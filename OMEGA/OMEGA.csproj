@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+	
+	<ItemGroup Condition="'$(OS)' == 'Windows_NT'">
+        <ContentWithTargetPath Include="$(MSBuildThisFileDirectory)\Libs\win64\SDL2.dll">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <TargetPath>SDL2.dll</TargetPath>
+        </ContentWithTargetPath>
+        <ContentWithTargetPath Include="$(MSBuildThisFileDirectory)\Libs\win64\bgfx.dll">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <TargetPath>bgfx.dll</TargetPath>
+        </ContentWithTargetPath>
+    </ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="protobuf-net" Version="3.0.62" />
+	</ItemGroup>
+
+</Project>

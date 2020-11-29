@@ -1,0 +1,8 @@
+﻿{
+  "title": "OMEGA DEMO",
+  "width": 800,
+  "height": 600,
+  "start_fullscreen": false,
+  "resources_folder": "Assets",
+  "preload_asset_paks":  ["demo"]
+}
