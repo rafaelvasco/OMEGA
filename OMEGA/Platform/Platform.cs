@@ -34,7 +34,7 @@ namespace OMEGA
                 }
             }
 
-            SDL_Init(
+            _ = SDL_Init(
                 SDL_INIT_VIDEO |
                 SDL_INIT_JOYSTICK |
                 SDL_INIT_GAMECONTROLLER |

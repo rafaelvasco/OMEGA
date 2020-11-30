@@ -1,6 +1,5 @@
 ﻿
 using System;
-using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace OMEGA
@@ -42,15 +41,15 @@ namespace OMEGA
 
         public float Area => Math.Abs(Width * Height);
 
-        public Vector2 TopLeft => new Vector2(X1, Y1);
+        public Vec2 TopLeft => new Vec2(X1, Y1);
 
-        public Vector2 TopRight => new Vector2(X2, Y1);
+        public Vec2 TopRight => new Vec2(X2, Y1);
 
-        public Vector2 BottomLeft => new Vector2(X1, Y2);
+        public Vec2 BottomLeft => new Vec2(X1, Y2);
 
-        public Vector2 BottomRight => new Vector2(X2, Y2);
+        public Vec2 BottomRight => new Vec2(X2, Y2);
 
-        public Vector2 Center => new Vector2(Calc.Abs(X2 - X1) / 2, Calc.Abs(Y2 - Y1) / 2);
+        public Vec2 Center => new Vec2(Calc.Abs(X2 - X1) / 2, Calc.Abs(Y2 - Y1) / 2);
 
         public override bool Equals(object obj)
         {

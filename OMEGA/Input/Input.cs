@@ -1,6 +1,4 @@
-﻿using System.Numerics;
-
-namespace OMEGA
+﻿namespace OMEGA
 {
     public static class Input
     {
@@ -71,15 +69,25 @@ namespace OMEGA
         /* GAMEPAD */
         public static GamePadDeadZone GamepadDeadZoneMode { get; set; } = GamePadDeadZone.Circular;
 
-        public static Vector2 LeftThumbstickAxis => gp_current_state.ThumbSticks.Left;
+        public static bool GamePadDown(GamePadButtons button, GamePadIndex player_index = 0)
+        {
+            return gp_current_state[(int)player_index][button];
+        }
 
-        public static Vector2 RightThumbstickAxis => gp_current_state.ThumbSticks.Right;
+        public static bool GamePadPressed(GamePadButtons button, GamePadIndex player_index = 0)
+        {
+            return gp_current_state[(int)player_index][button] && !gp_prev_state[(int)player_index][button];
+        }
 
-        public static float LeftTriggerValue => gp_current_state.Triggers.Left;
+        public static bool GamePadReleased(GamePadButtons button, GamePadIndex player_index = 0)
+        {
+            return !gp_current_state[(int)player_index][button] && gp_prev_state[(int)player_index][button];
+        }
 
-        public static float RightTriggerValue => gp_current_state.Triggers.Right;
-
-        public static GamePadState Gamepad => gp_current_state;
+        public static GamePadState GetGamePadState(GamePadIndex player_index = 0)
+        {
+            return gp_current_state[(int)player_index];
+        }
 
         /* KEYBOARD */
 
@@ -101,8 +109,8 @@ namespace OMEGA
 
         /* ============================================== */
 
-        private static GamePadState gp_current_state;
-        private static GamePadState gp_prev_state;
+        private static GamePadState[] gp_current_state;
+        private static GamePadState[] gp_prev_state;
 
         private static KeyboardState kb_current_state;
         private static KeyboardState kb_prev_state;
@@ -122,6 +130,9 @@ namespace OMEGA
             Platform.SetGamePadMappingsFile(gamepad_mappings_text_content);
 
             Platform.PreLookForGamepads();
+
+            gp_current_state = new GamePadState[GamePad.GAMEPAD_MAX_COUNT];
+            gp_prev_state = new GamePadState[GamePad.GAMEPAD_MAX_COUNT];
            
         }
 
@@ -139,10 +150,21 @@ namespace OMEGA
                 ms_current_state = Mouse.GetState();
             }
 
-            if (GamePadActive)
+            if (GamePadActive && GamePad.ConnectedGamePads > 0)
             {
-                gp_prev_state = gp_current_state;
-                gp_current_state = GamePad.GetState(GamePadIndex.One);
+                if (GamePad.ConnectedGamePads == 1)
+                {
+                    gp_prev_state[0] = gp_current_state[0];
+                    gp_current_state[0] = GamePad.GetState(GamePadIndex.One);                        
+                }
+                else
+                {
+                    for (int i = 0; i < GamePad.ConnectedGamePads; ++i)
+                    {
+                        gp_prev_state[i] = gp_current_state[i];
+                        gp_current_state[i] = GamePad.GetState((GamePadIndex)i);                
+                    }
+                }
             }
         }
 

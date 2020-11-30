@@ -101,13 +101,13 @@ namespace OMEGA
 
             Mat4.ZeroSet(ref result);
 
-            result.M0 = w;
-            result.M5 = h;
-            result.M8 = x;
-            result.M9 = y;
-            result.M10 = -aa;
-            result.M11 = -1.0f;
-            result.M14 = -bb;
+            result.M11 = w;
+            result.M22 = h;
+            result.M31 = x;
+            result.M32 = y;
+            result.M33 = -aa;
+            result.M34 = -1.0f;
+            result.M43 = -bb;
         }
 
         public static void MatProj(ref Mat4 result, float fov, float aspect, float near, float far)
@@ -121,13 +121,13 @@ namespace OMEGA
         {
             Mat4.ZeroSet(ref result);
 
-            result.M0 = 2.0f/(right - left);
-            result.M5 = 2.0f/(top - bottom);
-            result.M10 = 1.0f / (near - far);
-            result.M12 = (left + right)/(left - right) + offset;
-            result.M13 = (top + bottom)/(bottom - top);
-            result.M14 = near/(near-far);
-            result.M15 = 1.0f;
+            result.M11 = 2.0f/(right - left);
+            result.M22 = 2.0f/(top - bottom);
+            result.M33 = 1.0f / (near - far);
+            result.M41 = (left + right)/(left - right) + offset;
+            result.M42 = (top + bottom)/(bottom - top);
+            result.M43 = near/(near-far);
+            result.M44 = 1.0f;
         }
 
         public static void MatLookAt(ref Mat4 result, Vec3 eye, Vec3 at)
@@ -147,22 +147,22 @@ namespace OMEGA
 
             Mat4.ZeroSet(ref result);
 
-            result.M0 = right.X;
-            result.M1 = up.X;
-            result.M2 = view.X;
+            result.M11 = right.X;
+            result.M12 = up.X;
+            result.M13 = view.X;
 
-            result.M4 = right.Y;
-            result.M5 = up.Y;
-            result.M6 = view.Y;
+            result.M21 = right.Y;
+            result.M22 = up.Y;
+            result.M23 = view.Y;
 
-            result.M8 = right.Z;
-            result.M9 = up.Z;
-            result.M10 = view.Z;
+            result.M31 = right.Z;
+            result.M32 = up.Z;
+            result.M33 = view.Z;
 
-            result.M12 = -Vec3Dot(right, eye);
-            result.M13 = -Vec3Dot(up, eye);
-            result.M14 = -Vec3Dot(view, eye);
-            result.M15 = 1.0f;
+            result.M41 = -Vec3Dot(right, eye);
+            result.M42 = -Vec3Dot(up, eye);
+            result.M43 = -Vec3Dot(view, eye);
+            result.M44 = 1.0f;
         }
 
         public static void MatRotateXY(ref Mat4 result, float rx, float ry)
@@ -174,15 +174,15 @@ namespace OMEGA
 
             Mat4.ZeroSet(ref result);
 
-            result.M0 = cy;
-            result.M2 = sy;
-            result.M4 = sx*sy;
-            result.M5 = cx;
-            result.M6 = -sx*cy;
-            result.M8 = -cx*sy;
-            result.M9 = sx;
-            result.M10 = cx * cy;
-            result.M15 = 1.0f;
+            result.M11 = cy;
+            result.M13 = sy;
+            result.M21 = sx*sy;
+            result.M22 = cx;
+            result.M23 = -sx*cy;
+            result.M31 = -cx*sy;
+            result.M32 = sx;
+            result.M33 = cx * cy;
+            result.M44 = 1.0f;
         }
     }
 }

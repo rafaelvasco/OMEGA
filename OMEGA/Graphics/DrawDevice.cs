@@ -310,9 +310,6 @@ namespace OMEGA
             GraphicsContext.Submit(draw_pass_index, current_shader.Program);
         }
 
-
-
-
         public void SetTexture(ShaderProgram program, int slot, Texture2D texture)
         {
             GraphicsContext.SetTexture(0, program.Samplers[slot], texture.Handle, texture.TexFlags);

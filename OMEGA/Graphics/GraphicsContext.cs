@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace OMEGA
@@ -324,7 +323,7 @@ namespace OMEGA
             Bgfx.set_uniform(uniform, &value, 1);
         }
 
-        public static void SetUniform(UniformHandle uniform, ref Vector4 value)
+        public static void SetUniform(UniformHandle uniform, ref Vec4 value)
         {
             Bgfx.set_uniform(uniform, Unsafe.AsPointer(ref value), 1);
         }
@@ -369,8 +368,8 @@ namespace OMEGA
         {
             Bgfx.set_view_transform(
                 view_id,
-                Unsafe.AsPointer(ref view.M0),
-                Unsafe.AsPointer(ref projection.M0)
+                Unsafe.AsPointer(ref view.M11),
+                Unsafe.AsPointer(ref projection.M11)
             );
         }
 
@@ -382,7 +381,7 @@ namespace OMEGA
         public static void SetModelTransform(ref Mat4 transform)
         {
             Bgfx.set_transform(
-                Unsafe.AsPointer(ref transform.M0),
+                Unsafe.AsPointer(ref transform.M11),
                 1
             );
         }

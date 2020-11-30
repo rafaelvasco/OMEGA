@@ -149,7 +149,7 @@ namespace OMEGA
         /// <returns></returns>
         public override bool Equals(object obj)
         {
-            return (obj is MouseState) && (this == (MouseState)obj);
+            return (obj is MouseState state) && (this == state);
         }
 
         /// <summary>

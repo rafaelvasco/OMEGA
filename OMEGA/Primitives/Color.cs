@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -150,8 +149,10 @@ namespace OMEGA
         public static readonly Color Yellow = new Color(0xff00ffff);
         public static readonly Color YellowGreen = new Color(0xff32cd9a);
         
+        // Stored as RGBA with R in the least significant octet:
+        // |-------|-------|-------|-------
+        // A       B       G       R
         private readonly uint _abgr;
-        
 
         public Color(uint abgr)
         {
@@ -351,17 +352,12 @@ namespace OMEGA
             return color._abgr;
         }
 
-        //public static implicit operator int(Color color)
-        //{
-        //    return color.RGBA;
-        //}
-          
-        public static implicit operator Vector4(Color color)
+        public static implicit operator Vec4(Color color)
         {
-            return new Vector4(color.Rf, color.Gf, color.Bf, color.Af);
+            return new Vec4(color.Rf, color.Gf, color.Bf, color.Af);
         }
 
-        public static implicit operator Color(Vector4 vec)
+        public static implicit operator Color(Vec4 vec)
         {
             return new Color(vec.X, vec.Y, vec.Z, vec.W);
         }

@@ -92,7 +92,6 @@ namespace OMEGA
 
         private static IGame running_game;
 
-
         public static void Init(IGame game, GameInfo game_info)
         {
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
@@ -141,6 +140,9 @@ namespace OMEGA
         {
             Platform.ShowWindow(show);
         }
+
+        //TODO:
+        public static void SaveScreenSnapShot() {}
 
         public static void ToggleFullscreen()
         {

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Numerics;
 
 namespace OMEGA
 {
@@ -11,9 +10,9 @@ namespace OMEGA
 
         internal bool SubmitedOnce;
 
-        public Vector4 Value => _value;
+        public Vec4 Value => _value;
 
-        private Vector4 _value;
+        private Vec4 _value;
 
         internal ShaderParameter(string name)
         {
@@ -25,20 +24,20 @@ namespace OMEGA
             _value.X = v;
         }
 
-        public void SetValue(Vector2 v)
+        public void SetValue(Vec2 v)
         {
             _value.X = v.X;
             _value.Y = v.Y;
         }
 
-        public void SetValue(Vector3 v)
+        public void SetValue(Vec3 v)
         {
             _value.X = v.X;
             _value.Y = v.Y;
             _value.Z = v.Z;
         }
 
-        public void SetValue(Vector4 v)
+        public void SetValue(Vec4 v)
         {
             _value = v;
         }

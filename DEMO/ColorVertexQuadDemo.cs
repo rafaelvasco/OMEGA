@@ -40,10 +40,11 @@ namespace DEMO
 
         public override void VariableUpdate(float dt)
         {
-            if (GamePad.GetState(GamePadIndex.One).IsButtonDown(Buttons.Back) || Input.KeyPressed(Keys.Escape))
+            if (Input.GamePadPressed(GamePadButtons.Back) || Input.KeyPressed(Keys.Escape))
             {
                 Exit();
             }
+
         }
 
         public override void Draw(float dt)

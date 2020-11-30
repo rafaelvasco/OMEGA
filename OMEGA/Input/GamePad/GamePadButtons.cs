@@ -1,182 +1,112 @@
-﻿namespace OMEGA
+﻿using System;
+
+namespace OMEGA
 {
-    public struct GamePadButtons
+    /// <summary>
+	/// Defines the buttons on gamepad.
+	/// </summary>
+	[Flags]
+	public enum GamePadButtons
 	{
-		public ButtonState A
-		{
-			get
-			{
-				return ((buttons & Buttons.A) == Buttons.A) ?
-					ButtonState.Pressed :
-					ButtonState.Released;
-			}
-		}
-
-		public ButtonState B
-		{
-			get
-			{
-				return ((buttons & Buttons.B) == Buttons.B) ?
-					ButtonState.Pressed :
-					ButtonState.Released;
-			}
-		}
-
-		public ButtonState Back
-		{
-			get
-			{
-				return ((buttons & Buttons.Back) == Buttons.Back) ?
-					ButtonState.Pressed :
-					ButtonState.Released;
-			}
-		}
-
-		public ButtonState X
-		{
-			get
-			{
-				return ((buttons & Buttons.X) == Buttons.X) ?
-					ButtonState.Pressed :
-					ButtonState.Released;
-			}
-		}
-
-		public ButtonState Y
-		{
-			get
-			{
-				return ((buttons & Buttons.Y) == Buttons.Y) ?
-					ButtonState.Pressed :
-					ButtonState.Released;
-			}
-		}
-
-		public ButtonState Start
-		{
-			get
-			{
-				return ((buttons & Buttons.Start) == Buttons.Start) ?
-					ButtonState.Pressed :
-					ButtonState.Released;
-			}
-		}
-
-		public ButtonState LeftShoulder
-		{
-			get
-			{
-				return ((buttons & Buttons.LeftShoulder) == Buttons.LeftShoulder) ?
-					ButtonState.Pressed :
-					ButtonState.Released;
-			}
-		}
-
-		public ButtonState LeftStick
-		{
-			get
-			{
-				return ((buttons & Buttons.LeftStick) == Buttons.LeftStick) ?
-					ButtonState.Pressed :
-					ButtonState.Released;
-			}
-		}
-
-		public ButtonState RightShoulder
-		{
-			get
-			{
-				return ((buttons & Buttons.RightShoulder) == Buttons.RightShoulder) ?
-					ButtonState.Pressed :
-					ButtonState.Released;
-			}
-		}
-
-		public ButtonState RightStick
-		{
-			get
-			{
-				return ((buttons & Buttons.RightStick) == Buttons.RightStick) ?
-					ButtonState.Pressed :
-					ButtonState.Released;
-			}
-		}
-
-		public ButtonState BigButton
-		{
-			get
-			{
-				return ((buttons & Buttons.BigButton) == Buttons.BigButton) ?
-					ButtonState.Pressed :
-					ButtonState.Released;
-			}
-		}
-
-		internal Buttons buttons;
-
-		public GamePadButtons(Buttons buttons)
-		{
-			this.buttons = buttons;
-		}
-
-		/* Used by GamePadState public constructor, DO NOT USE! */
-		internal static GamePadButtons FromButtonArray(params Buttons[] buttons)
-		{
-			Buttons mask = (Buttons) 0;
-			foreach (Buttons b in buttons)
-			{
-				mask |= b;
-			}
-			return new GamePadButtons(mask);
-		}
-
 		/// <summary>
-		/// Determines whether two specified instances of <see cref="GamePadButtons"/> are
-		/// equal.
+		/// Directional pad up.
 		/// </summary>
-		/// <param name="left">The first object to compare.</param>
-		/// <param name="right">The second object to compare.</param>
-		/// <returns>
-		/// True if <paramref name="left"/> and <paramref name="right"/> are equal;
-		/// otherwise, false.
-		/// </returns>
-		public static bool operator ==(GamePadButtons left, GamePadButtons right)
-		{
-			return left.buttons == right.buttons;
-		}
-
+		DPadUp =		0x00000001,
 		/// <summary>
-		/// Determines whether two specified instances of <see cref="GamePadButtons"/> are
-		/// not equal.
+		/// Directional pad down.
 		/// </summary>
-		/// <param name="left">The first object to compare.</param>
-		/// <param name="right">The second object to compare.</param>
-		/// <returns>
-		/// True if <paramref name="left"/> and <paramref name="right"/> are not equal;
-		/// otherwise, false.
-		/// </returns>
-		public static bool operator !=(GamePadButtons left, GamePadButtons right)
-		{
-			return !(left == right);
-		}
-
+		DPadDown =		0x00000002,
 		/// <summary>
-		/// Returns a value indicating whether this instance is equal to a specified object.
+		/// Directional pad left.
 		/// </summary>
-		/// <param name="obj">An object to compare to this instance.</param>
-		/// <returns>
-		/// True if <paramref name="obj"/> is a <see cref="GamePadButtons"/> and
-		/// has the same value as this instance; otherwise, false.
-		/// </returns>
-		public override bool Equals(object obj)
-		{
-			return (obj is GamePadButtons) && (this == (GamePadButtons) obj);
-		}
-
-		public override int GetHashCode()
-		{
-			return (int) this.buttons;
-		}
-
+		DPadLeft =		0x00000004,
+		/// <summary>
+		/// Directional pad right.
+		/// </summary>
+		DPadRight =		0x00000008,
+		/// <summary>
+		/// START button.
+		/// </summary>
+		Start =			0x00000010,
+		/// <summary>
+		/// BACK button.
+		/// </summary>
+		Back =			0x00000020,
+		/// <summary>
+		/// Left stick button (pressing the left stick).
+		/// </summary>
+		LeftStick =		0x00000040,
+		/// <summary>
+		/// Right stick button (pressing the right stick).
+		/// </summary>
+		RightStick =		0x00000080,
+		/// <summary>
+		/// Left bumper (shoulder) button.
+		/// </summary>
+		LeftShoulder =		0x00000100,
+		/// <summary>
+		/// Right bumper (shoulder) button.
+		/// </summary>
+		RightShoulder =		0x00000200,
+		/// <summary>
+		/// Big button.
+		/// </summary>
+		BigButton =		0x00000800,
+		/// <summary>
+		/// A button.
+		/// </summary>
+		A =			0x00001000,
+		/// <summary>
+		/// B button.
+		/// </summary>
+		B =			0x00002000,
+		/// <summary>
+		/// X button.
+		/// </summary>
+		X =			0x00004000,
+		/// <summary>
+		/// Y button.
+		/// </summary>
+		Y =			0x00008000,
+		/// <summary>
+		/// Left stick is towards the left.
+		/// </summary>
+		LeftThumbstickLeft =	0x00200000,
+		/// <summary>
+		/// Right trigger.
+		/// </summary>
+		RightTrigger =		0x00400000,
+		/// <summary>
+		/// Left trigger.
+		/// </summary>
+		LeftTrigger =		0x00800000,
+		/// <summary>
+		/// Right stick is towards up.
+		/// </summary>
+		RightThumbstickUp =	0x01000000,
+		/// <summary>
+		/// Right stick is towards down.
+		/// </summary>
+		RightThumbstickDown =	0x02000000,
+		/// <summary>
+		/// Right stick is towards the right.
+		/// </summary>
+		RightThumbstickRight =	0x04000000,
+		/// <summary>
+		/// Right stick is towards the left.
+		/// </summary>
+		RightThumbstickLeft =	0x08000000,
+		/// <summary>
+		/// Left stick is towards up.
+		/// </summary>
+		LeftThumbstickUp =	0x10000000,
+		/// <summary>
+		/// Left stick is towards down.
+		/// </summary>
+		LeftThumbstickDown =	0x20000000,
+		/// <summary>
+		/// Left stick is towards the right.
+		/// </summary>
+		LeftThumbstickRight =	0x40000000
 	}
 }

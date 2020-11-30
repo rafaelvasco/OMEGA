@@ -21,10 +21,6 @@ namespace OMEGA
 			}
 		}
 
-		internal static float DisplayScaleFactorX;
-
-		internal static float DisplayScaleFactorY;
-
 		private static int wheel_value = 0;
 
 		/// <summary>
@@ -44,8 +40,8 @@ namespace OMEGA
                 out ButtonState x2
             );
 
-            x = (int) ((double) x * DisplayScaleFactorX);
-			y = (int) ((double) y * DisplayScaleFactorY);
+            x = (int) ((double) x * 1.0f);
+			y = (int) ((double) y * 1.0f);
 
 			return new MouseState(
 				x,
@@ -72,8 +68,8 @@ namespace OMEGA
 			}
 
 			// Scale the mouse coordinates for the faux-backbuffer
-			x = (int) ((double) x * DisplayScaleFactorX);
-			y = (int) ((double) y * DisplayScaleFactorY);
+			x = (int) ((double) x * 1.0f);
+			y = (int) ((double) y * 1.0f);
 
 			Platform.SetMousePosition(x, y);
 		}

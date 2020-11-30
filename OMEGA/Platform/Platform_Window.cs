@@ -265,18 +265,7 @@ namespace OMEGA
             // Window Resize
             else if (evt.window.windowEvent == SDL_WindowEventID.SDL_WINDOWEVENT_SIZE_CHANGED)
             {
-                Mouse.DisplayScaleFactorX = Engine.DrawDevice.BackBufferWidth / evt.window.data1;
-                Mouse.DisplayScaleFactorY = Engine.DrawDevice.BackBufferHeight / evt.window.data2;
-            }
-
-            else if (evt.window.windowEvent == SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED)
-            {
-                uint flags = SDL_GetWindowFlags(_window);
-                if ((flags & (uint)SDL_WindowFlags.SDL_WINDOW_RESIZABLE) != 0 &&
-                    (flags & (uint)SDL_WindowFlags.SDL_WINDOW_INPUT_FOCUS) != 0)
-                {
-                    Engine.RunningGame.OnResize();
-                }
+                Engine.RunningGame.OnResize();
             }
 
             else if (evt.window.windowEvent == SDL_WindowEventID.SDL_WINDOWEVENT_EXPOSED)

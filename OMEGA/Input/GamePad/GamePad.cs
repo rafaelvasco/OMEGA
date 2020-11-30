@@ -7,8 +7,9 @@
 		internal const float RightDeadZone = 8689.0f / 32768.0f;
 		internal const float TriggerThreshold = 30.0f / 255.0f;
 
+		public static int ConnectedGamePads {get; internal set;}
 
-		internal static readonly int GAMEPAD_COUNT = 4;
+		public static readonly int GAMEPAD_MAX_COUNT = 4;
 
 		public static GamePadCapabilities GetCapabilities(GamePadIndex gamepad_index)
 		{

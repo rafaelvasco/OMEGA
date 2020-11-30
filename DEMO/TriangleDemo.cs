@@ -13,9 +13,9 @@ namespace DEMO
 
             vertex_stream = new VertexStream<VertexPositionColor>(new VertexPositionColor[] {
 
-                new VertexPositionColor ( 0.0f, 0.5f, 0.0f, Color.RoyalBlue ), // TOP-LEFT
-                new VertexPositionColor ( 0.5f, -0.5f, 0.0f, Color.SpringGreen ), // TOP-RIGHT
-                new VertexPositionColor ( -0.5f, -0.5f, 0.0f, Color.LightPink ), // BOTTOM-RIGHT
+                new VertexPositionColor ( 0.0f, 0.5f, 0.0f, Color.RoyalBlue ),
+                new VertexPositionColor ( 0.5f, -0.5f, 0.0f, Color.SpringGreen ),
+                new VertexPositionColor ( -0.5f, -0.5f, 0.0f, Color.LightPink ),
             });
 
 
@@ -28,7 +28,7 @@ namespace DEMO
 
         public override void VariableUpdate(float dt)
         {
-            if (GamePad.GetState(GamePadIndex.One).IsButtonDown(Buttons.Back) || Input.KeyPressed(Keys.Escape))
+            if (Input.GamePadPressed(GamePadButtons.Back) || Input.KeyPressed(Keys.Escape))
             {
                 Exit();
             }

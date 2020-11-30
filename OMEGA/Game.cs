@@ -207,14 +207,14 @@ namespace OMEGA
             Engine.Shutdown();
         }
 
-        public void OnActivated()
+        public virtual void OnActivated()
         {
         }
 
-        public void OnDeactivated()
+        public virtual void OnDeactivated()
         {
         }
-        public void OnResize()
+        public virtual void OnResize()
         {
         }
     }

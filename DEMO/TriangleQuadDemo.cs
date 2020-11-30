@@ -52,7 +52,7 @@ namespace DEMO
 
         public override void VariableUpdate(float dt)
         {
-            if (GamePad.GetState(GamePadIndex.One).IsButtonDown(Buttons.Back) || Keyboard.GetState().IsKeyDown(Keys.Escape))
+            if (Input.GamePadPressed(GamePadButtons.Back) || Input.KeyPressed(Keys.Escape))
             {
                 Exit();
             }

@@ -209,7 +209,7 @@ namespace OMEGA
             }
         }
 
-        internal void OnScreenResized(int width, int height)
+        public void OnScreenResized(int width, int height)
         {
             var canvas_w = this.Width;
             var canvas_h = this.Height;

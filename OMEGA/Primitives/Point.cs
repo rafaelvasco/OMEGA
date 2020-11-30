@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace OMEGA
@@ -53,12 +52,12 @@ namespace OMEGA
             return a.X * b.Y - a.Y * b.X;
         }
 
-        public static implicit operator Vector2(Point p)
+        public static implicit operator Vec2(Point p)
         {
-            return new Vector2(p.X, p.Y);
+            return new Vec2(p.X, p.Y);
         }
 
-        public static explicit operator Point(Vector2 p)
+        public static explicit operator Point(Vec2 p)
         {
             return new Point((int) p.X, (int) p.Y);
         }

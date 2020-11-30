@@ -1,17 +1,16 @@
-﻿using System.Numerics;
-
+﻿
 namespace OMEGA
 {
     public struct GamePadThumbSticks
 	{
-		public Vector2 Left
+		public Vec2 Left
 		{
 			get
 			{
 				return left;
 			}
 		}
-		public Vector2 Right
+		public Vec2 Right
 		{
 			get
 			{
@@ -19,10 +18,10 @@ namespace OMEGA
 			}
 		}
 
-		private Vector2 left;
-		private Vector2 right;
+		private Vec2 left;
+		private Vec2 right;
 
-		public GamePadThumbSticks(Vector2 leftPosition, Vector2 rightPosition)
+		public GamePadThumbSticks(Vec2 leftPosition, Vec2 rightPosition)
 		{
 			left = leftPosition;
 			right = rightPosition;
@@ -30,8 +29,8 @@ namespace OMEGA
 		}
 
 		internal GamePadThumbSticks(
-			Vector2 leftPosition,
-			Vector2 rightPosition,
+			Vec2 leftPosition,
+			Vec2 rightPosition,
 			GamePadDeadZone deadZoneMode
 		) {
 			left = leftPosition;
@@ -86,12 +85,12 @@ namespace OMEGA
 			}
 		}
 
-		private static Vector2 ExcludeCircularDeadZone(Vector2 value, float deadZone)
+		private static Vec2 ExcludeCircularDeadZone(Vec2 value, float deadZone)
 		{
 			float originalLength = value.Length();
 			if (originalLength <= deadZone)
 			{
-				return Vector2.Zero;
+				return Vec2.Zero;
 			}
 			float newLength = (originalLength - deadZone) / (1.0f - deadZone);
 			return value * (newLength / originalLength);

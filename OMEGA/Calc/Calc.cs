@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace OMEGA
@@ -434,7 +433,7 @@ namespace OMEGA
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float AngleBetweenVectors(Vector2 from, Vector2 to)
+        public static float AngleBetweenVectors(Vec2 from, Vec2 to)
         {
             return (float) Math.Atan2(to.Y - from.Y, to.X - from.X);
         }
@@ -473,10 +472,10 @@ namespace OMEGA
         /// <param name="radius">Radius.</param>
         /// <param name="angleInDegrees">Angle in degrees.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 PointOnCircle(Vector2 circleCenter, float radius, float angleInDegrees)
+        public static Vec2 PointOnCircle(Vec2 circleCenter, float radius, float angleInDegrees)
         {
             var radians = ToRadians(angleInDegrees);
-            return new Vector2
+            return new Vec2
             {
                 X = Cos(radians) * radius + circleCenter.X,
                 Y = Sin(radians) * radius + circleCenter.Y
@@ -484,14 +483,14 @@ namespace OMEGA
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 RotateAround(Vector2 point, Vector2 center, float angleRadians)
+        public static Vec2 RotateAround(Vec2 point, Vec2 center, float angleRadians)
         {
             var cos = Cos(angleRadians);
             var sin = Sin(angleRadians);
             var rotatedX = cos * (point.X - center.X) - sin * (point.Y - center.Y) + center.X;
             var rotatedY = sin * (point.X - center.X) + cos * (point.Y - center.Y) + center.Y;
 
-            return new Vector2(rotatedX, rotatedY);
+            return new Vec2(rotatedX, rotatedY);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
