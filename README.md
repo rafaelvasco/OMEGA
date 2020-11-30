@@ -9,6 +9,7 @@
  - [BGFX][1] for low level graphics API abstraction;
  - [StbImageSharp][9] for image loading/writing;
  - Code fragments from [SharpBGFX][2] and [bgfx-cs][3] to help better abstract low level bindings;
+ - Game loop code from https://github.com/TylerGlaiel/FrameTimingControl
  
  **This project has taken inspiration or is using code directly from:**
  
