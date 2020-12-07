@@ -49,6 +49,7 @@ namespace OMEGA
 
         public Vec2 BottomRight => new Vec2(X2, Y2);
 
+
         public Vec2 Center => new Vec2(Calc.Abs(X2 - X1) / 2, Calc.Abs(Y2 - Y1) / 2);
 
         public override bool Equals(object obj)

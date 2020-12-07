@@ -23,10 +23,29 @@ namespace OMEGA
         private RenderTarget(int width, int height, TextureFormat format, TextureFlags flags)
         {
             handle = GraphicsContext.CreateFrameBuffer(width, height, format, flags);
-
-
             internal_texture = new Texture2D(GraphicsContext.GetFrameBufferTexture(handle, 0), width, height, false, false);
+        }
 
+        private RenderTarget(Texture2D texture, TextureFormat format, TextureFlags flags)
+        {
+            handle = GraphicsContext.CreateFrameBuffer(texture, format, flags);
+            internal_texture = texture;
+        }
+
+        public static RenderTarget Create(Texture2D texture)
+        {
+            var tex_flags = TextureFlags.ClampU | TextureFlags.ClampV;
+
+            if (!texture.Filtered)
+            {
+                tex_flags |= TextureFlags.FilterPoint;
+            }
+
+            var render_target = new RenderTarget(texture, TextureFormat.BGRA8, tex_flags);
+
+            GraphicsContext.RegisterAllocatedResource(render_target);
+
+            return render_target;
         }
 
         public static RenderTarget Create(int width, int height, bool filtered)
@@ -38,11 +57,11 @@ namespace OMEGA
                 tex_flags |= TextureFlags.FilterPoint;
             }
 
-            var frame_buffer = new RenderTarget(width, height, TextureFormat.BGRA8, tex_flags);
+            var render_target = new RenderTarget(width, height, TextureFormat.BGRA8, tex_flags);
 
-            GraphicsContext.RegisterAllocatedResource(frame_buffer);
+            GraphicsContext.RegisterAllocatedResource(render_target);
 
-            return frame_buffer;
+            return render_target;
         }
 
         ~RenderTarget()

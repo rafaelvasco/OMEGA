@@ -23,11 +23,11 @@ namespace OMEGA
             return vertex_buffer;
         }
 
-        public static DynamicVertexBuffer Create<T>(T[] vertices, BufferFlags flags = BufferFlags.None) where T : struct, IVertexType
+        public static DynamicVertexBuffer Create(Vertex[] vertices, BufferFlags flags = BufferFlags.None)
         {
             var vertex_buffer = new DynamicVertexBuffer
             {
-                Handle = GraphicsContext.CreateDynamicVertexBuffer(vertices, vertices[0].Layout, flags)
+                Handle = GraphicsContext.CreateDynamicVertexBuffer(vertices, Vertex.VertexLayout, flags)
             };
 
             GraphicsContext.RegisterAllocatedResource(vertex_buffer);
@@ -36,7 +36,7 @@ namespace OMEGA
         }
 
 
-        public void Update<T>(int start_vertex, T[] vertices)
+        public void Update(int start_vertex, Vertex[] vertices)
         {
             GraphicsContext.UpdateDynamicVertexBuffer(this.Handle, start_vertex, vertices);
         }

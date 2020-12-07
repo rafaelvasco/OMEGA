@@ -28,6 +28,12 @@ namespace OMEGA
             SwizzleToBGRA();
         }
 
+        public static Pixmap OnePixel(Color color)
+        {
+            var pixmap = new Pixmap(1, 1, color);
+            return pixmap;
+        }
+
         public Pixmap(int width, int height, Color color)
         {
             this.Width = width;
@@ -39,8 +45,6 @@ namespace OMEGA
             pixel_data = new byte[length];
 
             Fill(color);
-
-            SwizzleToBGRA();
         }
 
         public unsafe void BlitColors(Color[] colors)

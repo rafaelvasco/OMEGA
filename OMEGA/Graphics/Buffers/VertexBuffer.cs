@@ -10,11 +10,11 @@ namespace OMEGA
 
         internal VertexBufferHandle Handle { get; private set; }
 
-        public static VertexBuffer Create<T>(T[] vertices, BufferFlags flags = BufferFlags.None) where T : struct, IVertexType
+        public static VertexBuffer Create(Vertex[] vertices, BufferFlags flags = BufferFlags.None)
         {
             var vertex_buffer = new VertexBuffer
             {
-                Handle = GraphicsContext.CreateVertexBuffer(vertices, vertices[0].Layout, flags)
+                Handle = GraphicsContext.CreateVertexBuffer(vertices, Vertex.VertexLayout, flags)
             };
 
             GraphicsContext.RegisterAllocatedResource(vertex_buffer);

@@ -1,99 +1,458 @@
 ﻿using System;
-using System.Runtime.InteropServices;
+using System.Collections.Generic;
 
 namespace OMEGA
 {
-    public unsafe class Canvas
+    public class Canvas
     {
+        internal bool NeedsResetDisplay { get; set; } = false;
+
+        private static ushort StaticViewId = 0;
+
+        public CanvasView DefaultView => base_view;
+
+        public CanvasStretchMode StretchMode { get; set; } = CanvasStretchMode.LetterBox;
+
         public int MaxDrawCalls => max_draw_calls;
 
-        public int Width => render_surface.Width;
+        public BlendMode BlendMode
+        {
+            get => blend_mode;
+            set
+            {
+                if (blend_mode == value)
+                {
+                    return;
+                }
 
-        public int Height => render_surface.Height;
+                blend_mode = value;
 
-        public CanvasStretchMode StretchMode { get; set; } = CanvasStretchMode.PixelPerfect;
+                state_flags_changed = true;
 
-        public float RenderScaleX { get; private set; }
+                blend_mode = value;
 
-        public float RenderScaleY { get; private set; }
+                switch (blend_mode)
+                {
+                    case BlendMode.Solid:
+                        blend_state = 0x0;
+                        break;
+                    case BlendMode.Mask:
 
-        private ShaderProgram canvas_shader;
-        private ShaderProgram current_shader;
-        private RenderTarget render_surface;
-        private VertexStream<VertexPositionColorTexture> vertex_stream;
-        private VertexStream<VertexPositionColorTexture> render_surface_vertex_stream;
-        private Texture2D current_texture;
+                        blend_state =
+                            StateFlags.BlendAlphaToCoverage;
 
-        private DrawPass render_surface_draw_pass;
-        private DrawPass surface_to_screen_draw_pass;
+                        break;
+                    case BlendMode.Alpha:
 
-        private Quad render_surface_quad;
-        private Mat4 screen_proj_matrix;
+                        blend_state = GraphicsContext
+                           .STATE_BLEND_FUNC_SEPARATE(
+                               StateFlags.BlendSrcAlpha,
+                               StateFlags.BlendInvSrcAlpha,
+                               StateFlags.BlendOne,
+                               StateFlags.BlendInvSrcAlpha
+                       );
+
+                        break;
+
+                    case BlendMode.AlphaPre:
+
+                        blend_state = GraphicsContext
+                           .STATE_BLEND_FUNC_SEPARATE(
+                               StateFlags.BlendOne,
+                               StateFlags.BlendInvSrcAlpha,
+                               StateFlags.BlendOne,
+                               StateFlags.BlendInvSrcAlpha
+                       );
+
+                        break;
+
+                    case BlendMode.Add:
+
+                        blend_state = GraphicsContext
+                           .STATE_BLEND_FUNC_SEPARATE(
+                               StateFlags.BlendSrcAlpha,
+                               StateFlags.BlendOne,
+                               StateFlags.BlendOne,
+                               StateFlags.BlendOne
+                       );
+
+                        break;
+
+                    case BlendMode.Light:
+
+                        blend_state = GraphicsContext
+                           .STATE_BLEND_FUNC_SEPARATE(
+                               StateFlags.BlendDstColor,
+                               StateFlags.BlendOne,
+                               StateFlags.BlendZero,
+                               StateFlags.BlendOne
+                       );
+
+                        break;
+
+                    case BlendMode.Multiply:
+                        blend_state = GraphicsContext.STATE_BLEND_FUNC(StateFlags.BlendDstColor, StateFlags.BlendZero);
+                        break;
+
+                    case BlendMode.Invert:
+                        blend_state = GraphicsContext.STATE_BLEND_FUNC(StateFlags.BlendInvDstColor, StateFlags.BlendInvSrcColor);
+                        break;
+                }
+
+                UpdateRenderState();
+            }
+        }
+
+        public CullMode CullMode
+        {
+            get => cull_mode;
+
+            set
+            {
+                if (cull_mode == value)
+                {
+                    return;
+                }
+
+                cull_mode = value;
+
+                state_flags_changed = true;
+
+                switch (cull_mode)
+                {
+
+                    case CullMode.ClockWise:
+                        cull_state = StateFlags.CullCw;
+                        break;
+                    case CullMode.CounterClockWise:
+                        cull_state = StateFlags.CullCcw;
+                        break;
+                    case CullMode.None:
+                        cull_state = StateFlags.None;
+                        break;
+                }
+            }
+        }
+
+        public DepthTest DepthTest
+        {
+            get => depth_test;
+            set
+            {
+                if (depth_test == value)
+                {
+                    return;
+                }
+
+                if (blend_mode != BlendMode.Solid && blend_mode != BlendMode.Mask)
+                {
+                    return;
+                }
+
+                state_flags_changed = true;
+
+                depth_test = value;
+
+                switch (depth_test)
+                {
+                    case DepthTest.Always:
+                        depth_state = StateFlags.WriteZ | StateFlags.DepthTestAlways;
+                        break;
+                    case DepthTest.Equal:
+                        depth_state = StateFlags.WriteZ | StateFlags.DepthTestEqual;
+                        break;
+                    case DepthTest.GreaterOrEqual:
+                        depth_state = StateFlags.WriteZ | StateFlags.DepthTestGequal;
+                        break;
+                    case DepthTest.Greater:
+                        depth_state = StateFlags.WriteZ | StateFlags.DepthTestGreater;
+                        break;
+                    case DepthTest.LessOrEqual:
+                        depth_state = StateFlags.WriteZ | StateFlags.DepthTestLequal;
+                        break;
+                    case DepthTest.Less:
+                        depth_state = StateFlags.WriteZ | StateFlags.DepthTestLess;
+                        break;
+                    case DepthTest.Never:
+                        depth_state = StateFlags.DepthTestNever;
+                        break;
+                    case DepthTest.NotEqual:
+                        depth_state = StateFlags.WriteZ | StateFlags.DepthTestNotequal;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        private const int MAX_BATCH_VERTICES = 2048;
+
+        private VertexStream m_free_vertex_stream;
+        private VertexStream m_quad_vertex_stream;
+
         private int draw_calls;
         private int max_draw_calls;
-        private bool render_area_changed = true;
+        private BlendMode blend_mode;
+        private CullMode cull_mode;
+        private DepthTest depth_test;
+        private StateFlags blend_state;
+        private StateFlags depth_state;
+        private StateFlags cull_state;
+        private StateFlags render_state;
+        private bool state_flags_changed = true;
+        private ShaderProgram current_shader;
+        private ShaderProgram base_shader;
+        private Texture2D base_texture;
+        private Texture2D current_quads_texture;
+        private Texture2D current_free_vertices_texture;
+        private CanvasView base_view;
+        private List<CanvasView> additional_views = new List<CanvasView>();
+        private CanvasView current_view;
 
-        //private StateFlags prev_render_state;
-
-        private const int MAX_DEFAULT_VERTICES = 2048;
-
-
-        public Canvas(int width = 0, int height = 0)
+        internal Canvas()
         {
-            InitRenderSurface(width > 0 ? width : Engine.DrawDevice.BackBufferWidth, height > 0 ? height : Engine.DrawDevice.BackBufferHeight);
+            InitVertexStreams();
 
-            InitVertexStream();
+            InitDefaultResources();
 
-            InitDefaultShader();
+            InitDefaultView();
 
-            OnScreenResized(Engine.DisplaySize.Width, Engine.DisplaySize.Height);
+            ApplyViewProperties(base_view);
 
-            InitDrawPasses();
+            BlendMode = BlendMode.Alpha;
+
+            DepthTest = DepthTest.LessOrEqual;
+
+            CullMode = CullMode.None;
         }
 
-        private void InitRenderSurface(int width, int height)
+        public CanvasView CreateView()
         {
-            render_surface = RenderTarget.Create(width, height, false);
+            var view = new CanvasView()
+            {
+                ViewId = StaticViewId++,
+                ClearColor = base_view?.ClearColor ?? Color.CornflowerBlue,
+            };
+
+            if (view.ViewId > 0)
+            {
+                additional_views.Add(view);
+            }
+
+            return view;
         }
 
-        private void InitDrawPasses()
+        public void Begin(CanvasView view = null)
         {
-            // Render Surface Pass
-            var render_surface_proj_matrix = new Mat4();
+            current_view = view ?? base_view;
 
-            Calc.MatOrtho(ref render_surface_proj_matrix, 0f, render_surface.Width, render_surface.Height, 0f, 0.0f, 1000.0f);
+            if (!current_view.Applied)
+            {
+                ApplyViewProperties(current_view);
+            }
+        }
 
-            render_surface_draw_pass = new DrawPass(
-                view_port: Rect.FromBox(0, 0, render_surface.Width, render_surface.Height),
-                projection_matrix: render_surface_proj_matrix,
-                clear_color: Color.Orange,
-                render_target: render_surface
+        public void End()
+        {
+            RenderFreeVerticesBatch();
+            RenderQuadsBatch();
+        }
+
+        public void DrawVertices(Span<Vertex> vertices, Texture2D texture = null)
+        {
+            texture ??= base_texture;
+
+            if (current_free_vertices_texture != texture)
+            {
+                RenderFreeVerticesBatch();
+                current_free_vertices_texture = texture;
+            }
+
+            if (!m_free_vertex_stream.PutVertices(vertices))
+            {
+                RenderFreeVerticesBatch();
+                m_free_vertex_stream.Reset();
+
+                if (!m_free_vertex_stream.PutVertices(vertices))
+                {
+                    throw new Exception("Free Vertices Batch Overflow");
+                }
+            }
+        }
+
+        public void DrawQuad(in Quad quad, Texture2D texture = null)
+        {
+            texture ??= base_texture;
+
+            if (current_quads_texture != texture)
+            {
+                RenderQuadsBatch();
+                current_quads_texture = texture;
+            }
+
+            if (!m_quad_vertex_stream.PutQuad(in quad))
+            {
+                RenderQuadsBatch();
+                m_quad_vertex_stream.Reset();
+
+                if (!m_quad_vertex_stream.PutQuad(in quad))
+                {
+                    throw new Exception("Quad Batch Overflow");
+                }
+            }
+        }
+
+        internal void Frame()
+        {
+            GraphicsContext.Frame();
+        }
+
+        private void ApplyCanvasStretchModeForBaseView()
+        {
+            var game_resolution = Engine.GameResolution;
+            var display_size = Platform.GetDisplaySize();
+
+            switch (StretchMode)
+            {
+                case CanvasStretchMode.LetterBox:
+                    {
+                        float display_ratio = (float)display_size.Width / display_size.Height;
+                        float view_ratio = (float)game_resolution.Width / game_resolution.Height;
+
+                        float new_view_port_w = 1;
+                        float new_view_port_h = 1;
+                        float new_view_port_x = 0;
+                        float new_view_port_y = 0;
+
+                        bool horizontal_spacing = true;
+
+                        if (display_ratio < view_ratio)
+                        {
+                            horizontal_spacing = false;
+                        }
+
+                        // If horizontal_spacing is true, black bars will appear on the left and right.
+                        // Otherwise, they will appear on top and bottom
+
+                        if (horizontal_spacing)
+                        {
+                            new_view_port_w = view_ratio / display_ratio;
+                            new_view_port_x = (1 - new_view_port_w) / 2f;
+                        }
+                        else
+                        {
+                            new_view_port_h = display_ratio / view_ratio;
+                            new_view_port_y = (1 - new_view_port_h) / 2f;
+                        }
+
+                        base_view.SetViewport(RectF.FromBox(new_view_port_x, new_view_port_y, new_view_port_w, new_view_port_h));
+                    }
+                    break;
+                case CanvasStretchMode.Stretch:
+                    base_view.Reset(RectF.FromBox(0f, 0f, game_resolution.Width, game_resolution.Height));
+                    break;
+                case CanvasStretchMode.Resize:
+                    base_view.Reset(RectF.FromBox(0, 0, display_size.Width, display_size.Height));
+                    base_view.SetCenter(Engine.GameResolution.Width / 2.0f, Engine.GameResolution.Height / 2.0f);
+                    break;
+                default:
+                    break;
+            }
+
+            base_view.Applied = false;
+        }
+
+        internal void HandleDisplayChange()
+        {
+            var display_size = Platform.GetDisplaySize();
+
+            GraphicsContext.Reset(display_size.Width, display_size.Height, ResetFlags.Vsync);
+
+            ApplyCanvasStretchModeForBaseView();
+
+            ApplyViewProperties(base_view);
+
+            if (additional_views.Count > 0)
+            {
+                foreach (var view in additional_views)
+                {
+
+                    ApplyViewProperties(view);
+                }
+            }
+
+            NeedsResetDisplay = false;
+        }
+
+        private void InitDefaultView()
+        {
+            base_view = CreateView();
+
+            base_view.ClearColor = Color.CornflowerBlue;
+
+            var game_resolution = Engine.GameResolution;
+
+            base_view.Reset(RectF.FromBox(0, 0, game_resolution.Width, game_resolution.Height));
+
+            current_view = base_view;
+        }
+
+
+
+        private void ApplyViewProperties(CanvasView view)
+        {
+            Console.WriteLine("Apply View");
+
+            Rect viewport = GetViewPort(view);
+
+            Console.WriteLine($"Viewport: {viewport}");
+
+            GraphicsContext.SetViewRect(view.ViewId, viewport.X1, viewport.Y1, viewport.Width, viewport.Height);
+            GraphicsContext.SetViewClear(view.ViewId, ClearFlags.Color | ClearFlags.Depth, view.ClearColor.RGBA);
+
+            var projection = view.GetTransform();
+
+            GraphicsContext.SetProjection(view.ViewId, ref projection.M0);
+
+            view.Applied = true;
+        }
+
+        private Rect GetViewPort(CanvasView view)
+        {
+            var screen_size = Platform.GetDisplaySize();
+
+            var view_viewport = view.Viewport;
+            var base_view_viewport = base_view.Viewport;
+
+            var default_view_viewport = Rect.FromBox
+            (
+                (int)(0.5f + screen_size.Width * base_view_viewport.X1),
+                (int)(0.5f + screen_size.Height * base_view_viewport.Y1),
+                (int)(0.5f + screen_size.Width * base_view_viewport.Width),
+                (int)(0.5f + screen_size.Height * base_view_viewport.Height)
             );
 
-            Engine.DrawDevice.SetupDrawPass(0, render_surface_draw_pass);
-
-            // Render Surface to Screen Pass
-
-            surface_to_screen_draw_pass = new DrawPass(
-                view_port: Rect.FromBox(0, 0, Engine.DrawDevice.BackBufferWidth, Engine.DrawDevice.BackBufferHeight),
-                projection_matrix: screen_proj_matrix,
-                clear_color: Color.Black
-            );
-
-            Engine.DrawDevice.SetupDrawPass(1, surface_to_screen_draw_pass);
-
+            if (view.ViewId == 0)
+            {
+               return default_view_viewport;
+            }
+            else
+            {
+                return Rect.FromBox
+                (
+                    (int)(0.5f + default_view_viewport.Width * view_viewport.X1 + default_view_viewport.X1),
+                    (int)(0.5f + default_view_viewport.Height * view_viewport.Y1 + default_view_viewport.Y1),
+                    (int)(0.5f + default_view_viewport.Width * view_viewport.Width),
+                    (int)(0.5f + default_view_viewport.Height * view_viewport.Height)
+                );
+            }
         }
 
-        private void InitDefaultShader()
+        private void InitVertexStreams()
         {
-            canvas_shader = Engine.Content.Get<ShaderProgram>("canvas_shader");
+            /* Quad Vertex Stream */
 
-            current_shader = canvas_shader;
-        }
-
-        private void InitVertexStream()
-        {
-            var index_array = new ushort[MAX_DEFAULT_VERTICES / 4 * 6];
+            var index_array = new ushort[MAX_BATCH_VERTICES / 4 * 6];
 
             ushort indice_i = 0;
 
@@ -107,30 +466,27 @@ namespace OMEGA
                 index_array[i + 5] = (ushort)(indice_i + 3);
             }
 
-            vertex_stream = new VertexStream<VertexPositionColorTexture>(MAX_DEFAULT_VERTICES, index_array);
+            m_quad_vertex_stream = new VertexStream(MAX_BATCH_VERTICES, index_array);
 
-            render_surface_quad = new Quad(render_surface.Texture);
+            /* Free Layout Vertex Stream */
 
-            render_surface_vertex_stream = VertexStream<VertexPositionColorTexture>.FromQuad(render_surface_quad, stream_mode: VertexStreamMode.Dynamic);
+            m_free_vertex_stream = new VertexStream(MAX_BATCH_VERTICES);
         }
 
-
-        public void Begin()
+        private void InitDefaultResources()
         {
-            draw_calls = 0;
-            Engine.DrawDevice.SetShader(current_shader);
+            base_shader = Engine.Content.Get<ShaderProgram>("canvas_shader");
+
+            current_shader = base_shader;
+
+            base_texture = Texture2D.Create(Pixmap.OnePixel(Color.White));
+
+            current_quads_texture = base_texture;
         }
 
-        public void End()
+        private void RenderFreeVerticesBatch()
         {
-            RenderBatch();
-
-            RenderSurface();
-        }
-
-        private void RenderBatch()
-        {
-            if (vertex_stream.VertexCount == 0)
+            if (m_free_vertex_stream.VertexCount == 0)
             {
                 return;
             }
@@ -142,173 +498,95 @@ namespace OMEGA
                 max_draw_calls = draw_calls;
             }
 
-            var draw_device = Engine.DrawDevice;
+            SetTexture(0, current_free_vertices_texture);
 
-            draw_device.SetTexture(current_shader, 0, current_texture);
+            SubmitVertexStream(render_pass: current_view.ViewId, m_free_vertex_stream);
 
-            draw_device.SubmitVertexStream(draw_pass_index: 0, vertex_stream);
-
-            vertex_stream.Reset();
+            m_free_vertex_stream.Reset();
         }
 
-        private void RenderSurface()
+        private void RenderQuadsBatch()
         {
-            if (render_area_changed)
+            if (m_quad_vertex_stream.VertexCount == 0)
             {
-                render_area_changed = false;
-                render_surface_vertex_stream.Reset();
-
-                var vtx_fragment = render_surface_vertex_stream.GetNextVertexFragment(4);
-
-                fixed (VertexPositionColorTexture* vtx_ptr = &MemoryMarshal.GetReference(vtx_fragment))
-                {
-                    *(vtx_ptr) = render_surface_quad.V0;
-                    *(vtx_ptr+1) = render_surface_quad.V1;
-                    *(vtx_ptr+2) = render_surface_quad.V2;
-                    *(vtx_ptr+3) = render_surface_quad.V3;
-                }
+                return;
             }
 
-            var draw_device = Engine.DrawDevice;
+            draw_calls++;
 
-            draw_device.SetTexture(current_shader, 0, render_surface.Texture);
+            if (draw_calls > max_draw_calls)
+            {
+                max_draw_calls = draw_calls;
+            }
 
-            draw_device.SubmitVertexStream(draw_pass_index: 1, render_surface_vertex_stream);
+            SetTexture(0, current_quads_texture);
+
+            SubmitVertexStream(render_pass: current_view.ViewId, m_quad_vertex_stream);
+
+            m_quad_vertex_stream.Reset();
         }
 
-
-        public void DrawQuad(Texture2D texture, ref Quad quad)
+        private void SubmitVertexStream(
+          ushort render_pass,
+          VertexStream vertex_stream,
+          int start_vertex_index,
+          int vertex_count,
+          int start_indice_index = 0,
+          int index_count = 0)
         {
-            if (current_texture != texture)
+            if (current_shader == null)
             {
-                RenderBatch();
-                current_texture = texture;
+                return;
             }
 
-            var current_vertex_fragment = vertex_stream.GetNextVertexFragment(4);
-
-            if (current_vertex_fragment == null)
+            if (state_flags_changed)
             {
-                RenderBatch();
-
-                vertex_stream.Reset();
-                current_vertex_fragment = vertex_stream.GetNextVertexFragment(4);
+                UpdateRenderState();
+                GraphicsContext.SetState(render_state);
+                state_flags_changed = false;
             }
 
-            ref var v0 = ref quad.V0;
-            ref var v1 = ref quad.V1;
-            ref var v2 = ref quad.V2;
-            ref var v3 = ref quad.V3;
 
-            fixed(VertexPositionColorTexture* vertex_ptr = &MemoryMarshal.GetReference(current_vertex_fragment))
-            {
-                *(vertex_ptr) = new VertexPositionColorTexture(v0.X, v0.Y, v0.Z, v0.Col, v0.Tx, v0.Ty);
-                *(vertex_ptr + 1) = new VertexPositionColorTexture(v1.X, v1.Y, v1.Z, v1.Col, v1.Tx, v1.Ty);
-                *(vertex_ptr + 2) = new VertexPositionColorTexture(v2.X, v2.Y, v2.Z, v2.Col, v2.Tx, v2.Ty); ;
-                *(vertex_ptr + 3) = new VertexPositionColorTexture(v3.X, v3.Y, v3.Z, v3.Col, v3.Tx, v3.Ty);
-            }
+            current_shader.Submit();
+
+            vertex_stream.SubmitSpan(start_vertex_index, vertex_count, start_indice_index, index_count);
+
+            GraphicsContext.Submit(render_pass, current_shader.Program);
         }
 
-        public void OnScreenResized(int width, int height)
+        private void SubmitVertexStream(ushort render_pass, VertexStream vertex_stream)
         {
-            var canvas_w = this.Width;
-            var canvas_h = this.Height;
-
-            Rect render_area = Rect.Empty;
-
-            switch (StretchMode)
+            if (current_shader == null)
             {
-                case CanvasStretchMode.PixelPerfect:
-
-                    if (width > canvas_w || height > canvas_h)
-                    {
-                        var ar_origin = (float)canvas_w / canvas_h;
-                        var ar_new = (float)width / height;
-
-                        var scale_w = Calc.FloorToInt((float)width / canvas_w);
-                        var scale_h = Calc.FloorToInt((float)height / canvas_h);
-
-                        if (ar_new > ar_origin)
-                            scale_w = scale_h;
-                        else
-                            scale_h = scale_w;
-
-                        var margin_x = (width - canvas_w * scale_w) / 2;
-                        var margin_y = (height - canvas_h * scale_h) / 2;
-
-                        RenderScaleX = scale_w;
-                        RenderScaleY = scale_h;
-
-                        render_area = Rect.FromBox(margin_x, margin_y, canvas_w * scale_w, canvas_h * scale_h);
-                    }
-                    else
-                    {
-                        render_area = Rect.FromBox(0, 0, canvas_w, canvas_h);
-                    }
-
-                    break;
-                case CanvasStretchMode.LetterBox:
-
-                    if (width > canvas_w || height > canvas_h)
-                    {
-                        var ar_origin = (float)canvas_w / canvas_h;
-                        var ar_new = (float)width / height;
-
-                        var scale_w = (float)width / canvas_w;
-                        var scale_h = (float)height / canvas_h;
-
-                        if (ar_new > ar_origin)
-                            scale_w = scale_h;
-                        else
-                            scale_h = scale_w;
-
-                        var margin_x = (int)((width - canvas_w * scale_w) / 2);
-                        var margin_y = (int)((height - canvas_h * scale_h) / 2);
-
-                        RenderScaleX = scale_w;
-                        RenderScaleY = scale_h;
-
-                        render_area = Rect.FromBox(margin_x, margin_y, (int)(canvas_w * scale_w),
-                            (int)(canvas_h * scale_h));
-                    }
-                    else
-                    {
-                        RenderScaleX = 1.0f;
-                        RenderScaleY = 1.0f;
-                        render_area = Rect.FromBox(0, 0, canvas_w, canvas_h);
-                    }
-
-                    break;
-                case CanvasStretchMode.Stretch:
-
-                    RenderScaleX = (float)width / canvas_w;
-                    RenderScaleY = (float)height / canvas_h;
-                    render_area = Rect.FromBox(0, 0, width, height);
-
-                    break;
-                case CanvasStretchMode.Resize:
-
-                    //if (width == canvas_w && height == canvas_h)
-                    //{
-                    //    break;
-                    //}
-
-                    //RenderScaleX = 1.0f;
-                    //RenderScaleY = 1.0f;
-
-                    //render_area = Rect.FromBox(0, 0, width, height);
-
-                    //main_surface.ResizeSurface(width, height);
-
-                    break;
+                return;
             }
 
-            Console.WriteLine(
-                $"Render Area: {render_area.X1}, {render_area.Y1}, {render_area.Width}, {render_area.Height}");
+            if (state_flags_changed)
+            {
+                GraphicsContext.SetState(render_state);
+                state_flags_changed = false;
+            }
 
-            Calc.MatOrtho(ref screen_proj_matrix, 0, width, height, 0, 0.0f, 1.0f);
+            current_shader.Submit();
 
-            render_surface_quad.SetRect(render_area);
+            vertex_stream.Submit();
+            GraphicsContext.Submit(render_pass, current_shader.Program);
+        }
+
+        private void SetTexture(int slot, Texture2D texture)
+        {
+            current_quads_texture = texture;
+            GraphicsContext.SetTexture(0, current_shader.Samplers[slot], texture.Handle, texture.TexFlags);
+        }
+        private void UpdateRenderState()
+        {
+            render_state =
+                StateFlags.WriteRgb |
+                StateFlags.WriteA |
+                StateFlags.WriteZ |
+                blend_state |
+                depth_state |
+                cull_state;
         }
     }
 }

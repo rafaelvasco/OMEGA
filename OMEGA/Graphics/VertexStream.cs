@@ -4,149 +4,192 @@ using System.Runtime.InteropServices;
 
 namespace OMEGA
 {
-    public enum VertexStreamMode
+    internal enum VertexStreamMode
     {
         Static,
         Dynamic,
         Stream
     }
 
-    public unsafe class VertexStream<T> where T : struct, IVertexType
+    internal unsafe class VertexStream : IDisposable
     {
-        public int VertexCount => vertex_count;
+        public int VertexCount => m_vertex_count;
 
-        private readonly IndexBuffer index_buffer;
-        private readonly VertexBuffer static_vertex_buffer;
-        private readonly DynamicVertexBuffer dynamic_vertex_buffer;
-        private readonly VertexLayout vertex_layout;
-        private readonly VertexStreamMode stream_mode;
-        private readonly T[] vertices;
-        private readonly int max_vertex_count;
-        private bool vertex_array_changed = true;
-        private int vertex_count;
-        private int index_count;
+        private readonly IndexBuffer m_index_buffer;
+        private readonly VertexBuffer m_static_vertex_buffer;
+        private readonly DynamicVertexBuffer m_dynamic_vertex_buffer;
+        private readonly VertexStreamMode m_stream_mode;
+        private readonly Vertex[] m_vertices;
+        private readonly int m_max_vertex_count;
+        private bool m_vertex_array_changed = true;
+        private int m_vertex_count;
+        private int m_index_count;
 
-        public VertexStream(int max_vertex_count, ushort[] indices, VertexStreamMode stream_mode = VertexStreamMode.Stream)
+        public VertexStream(int max_vertex_count, ushort[] indices = null, VertexStreamMode stream_mode = VertexStreamMode.Stream)
         {
             if (stream_mode == VertexStreamMode.Static)
             {
                 throw new Exception("Invalid VertexStream mode for this constructor: A static VertexStream must be constructed with a pre made vertex array");
             }
 
-            this.stream_mode = stream_mode;
+            m_stream_mode = stream_mode;
 
-            this.max_vertex_count = max_vertex_count;
+            m_max_vertex_count = max_vertex_count;
 
-            vertices = new T[max_vertex_count];
+            m_vertices = new Vertex[max_vertex_count];
 
             if (stream_mode == VertexStreamMode.Dynamic)
             {
-                dynamic_vertex_buffer = DynamicVertexBuffer.Create(vertices);
+                m_dynamic_vertex_buffer = DynamicVertexBuffer.Create(m_vertices);
             }
 
-            vertex_layout = vertices[0].Layout;
-            vertex_count = 0;
-            index_count = 0;
-            index_buffer = IndexBuffer.Create(indices);
+            m_vertex_count = 0;
+            m_index_count = 0;
+
+            if (indices != null)
+            {
+                m_index_buffer = IndexBuffer.Create(indices);
+            }
         }
 
-        public VertexStream(Span<T> _vertices, ushort[] indices = null, VertexStreamMode stream_mode = VertexStreamMode.Static)
+
+        public VertexStream(Span<Vertex> _vertices, ushort[] indices = null, VertexStreamMode stream_mode = VertexStreamMode.Static)
         {
-            this.stream_mode = stream_mode;
+            m_stream_mode = stream_mode;
 
-            max_vertex_count = _vertices.Length;
+            m_max_vertex_count = _vertices.Length;
 
-            vertex_count = _vertices.Length;
+            m_vertex_count = _vertices.Length;
 
-            vertex_layout = _vertices[0].Layout;
+            m_vertices = new Vertex[_vertices.Length];
 
-            vertices = new T[_vertices.Length];
-
-            Unsafe.CopyBlockUnaligned(Unsafe.AsPointer(ref vertices[0]), Unsafe.AsPointer(ref _vertices[0]), (uint)(_vertices.Length * Unsafe.SizeOf<T>()));
+            Unsafe.CopyBlockUnaligned(Unsafe.AsPointer(ref m_vertices[0]), Unsafe.AsPointer(ref _vertices[0]), (uint)(_vertices.Length * Unsafe.SizeOf<Vertex>()));
 
             switch (stream_mode)
             {
                 case VertexStreamMode.Static:
-                    static_vertex_buffer = VertexBuffer.Create(vertices);
+                    m_static_vertex_buffer = VertexBuffer.Create(m_vertices);
                     break;
                 case VertexStreamMode.Dynamic:
-                    dynamic_vertex_buffer = DynamicVertexBuffer.Create(vertices);
+                    m_dynamic_vertex_buffer = DynamicVertexBuffer.Create(m_vertices);
                     break;
             }
 
             if (indices != null)
             {
-                index_count = indices.Length;
+                m_index_count = indices.Length;
 
-                index_buffer = IndexBuffer.Create(indices);
+                m_index_buffer = IndexBuffer.Create(indices);
             }
-        }
-
-        public static VertexStream<VertexPositionColorTexture> FromQuad(Quad quad, VertexStreamMode stream_mode = VertexStreamMode.Static)
-        {
-            return new VertexStream<VertexPositionColorTexture>(
-                new Span<VertexPositionColorTexture>(Unsafe.AsPointer(ref quad.V0), 4),
-                new ushort[] {0, 1, 2, 0, 2, 3},
-                stream_mode
-            );
         }
 
         public void Reset()
         {
-            vertex_count = 0;
-            index_count = 0;
+            m_vertex_count = 0;
+            m_index_count = 0;
         }
 
-        public Span<T> GetNextVertexFragment(int frag_vertex_count)
+        public bool PutVertices(Span<Vertex> vertices)
         {
-            if (stream_mode == VertexStreamMode.Static)
+            Span<Vertex> next_vertex_fragment = GetNextVertexFragment(vertices.Length);
+
+            if (next_vertex_fragment == null)
+            {
+                return false;
+            }
+
+            fixed (Vertex* vertex_ptr = &MemoryMarshal.GetReference(next_vertex_fragment))
+            {
+                for (int i = 0; i < vertices.Length; ++i)
+                {
+                    var vertex = vertices[i];
+                    *(vertex_ptr + i) = new Vertex(vertex.X, vertex.Y, vertex.Z, vertex.Col, vertex.Tx, vertex.Ty);
+                }
+            }
+
+            return true;
+        }
+
+        public bool PutQuad(in Quad quad)
+        {
+            var v0 = quad.V0;
+            var v1 = quad.V1;
+            var v2 = quad.V2;
+            var v3 = quad.V3;
+
+            Span<Vertex> next_quad_fragment = GetNextQuadFragment();
+
+            if (next_quad_fragment == null)
+            {
+                return false;
+            }
+
+            fixed (Vertex* vertex_ptr = &MemoryMarshal.GetReference(next_quad_fragment))
+            {
+                *(vertex_ptr) = new Vertex(v0.X, v0.Y, v0.Z, v0.Col, v0.Tx, v0.Ty);
+                *(vertex_ptr + 1) = new Vertex(v1.X, v1.Y, v1.Z, v1.Col, v1.Tx, v1.Ty);
+                *(vertex_ptr + 2) = new Vertex(v2.X, v2.Y, v2.Z, v2.Col, v2.Tx, v2.Ty); ;
+                *(vertex_ptr + 3) = new Vertex(v3.X, v3.Y, v3.Z, v3.Col, v3.Tx, v3.Ty);
+            }
+
+            return true;
+        }
+
+        private Span<Vertex> GetNextVertexFragment(int vertex_count, int index_count = 0)
+        {
+            if (m_stream_mode == VertexStreamMode.Static)
             {
                 throw new Exception("Trying to update Immutable VertexStream");
             }
 
-            if (vertex_count + frag_vertex_count > max_vertex_count)
+            if (m_vertex_count + vertex_count > m_max_vertex_count)
             {
                 return null;
             }
 
-            int current_start_index = vertex_count;
+            int current_start_index = m_vertex_count;
 
-            vertex_count += frag_vertex_count;
+            m_vertex_count += vertex_count;
 
-            index_count = vertex_count / 4 * 6;
+            m_index_count += index_count;
 
-            vertex_array_changed = true;
+            m_vertex_array_changed = true;
 
-            return new Span<T>(vertices, current_start_index, frag_vertex_count);
+            return new Span<Vertex>(m_vertices, current_start_index, vertex_count);
+        }
+
+        private Span<Vertex> GetNextQuadFragment()
+        {
+            return GetNextVertexFragment(4, 6);
         }
 
         internal void SubmitSpan(int start_vertex_index, int vertex_count, int start_indice_index, int index_count)
         {
             if (index_count > 0)
             {
-                GraphicsContext.SetIndexBuffer(index_buffer.Handle, start_indice_index, index_count);
+                GraphicsContext.SetIndexBuffer(m_index_buffer.Handle, start_indice_index, index_count);
             }
 
-            switch (stream_mode)
+            switch (m_stream_mode)
             {
                 case VertexStreamMode.Static:
-                    GraphicsContext.SetVertexBuffer(0, static_vertex_buffer.Handle, start_vertex_index, vertex_count);
+                    GraphicsContext.SetVertexBuffer(0, m_static_vertex_buffer.Handle, start_vertex_index, vertex_count);
                     break;
 
                 case VertexStreamMode.Dynamic:
 
-                    if (vertex_array_changed)
+                    if (m_vertex_array_changed)
                     {
-                        GraphicsContext.UpdateDynamicVertexBuffer(dynamic_vertex_buffer.Handle, 0, vertices);
-                        vertex_array_changed = false;
+                        GraphicsContext.UpdateDynamicVertexBuffer(m_dynamic_vertex_buffer.Handle, 0, m_vertices);
+                        m_vertex_array_changed = false;
                     }
-                    
-                    GraphicsContext.SetDynamicVertexBuffer(0, dynamic_vertex_buffer.Handle, start_vertex_index, vertex_count);
+
+                    GraphicsContext.SetDynamicVertexBuffer(0, m_dynamic_vertex_buffer.Handle, start_vertex_index, vertex_count);
                     break;
 
                 case VertexStreamMode.Stream:
-                    var vertices_span = new Span<T>(vertices, start_vertex_index, vertex_count);
-                    var transient_buffer = TransientVertexBuffer.Create(vertices_span, vertex_layout);
+                    var vertices_span = new Span<Vertex>(m_vertices, start_vertex_index, vertex_count);
+                    var transient_buffer = TransientVertexBuffer.Create(vertices_span, Vertex.VertexLayout);
                     GraphicsContext.SetTransientVertexBuffer(0, transient_buffer, 0, vertex_count);
                     break;
             }
@@ -154,8 +197,25 @@ namespace OMEGA
 
         internal void Submit()
         {
-            SubmitSpan(0, vertex_count, 0, index_count);
+            SubmitSpan(0, m_vertex_count, 0, m_index_count);
         }
 
+        public void Dispose()
+        {
+            if (m_index_buffer != null)
+            {
+                m_index_buffer.Dispose();
+            }
+
+            if (m_static_vertex_buffer != null)
+            {
+                m_static_vertex_buffer.Dispose();
+            }
+
+            if (m_dynamic_vertex_buffer != null)
+            {
+                m_dynamic_vertex_buffer.Dispose();
+            }
+        }
     }
 }

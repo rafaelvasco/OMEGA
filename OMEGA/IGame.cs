@@ -8,6 +8,8 @@ namespace OMEGA
 
         bool UnlockFrameRate {get;set;}
 
+        GameInfo GameInfo {get;}
+
         void Run();
 
         void Exit();
@@ -24,9 +26,7 @@ namespace OMEGA
 
         void OnDeactivated();
 
-        void OnResize();
-
-        void Draw(float dt);
+        void Draw(Canvas canvas, float dt);
 
     }
 }

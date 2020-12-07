@@ -2,18 +2,6 @@
   "resources": {
     "base": [
       {
-        "resource_id": "base_shader_pc",
-        "resource_type": "Shader",
-        "resource_path": "Base/Shaders/base_pos_color/base_vs_pc.sc",
-        "secondary_resource_path": "Base/Shaders/base_pos_color/base_fs_pc.sc"
-      },
-      {
-        "resource_id": "base_shader_pct",
-        "resource_type": "Shader",
-        "resource_path": "Base/Shaders/base_pos_color_tex/base_vs_pct.sc",
-        "secondary_resource_path": "Base/Shaders/base_pos_color_tex/base_fs_pct.sc"
-      },
-      {
         "resource_id": "canvas_shader",
         "resource_type": "Shader",
         "resource_path": "Base/Shaders/canvas_shader/canvas_vs.sc",

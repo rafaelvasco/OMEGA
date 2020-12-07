@@ -6,7 +6,7 @@ namespace OMEGA
     {
         protected abstract void Dispose();
 
-        public void Dispose(bool unregister)
+        public void Dispose(bool unregister = true)
         {
             Dispose();
 

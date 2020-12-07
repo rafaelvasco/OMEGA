@@ -65,38 +65,6 @@ namespace OMEGA
         }
     }
 
-    internal struct Transform
-    {
-        public void Allocate(ushort num)
-        {
-            unsafe
-            {
-                _transform.num = num;
-                _ = Bgfx.alloc_transform((TransformPtrData*)Unsafe.AsPointer(ref _transform), num);
-            }
-        }
-
-        private TransformPtrData _transform;
-
-        public RangeAccessor<float> Data
-        {
-            get
-            {
-                unsafe
-                {
-                    if ((IntPtr)_transform.data == IntPtr.Zero)
-                    {
-                        throw new OutOfMemoryException("Allocate() not called");
-                    }
-
-                    return new RangeAccessor<float>(_transform.data, 16 * _transform.num);
-                }
-            }
-        }
-
-
-    }
-
     internal unsafe struct Caps
     {
         public struct GPU

@@ -26,7 +26,7 @@ namespace OMEGA
             }
         }
 
-        public static Init Initialize(int resolutionWidth, int resolutionHeight, RendererType renderer_backend)
+        public static Init Initialize(int display_w, int display_h, RendererType renderer_backend)
         {
             RendererBackend = renderer_backend;
 
@@ -37,13 +37,16 @@ namespace OMEGA
                 Bgfx.init_ctor(&init_data);
                 init_data.type = renderer_backend;
                 init_data.vendorId = (ushort)PciIdFlags.None;
-                init_data.resolution.width = (uint)resolutionWidth;
-                init_data.resolution.height = (uint)resolutionHeight;
+                init_data.resolution.width = (uint)display_w;
+                init_data.resolution.height = (uint)display_h;
                 init_data.resolution.reset = (uint)ResetFlags.None;
                 Bgfx.init(&init_data);
             }
 
             result.init = init_data;
+
+            Reset(display_w, display_h, ResetFlags.Vsync);
+
             return result;
         }
 
@@ -71,7 +74,7 @@ namespace OMEGA
             }
         }
 
-        public static VertexBufferHandle CreateVertexBuffer<T>(T[] vertices, VertexLayout layout, BufferFlags flags = BufferFlags.None) where T : struct, IVertexType
+        public static VertexBufferHandle CreateVertexBuffer(Vertex[] vertices, VertexLayout layout, BufferFlags flags = BufferFlags.None)
         {
             var memory = GetMemoryBufferReference(vertices);
             var vertex_buffer = Bgfx.create_vertex_buffer(memory, &layout.InternalHandle, (ushort)flags);
@@ -84,14 +87,14 @@ namespace OMEGA
             return dyn_vertex_buffer;
         }
 
-        public static DynamicVertexBufferHandle CreateDynamicVertexBuffer<T>(T[] vertices, VertexLayout layout, BufferFlags flags = BufferFlags.None) where T : struct, IVertexType
+        public static DynamicVertexBufferHandle CreateDynamicVertexBuffer(Vertex[] vertices, VertexLayout layout, BufferFlags flags = BufferFlags.None)
         {
             var memory = GetMemoryBufferReference(vertices);
             var dyn_vertex_buffer = Bgfx.create_dynamic_vertex_buffer_mem(memory, &layout.InternalHandle, (ushort)flags);
             return dyn_vertex_buffer;
         }
 
-        public static void UpdateDynamicVertexBuffer<T>(DynamicVertexBufferHandle handle, int start_vertex, T[] vertices)
+        public static void UpdateDynamicVertexBuffer(DynamicVertexBufferHandle handle, int start_vertex, Vertex[] vertices)
         {
             var memory = GetMemoryBufferReference(vertices);
             Bgfx.update_dynamic_vertex_buffer(handle, (uint)start_vertex, memory);
@@ -157,6 +160,20 @@ namespace OMEGA
         public static FrameBufferHandle CreateFrameBuffer(int width, int height, TextureFormat tex_format, TextureFlags tex_flags)
         {
             return Bgfx.create_frame_buffer((ushort)width, (ushort)height, tex_format, (ulong)tex_flags);
+        }
+
+        public static FrameBufferHandle CreateFrameBuffer(Texture2D texture, TextureFormat tex_format, TextureFlags tex_flags)
+        {
+            var attachment = stackalloc Attachment[1];
+            
+            attachment->handle = texture.Handle;
+            attachment->access = Access.ReadWrite;
+            attachment->layer = 0;
+            attachment->mip = 0;
+            attachment->resolve = 0;
+
+            return Bgfx.create_frame_buffer_from_attachment(1, attachment, false);
+
         }
 
         public static void AllocTransientVertexBuffer(out TransientVertexBuffer buffer, int vertex_count, ref VertexLayout layout)
@@ -301,7 +318,7 @@ namespace OMEGA
 
         /* TEXTURE AND FRAMEBUFFER */
         /* ==================================================================*/
-        public static void UpdateTexture2D<T>(TextureHandle texture, int layer, byte mip, int x, int y, int width, int height, T[] pixel_data, int pitch) where T : struct
+        public static void UpdateTexture2D(TextureHandle texture, int layer, byte mip, int x, int y, int width, int height, byte[] pixel_data, int pitch)
         {
             unsafe
             {
@@ -330,10 +347,7 @@ namespace OMEGA
 
         public static void Frame(bool capture = false)
         {
-            unsafe
-            {
-                _ = Bgfx.frame(capture);
-            }
+            Bgfx.frame(capture);
         }
 
         public static void Reset(int width, int height, ResetFlags resetFlags)
@@ -371,6 +385,11 @@ namespace OMEGA
                 Unsafe.AsPointer(ref view.M11),
                 Unsafe.AsPointer(ref projection.M11)
             );
+        }
+
+        public static void SetProjection(ushort view_id, ref float projection)
+        {
+            Bgfx.set_view_transform(view_id, null, Unsafe.AsPointer(ref projection));
         }
 
         public static void Touch(ushort view_id)

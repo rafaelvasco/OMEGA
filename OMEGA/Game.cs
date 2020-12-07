@@ -28,7 +28,7 @@ namespace OMEGA
         {
             GameInfo = ResourceLoader.LoadGameInfo();
 
-            Engine.Init(this, GameInfo);
+            Engine.Init(this);
 
             fixed_deltatime = 1.0 / UpdateRate;
             desired_frametime = Platform.GetPerformanceFrequency() / UpdateRate;
@@ -169,9 +169,15 @@ namespace OMEGA
 
                 VariableUpdate((float)(consumed_delta_time / Platform.GetPerformanceFrequency()));
 
-                Draw((float)(frame_accum / desired_frametime));
+                if (Engine.Canvas.NeedsResetDisplay)
+                {
+                    Engine.Canvas.HandleDisplayChange();
+                }
 
-                Engine.DrawDevice.Frame();
+                Draw(Engine.Canvas, (float)(frame_accum / desired_frametime));
+
+                Engine.Canvas.Frame();
+
             }
             // Locked Frame Rate, No Interpolation
             else
@@ -187,9 +193,14 @@ namespace OMEGA
                     }
                 }
 
-                Draw(1.0f);
+                if (Engine.Canvas.NeedsResetDisplay)
+                {
+                    Engine.Canvas.HandleDisplayChange();
+                }
 
-                Engine.DrawDevice.Frame();
+                Draw(Engine.Canvas, 1.0f);
+
+                Engine.Canvas.Frame();
             }
 
         }
@@ -199,7 +210,7 @@ namespace OMEGA
 
         public virtual void FixedUpdate(float dt) { }
 
-        public abstract void Draw(float dt);
+        public abstract void Draw(Canvas canvas, float dt);
 
         public void Dispose()
         {

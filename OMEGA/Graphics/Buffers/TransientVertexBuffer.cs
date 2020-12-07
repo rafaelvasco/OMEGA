@@ -31,11 +31,11 @@ namespace OMEGA
             GraphicsContext.AllocTransientVertexBuffer(out this, vertex_count, ref layout);
         }
 
-        public static TransientVertexBuffer Create<T>(Span<T> vertices, VertexLayout layout)
+        public static TransientVertexBuffer Create(Span<Vertex> vertices, VertexLayout layout)
         {
             var transient_vtx_buffer = new TransientVertexBuffer(vertices.Length, layout);
 
-            var data_size = (uint)(vertices.Length * Unsafe.SizeOf<T>());
+            var data_size = (uint)(vertices.Length * Unsafe.SizeOf<Vertex>());
 
             Unsafe.CopyBlock((void*)transient_vtx_buffer.data, Unsafe.AsPointer(ref vertices[0]), data_size);
 

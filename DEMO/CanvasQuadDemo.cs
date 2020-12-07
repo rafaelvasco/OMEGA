@@ -1,11 +1,9 @@
 ﻿using OMEGA;
-using System;
 
-namespace DEMO
+namespace DEMO 
 {
-    public class CanvasDemo : Game
+    public class CanvasQuadDemo : Game
     {
-        private Canvas canvas;
         private Texture2D texture;
         private Texture2D bg_tile;
         private Quad quad;
@@ -19,37 +17,63 @@ namespace DEMO
         private float bg_scroll_speed = 2.0f;
         private float bg_scroll_value = 0.0f;
 
+        private CanvasView left_view;
+        private CanvasView right_view;
+
         public override void Load()
         {
-            canvas = new Canvas();
+
+            left_view = Engine.Canvas.CreateView();
+            right_view = Engine.Canvas.CreateView();
+
+            left_view.SetViewport(RectF.FromBox(0f, 0f, 0.495f, 1f));
+            right_view.SetViewport(RectF.FromBox(0.5f, 0f, 0.5f, 1f));
+
+            left_view.SetSize(left_view.Size.X/2f, left_view.Size.Y);
+            right_view.SetSize(right_view.Size.X/2f, right_view.Size.Y);
 
             texture = Engine.Content.Get<Texture2D>("party");
             bg_tile = Engine.Content.Get<Texture2D>("purple_tile");
 
+            bg_tile.Tiled = true;
+
+            int display_w = Engine.GameResolution.Width;
+            int display_h = Engine.GameResolution.Height;
+
             quad = new Quad(texture);
+
+            quad.V0.X = display_w/2 - texture.Width/2;
+            quad.V0.Y = display_h/2 - texture.Height/2;
+            quad.V1.X = quad.V0.X + texture.Width;
+            quad.V1.Y = quad.V0.Y;
+            quad.V2.X = quad.V1.X;
+            quad.V2.Y = quad.V0.Y + texture.Height;
+            quad.V3.X = quad.V0.X;
+            quad.V3.Y = quad.V2.Y;
+
             bg_quad = new Quad();
 
             bg_quad.V0.X = 0;
             bg_quad.V0.Y = 0;
             bg_quad.V0.Col = 0xFFFFFFFF;
-            bg_quad.V1.X = canvas.Width;
+            bg_quad.V1.X = display_w;
             bg_quad.V1.Y = 0;
             bg_quad.V1.Col = 0xFFFFFFFF;
-            bg_quad.V2.X = canvas.Width;
-            bg_quad.V2.Y = canvas.Height;
+            bg_quad.V2.X = display_w;
+            bg_quad.V2.Y = display_h;
             bg_quad.V2.Col = 0xFFFFFFFF;
             bg_quad.V3.X = 0;
-            bg_quad.V3.Y = canvas.Height;
+            bg_quad.V3.Y = display_h;
             bg_quad.V3.Col = 0xFFFFFFFF;
 
             bg_quad.V0.Tx = 0;
             bg_quad.V0.Ty = 0;
-            bg_quad.V1.Tx = canvas.Width / 64f;
+            bg_quad.V1.Tx = display_w / 64f;
             bg_quad.V1.Ty = 0;
-            bg_quad.V2.Tx = canvas.Width / 64f;
-            bg_quad.V2.Ty = canvas.Height / 64f;
+            bg_quad.V2.Tx = display_w / 64f;
+            bg_quad.V2.Ty = display_h / 64f;
             bg_quad.V3.Tx = 0;
-            bg_quad.V3.Ty = canvas.Height / 64f;
+            bg_quad.V3.Ty = display_h / 64f;
 
         }
 
@@ -57,6 +81,7 @@ namespace DEMO
         {
 
             var input_vector = Input.GetGamePadState().ThumbSticks.Left;
+            var view_move_input_vec = Input.GetGamePadState().ThumbSticks.Right;
 
             if (Input.KeyPressed(Keys.F11))
             {
@@ -88,14 +113,17 @@ namespace DEMO
 
             bg_scroll_value += bg_scroll_speed * dt;
 
+            int display_w = Engine.GameResolution.Width;
+            int display_h = Engine.GameResolution.Height;
+
             bg_quad.V0.Tx = bg_scroll_value;
             bg_quad.V0.Ty = bg_scroll_value;
-            bg_quad.V1.Tx = bg_scroll_value + canvas.Width / 64f;
+            bg_quad.V1.Tx = bg_scroll_value + display_w / 64f;
             bg_quad.V1.Ty = bg_scroll_value;
-            bg_quad.V2.Tx = bg_scroll_value + canvas.Width / 64f;
-            bg_quad.V2.Ty = bg_scroll_value + canvas.Height / 64f;
+            bg_quad.V2.Tx = bg_scroll_value + display_w / 64f;
+            bg_quad.V2.Ty = bg_scroll_value + display_h / 64f;
             bg_quad.V3.Tx = bg_scroll_value;
-            bg_quad.V3.Ty = bg_scroll_value + canvas.Height / 64f;
+            bg_quad.V3.Ty = bg_scroll_value + display_h / 64f;
 
             if (bg_scroll_value > 1.0f)
             {
@@ -103,20 +131,17 @@ namespace DEMO
             }
         }
 
-        public override void Draw(float dt)
+        public override void Draw(Canvas canvas, float dt)
         {
-            canvas.Begin();
-
-            canvas.DrawQuad(bg_tile, ref bg_quad);
-            canvas.DrawQuad(texture, ref quad);
+            canvas.Begin(left_view);
+                canvas.DrawQuad(in bg_quad, bg_tile);
+                canvas.DrawQuad(in quad, texture);
             canvas.End();
-        }
-
-        public override void OnResize()
-        {
-            Console.WriteLine("Resize");
-
-            canvas.OnScreenResized(Engine.DisplaySize.Width, Engine.DisplaySize.Height);
+            
+            canvas.Begin(right_view);
+                canvas.DrawQuad(in bg_quad, bg_tile);
+                canvas.DrawQuad(in quad, texture);
+            canvas.End();
         }
     }
 }

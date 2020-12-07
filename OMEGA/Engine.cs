@@ -6,7 +6,7 @@ namespace OMEGA
     {
         public static ContentManager Content { get; private set; }
 
-        public static DrawDevice DrawDevice => draw_device;
+        public static Canvas Canvas {get; private set;}
 
         public static IGame RunningGame => running_game;
 
@@ -55,34 +55,14 @@ namespace OMEGA
                 {
                     fullscreen = value;
 
-                    draw_device.ApplyVideoMode(display_width, display_height, fullscreen);
+                    Platform.SetFullscreen(fullscreen);
                 }
             }
         }
 
-        public static (int Width, int Height) DisplaySize
-        {
-            get => (display_width, display_height);
-            set
-            {
-                if (display_width != value.Width || display_height != value.Height)
-                {
-                    display_width = value.Width;
-                    display_height = value.Height;
+        public static (int Width, int Height) DisplaySize => Platform.GetDisplaySize();
 
-                    if (!fullscreen)
-                    {
-                        draw_device.ApplyVideoMode(display_width, display_height, fullscreen);
-                    }
-                }
-            }
-        }
-
-        private static DrawDevice draw_device;
-
-        private static int display_width;
-
-        private static int display_height;
+        public static (int Width, int Height) GameResolution => (running_game.GameInfo.ResolutionWidth, running_game.GameInfo.ResolutionHeight);
 
         private static bool fullscreen;
 
@@ -92,7 +72,7 @@ namespace OMEGA
 
         private static IGame running_game;
 
-        public static void Init(IGame game, GameInfo game_info)
+        public static void Init(IGame game)
         {
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
 
@@ -101,27 +81,33 @@ namespace OMEGA
             Platform.Init();
 
             MouseVisible = true;
-            display_width = game_info.ResolutionWidth;
-            display_height = game_info.ResolutionHeight;
+
+            var game_info = game.GameInfo;
+
             fullscreen = game_info.StartFullscreen;
 
-            Platform.CreateWindow(game_info.Title, display_width, display_height, fullscreen);
+            Platform.CreateWindow(game_info.Title, game_info.ResolutionWidth, game_info.ResolutionHeight, fullscreen);
 
-            IntPtr render_surface_handle = Platform.GetRenderSurfaceHandle();
-
-            draw_device = new DrawDevice(render_surface_handle, display_width, display_height);
+            Platform.InitGraphicsContext();
 
             Content = new ContentManager(game_info);
+
+            Canvas = new Canvas();
 
             Input.Init();
 
             running_game.Load();
         }
 
+        internal static void OnDisplayResize()
+        {
+            Canvas.NeedsResetDisplay = true;
+        }
+
         public static void Shutdown()
         {
             Content.FreeEverything();
-            draw_device.Dispose();
+            GraphicsContext.Shutdown();
             Platform.Terminate();
         }
 

@@ -72,6 +72,7 @@ namespace OMEGA
             Filtered = filtered;
             RenderTarget = render_target;
             Handle = GraphicsContext.CreateTexture2D(pixmap.Width, pixmap.Height, false, 0, TextureFormat.BGRA8, TexFlags, pixmap.Data);
+            UpdateTexFlags();
         }
 
         internal Texture2D(TextureHandle tex_handle, int width, int height, bool filtered, bool tiled)
@@ -82,9 +83,10 @@ namespace OMEGA
             this.Height = height;
             this.RenderTarget = true;
             this.Handle = tex_handle;
+            UpdateTexFlags();
         }
 
-        public static Texture2D Create(Pixmap pixmap, bool tiled, bool filtered)
+        public static Texture2D Create(Pixmap pixmap, bool tiled = false, bool filtered = false)
         {
             var texture = new Texture2D(pixmap, tiled, filtered);
 
@@ -93,10 +95,10 @@ namespace OMEGA
             return texture;
         }
 
-        //public void SetData(Pixmap pixmap)
-        //{
-        //    Game.Instance.GraphicsContext.UpdateTextureData(this, pixmap);
-        //}
+        public void SetData(Pixmap pixmap)
+        {
+            GraphicsContext.UpdateTexture2D(Handle, 0, 0, 0, 0, Width, Height, pixmap.Data, pixmap.Stride);
+        }
 
         //public Pixmap GetData()
         //{
@@ -116,18 +118,23 @@ namespace OMEGA
 
         private void UpdateTexFlags()
         {
-            var flags = BuildTexFlags(Tiled, Filtered);
+            var flags = BuildTexFlags(Tiled, Filtered, RenderTarget);
 
             this.TexFlags = flags;
         }
 
-        private static TextureFlags BuildTexFlags(bool tiled, bool filtered)
+        private static TextureFlags BuildTexFlags(bool tiled, bool filtered, bool render_target)
         {
             var tex_flags = TextureFlags.None;
 
             if (!tiled) tex_flags = TextureFlags.ClampU | TextureFlags.ClampV;
 
             if (!filtered) tex_flags |= TextureFlags.FilterPoint;
+
+            if (render_target)
+            {
+                tex_flags |= TextureFlags.RenderTarget;
+            }
 
             return tex_flags;
         }

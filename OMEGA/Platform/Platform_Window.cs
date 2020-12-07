@@ -10,6 +10,14 @@ namespace OMEGA
 
         private static IntPtr _window;
 
+        private static int prev_display_w;
+
+        private static int prev_display_h;
+
+        private static int display_w;
+
+        private static int display_h;
+
         private static readonly bool OSXUseSpaces = (
             SDL_GetPlatform().Equals("Mac OS X") &&
             SDL_GetHintBoolean(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, SDL_bool.SDL_TRUE) == SDL_bool.SDL_TRUE
@@ -17,6 +25,9 @@ namespace OMEGA
 
         public static void CreateWindow(string title, int width, int height, bool fullscreen)
         {
+            prev_display_w = width;
+            prev_display_h = height;
+
             var window_flags = SDL_WindowFlags.SDL_WINDOW_HIDDEN |
                 SDL_WindowFlags.SDL_WINDOW_INPUT_FOCUS |
                 SDL_WindowFlags.SDL_WINDOW_MOUSE_FOCUS;
@@ -35,7 +46,29 @@ namespace OMEGA
                 window_flags
             );
 
+            if (fullscreen)
+            {
+                SDL_GetDisplayMode(0, 0, out var mode);
+
+                display_w = mode.w;
+                display_h = mode.h;
+            }
+            else
+            {
+                display_w = prev_display_w;
+                display_h = prev_display_h;
+            }
+
             SDL_DisableScreenSaver();
+        }
+
+        public static void InitGraphicsContext()
+        {
+            GraphicsContext.SetPlatformData(GetRenderSurfaceHandle());
+
+            var display_size = GetDisplaySize();
+
+            GraphicsContext.Initialize(display_size.Width, display_size.Height, RendererType.Direct3D11);
         }
 
         public static void ShowWindow(bool show)
@@ -73,105 +106,57 @@ namespace OMEGA
                 "Invalid OS, could not retrive native renderer surface handle.");
         }
 
-        public static void SetVideoMode(int width, int height, bool fullscreen)
+        public static void SetDisplaySize(int width, int height)
         {
-            bool center = false;
-
-            if (!fullscreen)
+            if (IsFullscreen())
             {
-                bool resize;
-                if ((SDL_GetWindowFlags(_window) & (uint)SDL_WindowFlags.SDL_WINDOW_FULLSCREEN) != 0)
+                return;
+            }
+
+            prev_display_w = width;
+            prev_display_h = height;
+
+            SDL_SetWindowSize(_window, width, height);
+            SDL_SetWindowPosition(_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+        }
+
+        public static (int Width, int Height) GetDisplaySize()
+        {
+            return (display_w, display_h);
+        }
+
+        public static bool IsFullscreen()
+        {
+            return (SDL_GetWindowFlags(_window) & (uint)SDL_WindowFlags.SDL_WINDOW_FULLSCREEN) != 0;
+        }
+
+        public static void SetFullscreen(bool enabled)
+        {
+            if (IsFullscreen() != enabled)
+            {
+                if (enabled)
                 {
-                    SDL_SetWindowFullscreen(_window, 0);
-                    resize = true;
+                    if (!IsFullscreen())
+                    {
+                        SDL_GetCurrentDisplayMode(
+                            0,
+                            out SDL_DisplayMode mode
+                        );
+                        SDL_SetWindowSize(_window, mode.w, mode.h);
+                    }
+                    SDL_SetWindowFullscreen(_window, (uint)SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP);
                 }
                 else
                 {
-                    int w, h;
-                    SDL_GetWindowSize(
-                        _window,
-                        out w,
-                        out h
-                    );
-                    resize = (width != w || height != h);
-                }
-                if (resize)
-                {
-                    SDL_RestoreWindow(_window);
-                    SDL_SetWindowSize(_window, width, height);
-                    center = true;
+                    SDL_SetWindowFullscreen(_window, 0);
+
+                    if (prev_display_w != display_w || prev_display_h != display_h)
+                    {
+                        SDL_RestoreWindow(_window);
+                        SetDisplaySize(prev_display_w, prev_display_h);
+                    }
                 }
             }
-
-            if (center)
-            {
-                SDL_SetWindowPosition(_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-            }
-
-            if (fullscreen)
-            {
-                if ((SDL_GetWindowFlags(_window) & (uint)SDL_WindowFlags.SDL_WINDOW_SHOWN) == 0)
-                {
-                    SDL_DisplayMode mode;
-                    SDL_GetCurrentDisplayMode(
-                        0,
-                        out mode
-                    );
-                    SDL_SetWindowSize(_window, mode.w, mode.h);
-                }
-                SDL_SetWindowFullscreen(
-                    _window,
-                    (uint)SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP
-                );
-            }
-        }
-
-        public static Rect GetWindowBounds()
-        {
-            Rect result;
-
-            if ((SDL_GetWindowFlags(_window) & (uint)SDL_WindowFlags.SDL_WINDOW_FULLSCREEN) != 0)
-            {
-                SDL_GetCurrentDisplayMode(
-                    SDL_GetWindowDisplayIndex(
-                        _window
-                    ),
-                    out SDL_DisplayMode mode
-                );
-
-                result = new Rect(0, 0, mode.w, mode.h);
-            }
-            else
-            {
-                SDL_GetWindowPosition(
-                    _window,
-                    out var X,
-                    out var Y
-                );
-                SDL_GetWindowSize(
-                    _window,
-                    out var Width,
-                    out var Height
-                );
-
-                result = new Rect(X, Y, Width, Height);
-            }
-            return result;
-        }
-
-        public static bool GetWindowResizable()
-        {
-            return (SDL_GetWindowFlags(_window) & (uint)SDL_WindowFlags.SDL_WINDOW_RESIZABLE) != 0;
-        }
-
-        public static void SetWindowResizable(bool resizable)
-        {
-            SDL_SetWindowResizable(
-                _window,
-                resizable ?
-                    SDL_bool.SDL_TRUE :
-                    SDL_bool.SDL_FALSE
-            );
         }
 
         public static bool GetWindowBorderless()
@@ -265,7 +250,12 @@ namespace OMEGA
             // Window Resize
             else if (evt.window.windowEvent == SDL_WindowEventID.SDL_WINDOWEVENT_SIZE_CHANGED)
             {
-                Engine.RunningGame.OnResize();
+                var w = evt.window.data1;
+                var h = evt.window.data2;
+                display_w = w;
+                display_h = h;
+
+                Engine.OnDisplayResize();
             }
 
             else if (evt.window.windowEvent == SDL_WindowEventID.SDL_WINDOWEVENT_EXPOSED)

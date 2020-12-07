@@ -2,8 +2,7 @@
 {
     public enum CanvasStretchMode : byte
     {
-        PixelPerfect = 0,
-        LetterBox,
+        LetterBox = 0,
         Stretch,
         Resize
     }
