@@ -11,6 +11,12 @@ namespace OMEGA
 
         public CanvasView DefaultView => base_view;
 
+        public int Width {get; private set;}
+
+        public int Height {get; private set;}
+
+        public (int Width, int Height) Size => (Width, Height);
+
         public CanvasStretchMode StretchMode { get; set; } = CanvasStretchMode.LetterBox;
 
         public int MaxDrawCalls => max_draw_calls;
@@ -209,8 +215,11 @@ namespace OMEGA
         private List<CanvasView> additional_views = new List<CanvasView>();
         private CanvasView current_view;
 
-        internal Canvas()
+        internal Canvas(int width, int height)
         {
+            Width = width;
+            Height = height;
+
             InitVertexStreams();
 
             InitDefaultResources();
@@ -228,7 +237,7 @@ namespace OMEGA
 
         public CanvasView CreateView()
         {
-            var view = new CanvasView()
+            var view = new CanvasView(1f, 1f)
             {
                 ViewId = StaticViewId++,
                 ClearColor = base_view?.ClearColor ?? Color.CornflowerBlue,
@@ -309,7 +318,7 @@ namespace OMEGA
 
         private void ApplyCanvasStretchModeForBaseView()
         {
-            var game_resolution = Engine.GameResolution;
+            var canvas_size = Size;
             var display_size = Platform.GetDisplaySize();
 
             switch (StretchMode)
@@ -317,7 +326,7 @@ namespace OMEGA
                 case CanvasStretchMode.LetterBox:
                     {
                         float display_ratio = (float)display_size.Width / display_size.Height;
-                        float view_ratio = (float)game_resolution.Width / game_resolution.Height;
+                        float view_ratio = (float)canvas_size.Width / canvas_size.Height;
 
                         float new_view_port_w = 1;
                         float new_view_port_h = 1;
@@ -349,11 +358,8 @@ namespace OMEGA
                     }
                     break;
                 case CanvasStretchMode.Stretch:
-                    base_view.Reset(RectF.FromBox(0f, 0f, game_resolution.Width, game_resolution.Height));
-                    break;
                 case CanvasStretchMode.Resize:
-                    base_view.Reset(RectF.FromBox(0, 0, display_size.Width, display_size.Height));
-                    base_view.SetCenter(Engine.GameResolution.Width / 2.0f, Engine.GameResolution.Height / 2.0f);
+                    base_view.NeedsUpdateTransform = true;
                     break;
                 default:
                     break;
@@ -368,6 +374,17 @@ namespace OMEGA
 
             GraphicsContext.Reset(display_size.Width, display_size.Height, ResetFlags.Vsync);
 
+            if (StretchMode == CanvasStretchMode.Resize)
+            {
+                Width = display_size.Width;
+                Height = display_size.Height;
+            }
+            else
+            {
+                Width = Engine.RunningGame.GameInfo.ResolutionWidth;
+                Height = Engine.RunningGame.GameInfo.ResolutionHeight;
+            }
+
             ApplyCanvasStretchModeForBaseView();
 
             ApplyViewProperties(base_view);
@@ -376,7 +393,7 @@ namespace OMEGA
             {
                 foreach (var view in additional_views)
                 {
-
+                    view.NeedsUpdateTransform = true;
                     ApplyViewProperties(view);
                 }
             }
@@ -389,10 +406,6 @@ namespace OMEGA
             base_view = CreateView();
 
             base_view.ClearColor = Color.CornflowerBlue;
-
-            var game_resolution = Engine.GameResolution;
-
-            base_view.Reset(RectF.FromBox(0, 0, game_resolution.Width, game_resolution.Height));
 
             current_view = base_view;
         }
@@ -410,7 +423,7 @@ namespace OMEGA
             GraphicsContext.SetViewRect(view.ViewId, viewport.X1, viewport.Y1, viewport.Width, viewport.Height);
             GraphicsContext.SetViewClear(view.ViewId, ClearFlags.Color | ClearFlags.Depth, view.ClearColor.RGBA);
 
-            var projection = view.GetTransform();
+            var projection = view.GetTransform(Width, Height);
 
             GraphicsContext.SetProjection(view.ViewId, ref projection.M0);
 
@@ -434,7 +447,7 @@ namespace OMEGA
 
             if (view.ViewId == 0)
             {
-               return default_view_viewport;
+                return default_view_viewport;
             }
             else
             {

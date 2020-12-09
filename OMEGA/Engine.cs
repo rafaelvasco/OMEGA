@@ -60,10 +60,6 @@ namespace OMEGA
             }
         }
 
-        public static (int Width, int Height) DisplaySize => Platform.GetDisplaySize();
-
-        public static (int Width, int Height) GameResolution => (running_game.GameInfo.ResolutionWidth, running_game.GameInfo.ResolutionHeight);
-
         private static bool fullscreen;
 
         private static bool is_active;
@@ -92,7 +88,7 @@ namespace OMEGA
 
             Content = new ContentManager(game_info);
 
-            Canvas = new Canvas();
+            Canvas = new Canvas(game_info.ResolutionWidth, game_info.ResolutionHeight);
 
             Input.Init();
 

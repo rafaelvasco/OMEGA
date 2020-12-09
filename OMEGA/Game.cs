@@ -172,6 +172,7 @@ namespace OMEGA
                 if (Engine.Canvas.NeedsResetDisplay)
                 {
                     Engine.Canvas.HandleDisplayChange();
+                    OnDisplayResize();
                 }
 
                 Draw(Engine.Canvas, (float)(frame_accum / desired_frametime));
@@ -225,8 +226,7 @@ namespace OMEGA
         public virtual void OnDeactivated()
         {
         }
-        public virtual void OnResize()
-        {
-        }
+        
+        public virtual void OnDisplayResize() {}
     }
 }

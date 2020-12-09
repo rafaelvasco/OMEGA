@@ -2,20 +2,23 @@
 
 namespace DEMO
 {
-    public class DrawTriangle : Game
+    public class QuadDemo : Game
     {
-        Vertex[] vertices;
+        Quad quad;
 
         public override void Load()
         {
-            var display_size = Engine.DisplaySize;
+            quad = new Quad(RectF.FromBox(
+                100f,
+                100f,
+                Engine.Canvas.Width - 200f,
+                Engine.Canvas.Height - 200f
+            ),
+            top_left_col: Color.Red,
+            top_right_col: Color.Orange,
+            bottom_left_col: Color.PeachPuff,
+            bottom_right_col: Color.GreenYellow);
 
-            vertices = new Vertex[] {
-
-                new Vertex ( 0f, 0f, 0.0f, Color.RoyalBlue, 0f, 0f),
-                new Vertex ( display_size.Width, display_size.Height/2, 0.0f, Color.SpringGreen, 0f, 0f ),
-                new Vertex ( 0f, display_size.Height, 0.0f, Color.LightPink, 0f, 0f )
-            };
         }
 
         public override void VariableUpdate(float dt)
@@ -33,7 +36,7 @@ namespace DEMO
 
         public override void Draw(Canvas canvas, float dt)
         {
-            canvas.DrawVertices(vertices);
+            canvas.DrawQuad(in quad);
         }
     }
 }

@@ -26,6 +26,8 @@ namespace OMEGA
 
         void OnDeactivated();
 
+        void OnDisplayResize();
+
         void Draw(Canvas canvas, float dt);
 
     }
