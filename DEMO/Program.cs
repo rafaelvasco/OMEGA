@@ -4,7 +4,7 @@
     {
         private static void Main()
         {
-            using var demo = new QuadDemo();
+            using var demo = new CanvasDemo();
             demo.Run();
         }
     }

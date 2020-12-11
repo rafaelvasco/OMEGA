@@ -13,11 +13,14 @@ namespace DEMO
                 100f,
                 Engine.Canvas.Width - 200f,
                 Engine.Canvas.Height - 200f
-            ),
-            top_left_col: Color.Red,
-            top_right_col: Color.Orange,
-            bottom_left_col: Color.PeachPuff,
-            bottom_right_col: Color.GreenYellow);
+            ));
+
+            quad.SetColors(
+                color_top_left: Color.Red,
+                color_top_right: Color.Orange,
+                color_bottom_left: Color.PeachPuff,
+                color_bottom_right: Color.GreenYellow
+            );
 
         }
 

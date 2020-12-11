@@ -15,12 +15,6 @@ namespace OMEGA
         public float Height => Calc.Abs(V2.Y - V1.Y);
 
         public Quad(RectF rect)
-            :this(rect, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF)
-        {
-            
-        }
-
-        public Quad(RectF rect, Color top_left_col, Color top_right_col, Color bottom_left_col, Color bottom_right_col)
         {
             this.V0 = default;
             this.V1 = default;
@@ -29,16 +23,32 @@ namespace OMEGA
 
             V0.X = rect.X1;
             V0.Y = rect.Y1;
-            V0.Col = top_left_col;
+            V0.Col = 0xFFFFFFFF;
             V1.X = rect.X2;
             V1.Y = rect.Y1;
-            V1.Col = top_right_col;
+            V1.Col = 0xFFFFFFFF;
             V2.X = rect.X2;
             V2.Y = rect.Y2;
-            V2.Col = bottom_right_col;
+            V2.Col = 0xFFFFFFFF;
             V3.X = rect.X1;
             V3.Y = rect.Y2;
-            V3.Col = bottom_left_col;
+            V3.Col = 0xFFFFFFFF;
+        }
+
+        public void SetColor(Color color)
+        {
+            V0.Col = color;
+            V1.Col = color;
+            V2.Col = color;
+            V3.Col = color;
+        }
+
+        public void SetColors(Color color_top_left, Color color_top_right, Color color_bottom_left, Color color_bottom_right)
+        {
+            V0.Col = color_top_left;
+            V1.Col = color_top_right;
+            V2.Col = color_bottom_right;
+            V3.Col = color_bottom_left;
         }
 
         public Quad(Texture2D texture, RectF src_rect = default, RectF dest_rect = default)

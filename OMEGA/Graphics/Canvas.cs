@@ -11,9 +11,9 @@ namespace OMEGA
 
         public CanvasView DefaultView => base_view;
 
-        public int Width {get; private set;}
+        public int Width { get; private set; }
 
-        public int Height {get; private set;}
+        public int Height { get; private set; }
 
         public (int Width, int Height) Size => (Width, Height);
 
@@ -31,9 +31,9 @@ namespace OMEGA
                     return;
                 }
 
-                blend_mode = value;
+                Flush();
 
-                state_flags_changed = true;
+                blend_mode = value;
 
                 blend_mode = value;
 
@@ -52,10 +52,10 @@ namespace OMEGA
 
                         blend_state = GraphicsContext
                            .STATE_BLEND_FUNC_SEPARATE(
-                               StateFlags.BlendSrcAlpha,
-                               StateFlags.BlendInvSrcAlpha,
-                               StateFlags.BlendOne,
-                               StateFlags.BlendInvSrcAlpha
+                                StateFlags.BlendSrcAlpha,
+                                StateFlags.BlendInvSrcAlpha,
+                                StateFlags.BlendOne,
+                                StateFlags.BlendInvSrcAlpha
                        );
 
                         break;
@@ -63,9 +63,7 @@ namespace OMEGA
                     case BlendMode.AlphaPre:
 
                         blend_state = GraphicsContext
-                           .STATE_BLEND_FUNC_SEPARATE(
-                               StateFlags.BlendOne,
-                               StateFlags.BlendInvSrcAlpha,
+                           .STATE_BLEND_FUNC(
                                StateFlags.BlendOne,
                                StateFlags.BlendInvSrcAlpha
                        );
@@ -120,9 +118,9 @@ namespace OMEGA
                     return;
                 }
 
-                cull_mode = value;
+                Flush();
 
-                state_flags_changed = true;
+                cull_mode = value;
 
                 switch (cull_mode)
                 {
@@ -150,12 +148,12 @@ namespace OMEGA
                     return;
                 }
 
-                if (blend_mode != BlendMode.Solid && blend_mode != BlendMode.Mask)
-                {
-                    return;
-                }
+                //if (blend_mode != BlendMode.Solid && blend_mode != BlendMode.Mask)
+                //{
+                //    return;
+                //}
 
-                state_flags_changed = true;
+                Flush();
 
                 depth_test = value;
 
@@ -205,7 +203,6 @@ namespace OMEGA
         private StateFlags depth_state;
         private StateFlags cull_state;
         private StateFlags render_state;
-        private bool state_flags_changed = true;
         private ShaderProgram current_shader;
         private ShaderProgram base_shader;
         private Texture2D base_texture;
@@ -233,6 +230,7 @@ namespace OMEGA
             DepthTest = DepthTest.LessOrEqual;
 
             CullMode = CullMode.None;
+
         }
 
         public CanvasView CreateView()
@@ -261,10 +259,17 @@ namespace OMEGA
             }
         }
 
-        public void End()
+        private void Flush()
         {
             RenderFreeVerticesBatch();
             RenderQuadsBatch();
+
+        }
+
+        public void End()
+        {
+            Flush();
+            ResetRenderState();
         }
 
         public void DrawVertices(Span<Vertex> vertices, Texture2D texture = null)
@@ -513,6 +518,8 @@ namespace OMEGA
 
             SetTexture(0, current_free_vertices_texture);
 
+            GraphicsContext.SetState(render_state);
+
             SubmitVertexStream(render_pass: current_view.ViewId, m_free_vertex_stream);
 
             m_free_vertex_stream.Reset();
@@ -534,6 +541,8 @@ namespace OMEGA
 
             SetTexture(0, current_quads_texture);
 
+            GraphicsContext.SetState(render_state);
+
             SubmitVertexStream(render_pass: current_view.ViewId, m_quad_vertex_stream);
 
             m_quad_vertex_stream.Reset();
@@ -552,13 +561,6 @@ namespace OMEGA
                 return;
             }
 
-            if (state_flags_changed)
-            {
-                UpdateRenderState();
-                GraphicsContext.SetState(render_state);
-                state_flags_changed = false;
-            }
-
 
             current_shader.Submit();
 
@@ -572,12 +574,6 @@ namespace OMEGA
             if (current_shader == null)
             {
                 return;
-            }
-
-            if (state_flags_changed)
-            {
-                GraphicsContext.SetState(render_state);
-                state_flags_changed = false;
             }
 
             current_shader.Submit();
@@ -600,6 +596,13 @@ namespace OMEGA
                 blend_state |
                 depth_state |
                 cull_state;
+        }
+
+        private void ResetRenderState()
+        {
+            BlendMode = BlendMode.Alpha;
+            CullMode = CullMode.None;
+            DepthTest = DepthTest.LessOrEqual;
         }
     }
 }

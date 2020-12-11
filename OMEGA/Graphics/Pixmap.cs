@@ -25,7 +25,7 @@ namespace OMEGA
             this.pixel_data = new byte[src_data.Length];
             Unsafe.CopyBlockUnaligned(ref pixel_data[0], ref src_data[0], (uint)SizeBytes);
 
-            SwizzleToBGRA();
+            ConvertToEngineRepresentation();
         }
 
         public static Pixmap OnePixel(Color color)
@@ -90,7 +90,7 @@ namespace OMEGA
             }
         }
 
-        private unsafe void SwizzleToRGBA()
+        private unsafe void ConvertToExportRepresentation()
         {
             var pd = pixel_data;
 
@@ -112,7 +112,7 @@ namespace OMEGA
             }
         }
 
-        private unsafe void SwizzleToBGRA()
+        private unsafe void ConvertToEngineRepresentation(bool premultiply_alpha = false)
         {
             var pd = pixel_data;
 
@@ -126,9 +126,23 @@ namespace OMEGA
                     byte b = *(p + i + 2);
                     byte a = *(p + i + 3);
 
-                    *(p + i) = b;
-                    *(p + i + 1) = g;
-                    *(p + i + 2) = r;
+
+
+                    if (!premultiply_alpha)
+                    {
+                        *(p + i) = b;
+                        *(p + i + 1) = g;
+                        *(p + i + 2) = r;
+                    }
+                    else
+                    {
+                        *(p + i) = (byte)((b * a) / 255);
+                        *(p + i + 1) = (byte)((g * a) / 255);
+                        *(p + i + 2) = (byte)(r * a / 255);
+                    }
+
+
+
                     *(p + i + 3) = a;
                 }
             }

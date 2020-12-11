@@ -20,6 +20,11 @@
         "resource_path": "Images/party.png"
       },
       {
+        "resource_id": "party_semi_transparent",
+        "resource_type": "Image",
+        "resource_path": "Images/party_semi_transparent.png"
+      },
+      {
         "resource_id": "purple_tile",
         "resource_type": "Image",
         "resource_path": "Images/Purple.png"
