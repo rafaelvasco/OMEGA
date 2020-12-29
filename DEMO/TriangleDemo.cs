@@ -33,7 +33,11 @@ namespace DEMO
 
         public override void Draw(Canvas canvas, float dt)
         {
+            canvas.Begin();
+
             canvas.DrawVertices(vertices);
+
+            canvas.End();
         }
     }
 }

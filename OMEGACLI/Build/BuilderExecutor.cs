@@ -4,7 +4,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 
-namespace OMEGACLI.Build
+namespace OMEGACLI
 {
     public class BuildActionArgs
     {
@@ -18,7 +18,7 @@ namespace OMEGACLI.Build
         [HelpHook, ArgShortcut("-?"), ArgDescription("Shows Usage")]
         public bool Help { get; set; }
 
-        [ArgActionMethod, ArgDescription("Builds App Assets")]
+        [ArgActionMethod, ArgDescription("Builds App Assets"), ArgShortcut("build_assets")]
         public void Build(BuildActionArgs args)
         {
             try

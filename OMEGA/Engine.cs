@@ -1,7 +1,12 @@
 ﻿using System;
+using System.Runtime;
 
 namespace OMEGA
 {
+    /* ╔═════════════╗ */
+    /* ║OMEGA ENGINE ║ */                                            
+    /* ╚═════════════╝ */
+
     public static class Engine
     {
         public static ContentManager Content { get; private set; }
@@ -93,6 +98,8 @@ namespace OMEGA
             Input.Init();
 
             running_game.Load();
+
+            GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
         }
 
         internal static void OnDisplayResize()
@@ -105,6 +112,18 @@ namespace OMEGA
             Content.FreeEverything();
             GraphicsContext.Shutdown();
             Platform.Terminate();
+
+#if DEBUG
+            var gen0 = GC.CollectionCount(0);
+            var gen1 = GC.CollectionCount(1);
+            var gen2 = GC.CollectionCount(2);
+
+            var gc_info = GC.GetGCMemoryInfo();
+
+            Console.WriteLine(
+                $"Gen-0: {gen0} | Gen-1: {gen1} | Gen-2: {gen2}"
+            );
+#endif
         }
 
         public static void Exit()

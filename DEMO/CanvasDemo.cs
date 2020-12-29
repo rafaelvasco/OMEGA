@@ -44,8 +44,6 @@ namespace DEMO
 
             quad = new Quad(texture);
 
-            quad.SetColor(Color.Red);
-
             quad.V0.X = canvas_w / 2 - texture.Width / 2;
             quad.V0.Y = canvas_h / 2 - texture.Height / 2;
             quad.V1.X = quad.V0.X + texture.Width;
@@ -137,14 +135,13 @@ namespace DEMO
         public override void Draw(Canvas canvas, float dt)
         {
             canvas.Begin(left_view);
-            canvas.DrawQuad(in bg_quad, bg_tile);
-            canvas.BlendMode = BlendMode.Invert;
-            canvas.DrawQuad(in quad, texture);
+            canvas.DrawTextureQuad(in bg_quad, bg_tile);
+            canvas.DrawTextureQuad(in quad, texture);
             canvas.End();
 
             canvas.Begin(right_view);
-            canvas.DrawQuad(in bg_quad, bg_tile);
-            canvas.DrawQuad(in quad, texture);
+            canvas.DrawTextureQuad(in bg_quad, bg_tile);
+            canvas.DrawTextureQuad(in quad, texture);
             canvas.End();
 
             //canvas.Begin();

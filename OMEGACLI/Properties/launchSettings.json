@@ -2,7 +2,7 @@
   "profiles": {
     "OMEGACLI": {
       "commandName": "Project",
-      "commandLineArgs": "Build -p C:\\Dev\\OmegaEngine\\DEMO"
+      "commandLineArgs": "build -p D:\\Dev\\OMEGA\\DEMO"
     }
   }
 }

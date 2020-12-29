@@ -39,7 +39,11 @@ namespace DEMO
 
         public override void Draw(Canvas canvas, float dt)
         {
-            canvas.DrawQuad(in quad);
+            canvas.Begin();
+
+            canvas.DrawTextureQuad(in quad);
+
+            canvas.End();
         }
     }
 }

@@ -238,6 +238,16 @@ namespace OMEGA
             return !(value1 == value2);
         }
 
+        public static implicit operator SVec3(Vec3 vec)
+        {
+            return new SVec3(vec.X, vec.Y, vec.Z);
+        }
+
+        public static implicit operator Vec3(SVec3 vec)
+        {
+            return new Vec3(vec.X, vec.Y, vec.Z);
+        }
+
         public override bool Equals(object obj)
         {
             if (!(obj is Vec3))

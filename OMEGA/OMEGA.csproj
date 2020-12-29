@@ -17,7 +17,11 @@
     </ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="protobuf-net" Version="3.0.62" />
+	  <Folder Include="Framework\Components\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="protobuf-net" Version="3.0.73" />
 	</ItemGroup>
 
 </Project>

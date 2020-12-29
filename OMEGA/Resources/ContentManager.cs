@@ -36,9 +36,6 @@ namespace OMEGA
 
             throw new Exception($"Can't find resource with ID: {resource_id}");
         }
-
-
-
         public void LoadContentPack(string pak_name)
         {
             ResourcePak pak = ResourceLoader.LoadPak(pak_name);
@@ -50,6 +47,16 @@ namespace OMEGA
                     Texture2D texture = ResourceLoader.LoadTexture(image_res.Value);
 
                     _loaded_resources.Add(texture.Id, texture);
+                }
+            }
+
+            if (pak.Atlases != null)
+            {
+                foreach (var atlas_res in pak.Atlases)
+                {
+                    TextureAtlas atlas = ResourceLoader.LoadAtlas(atlas_res.Value);
+
+                    _loaded_resources.Add(atlas.Id, atlas);
                 }
             }
 
@@ -114,7 +121,7 @@ namespace OMEGA
 
         internal void FreeEverything()
         {
-            Console.WriteLine($" > Diposing {_loaded_resources.Count.ToString()} loaded resources.");
+            Console.WriteLine($" > Diposing {_loaded_resources.Count} loaded resources.");
 
             foreach (var resource in _loaded_resources)
             {

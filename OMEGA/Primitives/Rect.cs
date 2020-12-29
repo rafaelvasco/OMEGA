@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace OMEGA
 {
@@ -146,6 +145,21 @@ namespace OMEGA
         public static bool operator !=(Rect a, Rect b)
         {
             return !a.Equals(ref b);
+        }
+
+        public static implicit operator RectF(Rect rect)
+        {
+            return new RectF(rect.X1, rect.Y1, rect.X2, rect.Y2);
+        }
+
+        public static implicit operator SRect(Rect rect)
+        {
+            return new SRect(rect.X1, rect.Y1, rect.Width, rect.Height);
+        }
+
+        public static implicit operator Rect(SRect rect)
+        {
+            return FromBox(rect.X, rect.Y, rect.W, rect.H);
         }
     }
 }

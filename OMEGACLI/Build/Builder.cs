@@ -4,13 +4,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace OMEGACLI.Build
+namespace OMEGACLI
 {
     public static class Builder
     {
-
         public static void BuildGame(string resources_folder, GameAssetsManifest manifest)
         {
+            Console.WriteLine("Building Game Asssets...");
+
             ResourceLoader.SetRootPath(resources_folder);
 
             List<ResourcePak> resource_paks =
@@ -45,7 +46,6 @@ namespace OMEGACLI.Build
 
         private static List<ResourcePak> BuildProjectResources(GameAssetsManifest manifest)
         {
-
             var resource_groups = manifest.Resources;
 
             var results = new List<ResourcePak>();
@@ -54,57 +54,72 @@ namespace OMEGACLI.Build
             {
                 var pak = new ResourcePak(resource_group.Key);
 
-                var resource_defs = resource_group.Value;
+                Console.WriteLine($"Creating resource Pak: {pak.Name}");
 
-
-                foreach (var resource_def in resource_defs)
+                if (resource_group.Value.Images != null)
                 {
-                    switch (resource_def.ResourceType)
+                    foreach (var image_info in resource_group.Value.Images)
                     {
-                        case ResourceType.Image:
+                        var pixmap_data = TextureBuilder.Build(image_info.Id, image_info.Path);
 
-                            var pixmap_data = ResourceLoader.LoadImageData(resource_def.ResourceId, resource_def.ResourcePath);
+                        pak.Images.Add(image_info.Id, pixmap_data);
 
-                            pak.Images.Add(resource_def.ResourceId, pixmap_data);
+                        Console.WriteLine($"Added Image: {pixmap_data.Id}");
+                    }
+                }
 
-                            break;
+                if (resource_group.Value.Shaders != null)
+                {
+                    foreach (var shader_info in resource_group.Value.Shaders)
+                    {
+                        var shader_data = ShaderBuilder.Build(shader_info.Id, shader_info.VsPath, shader_info.FsPath);
 
-                        case ResourceType.Font:
+                        pak.Shaders.Add(shader_info.Id, shader_data);
 
-                            var font_data = ResourceLoader.LoadFontData(resource_def.ResourceId, resource_def.ResourcePath, resource_def.SecondaryResourcePath);
+                        Console.WriteLine($"Added Shader: {shader_data.Id}");
+                    }
+                }
 
-                            pak.Fonts.Add(resource_def.ResourceId, font_data);
+                if (resource_group.Value.Fonts != null)
+                {
+                    foreach (var font_info in resource_group.Value.Fonts)
+                    {
 
-                            break;
-                        case ResourceType.Shader:
+                        for (int i = 0; i < font_info.Sizes.Length; ++i)
+                        {
+                            var size = font_info.Sizes[i];
 
-                            var shader_data = ResourceLoader.LoadShaderProgramData(resource_def.ResourceId, resource_def.ResourcePath, resource_def.SecondaryResourcePath);
+                            var id = font_info.Id + size;
 
-                            pak.Shaders.Add(resource_def.ResourceId, shader_data);
+                            var font_data = FontBuilder.Build(id, font_info.Path, size, font_info.Ranges);
 
-                            break;
+                            pak.Fonts.Add(id, font_data);
 
-                        //case ResourceType.Sfx:
+                            Console.WriteLine($"Added Font: {font_data.Id}");
+                        }
+                    }
+                }
 
-                        //    var sfx_data = Loader.LoadSfxData(res_file_info.FullPath);
+                if (resource_group.Value.Atlases != null)
+                {
+                    foreach (var atlas_info in resource_group.Value.Atlases)
+                    {
+                        var atlas_data = AtlasBuilder.Build(atlas_info.Id, atlas_info.Path, atlas_info.Regions);
 
-                        //    pak.Sfx.Add(res_file_info.FileName, sfx_data);
+                        pak.Atlases.Add(atlas_data.Id, atlas_data);
 
-                        //    break;
-                        //case ResourceType.Song:
+                        Console.WriteLine($"Added Atlas: {atlas_data.Id}");
+                    }
+                }
 
-                        //    var song_data = Loader.LoadSongData(res_file_info.FullPath);
+                if (resource_group.Value.TextFiles != null)
+                {
+                    foreach (var text_file_info in resource_group.Value.TextFiles)
+                    {
+                        var text_file_data = TextBuilder.Build(text_file_info.Id, text_file_info.Path);
+                        pak.TextFiles.Add(text_file_info.Id, text_file_data);
 
-                        //    pak.Songs.Add(res_file_info.FileName, song_data);
-
-                        //    break;
-
-                        case ResourceType.TextFile:
-
-                            var text_file_data = ResourceLoader.LoadTextFileData(resource_def.ResourcePath);
-                            pak.TextFiles.Add(resource_def.ResourceId, text_file_data);
-
-                            break;
+                        Console.WriteLine($"Added TextFile: {text_file_data.Id}");
                     }
                 }
 

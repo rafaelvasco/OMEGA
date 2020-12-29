@@ -58,7 +58,7 @@ namespace OMEGA
         public static readonly Color Gold = new Color(0xff00d7ff);
         public static readonly Color Goldenrod = new Color(0xff20a5da);
         public static readonly Color Gray = new Color(0xff808080);
-        public static readonly Color Green = new Color(0xff008000);
+        public static readonly Color Green = new Color(0xff00ff00);
         public static readonly Color GreenYellow = new Color(0xff2fffad);
         public static readonly Color Honeydew = new Color(0xfff0fff0);
         public static readonly Color HotPink = new Color(0xffb469ff);

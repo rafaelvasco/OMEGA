@@ -1,34 +1,89 @@
 ﻿{
   "resources": {
-    "base": [
-      {
-        "resource_id": "canvas_shader",
-        "resource_type": "Shader",
-        "resource_path": "Base/Shaders/canvas_shader/canvas_vs.sc",
-        "secondary_resource_path": "Base/Shaders/canvas_shader/canvas_fs.sc"
-      },
-      {
-        "resource_id": "gamecontrollerdb",
-        "resource_type": "TextFile",
-        "resource_path": "Base/TextFiles/gamecontrollerdb.txt"
-      }
-    ],
-    "demo": [
-      {
-        "resource_id": "party",
-        "resource_type": "Image",
-        "resource_path": "Images/party.png"
-      },
-      {
-        "resource_id": "party_semi_transparent",
-        "resource_type": "Image",
-        "resource_path": "Images/party_semi_transparent.png"
-      },
-      {
-        "resource_id": "purple_tile",
-        "resource_type": "Image",
-        "resource_path": "Images/Purple.png"
-      }
-    ]
+    "base": {
+      "shaders": [
+        {
+          "id": "canvas_shader",
+          "vs_path": "Base/Shaders/canvas_shader/canvas_vs.sc",
+          "fs_path": "Base/Shaders/canvas_shader/canvas_fs.sc"
+        }
+      ],
+      "text_files": [
+        {
+          "id": "gamecontrollerdb",
+          "path": "Base/TextFiles/gamecontrollerdb.txt"
+        }
+      ]
+    },
+    "demo": {
+      "images": [
+        {
+          "id": "party",
+          "path": "Images/party.png"
+        },
+        {
+          "id": "party_semi_transparent",
+          "path": "Images/party_semi_transparent.png"
+        },
+        {
+          "id": "purple_tile",
+          "path": "Images/Purple.png"
+        },
+        {
+          "id": "checker",
+          "path": "Images/checker.png"
+        }
+      ],
+      "fonts": [
+        {
+          "id": "nokia",
+          "path": "Fonts/nokiafc22.ttf",
+          "sizes": [ 60, 16 ]
+        },
+        {
+          "id": "droid",
+          "path": "Fonts/droidsans.ttf",
+          "sizes": [ 60 ]
+        },
+        {
+          "id": "c64",
+          "path": "Fonts/c64.ttf",
+          "sizes": [ 60 ]
+
+        }
+      ],
+      "atlases": [
+        {
+          "id": "character",
+          "path": "Images/character.png",
+          "regions": {
+            "idle_0": {
+              "X": 1,
+              "Y": 6,
+              "W": 15,
+              "H": 22
+            },
+            "idle_1": {
+              "X": 17,
+              "Y": 7,
+              "W": 15,
+              "H": 21
+            },
+            "idle_2": {
+              "X": 33,
+              "Y": 6,
+              "W": 15,
+              "H": 22
+            },
+            "idle_3": {
+              "X": 49,
+              "Y": 7,
+              "W": 15,
+              "H": 21
+            }
+          }
+        }
+      ]
+    }
   }
 }

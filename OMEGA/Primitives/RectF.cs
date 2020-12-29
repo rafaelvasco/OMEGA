@@ -16,6 +16,7 @@ namespace OMEGA
         public float X2;
         public float Y2;
 
+
         public static RectF FromBox(float x, float y, float w, float h)
         {
             return new RectF(x, y, x + w, y + h);
