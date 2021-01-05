@@ -16,21 +16,28 @@ namespace DEMO
                 Font = Engine.Content.Get<Font>("nokia16")
             };
 
+            text.SetColor(Color.Red);
+
             text2 = new Text
             {
                 TextValue = "OMEGA ENGINE!",
                 Font = Engine.Content.Get<Font>("nokia60")
             };
 
+            text2.SetColor(Color.DodgerBlue);
+
             text3 = new Text
             {
-                TextValue = "IS AWESOME! :)",
+                TextValue = "IS AWESOME!\nNEW LINE\nNEW LINE :)",
                 Font = Engine.Content.Get<Font>("droid60")
             };
 
-            text.SetPosition(10, 10);
-            text2.SetPosition(100, 100);
-            text3.SetPosition(300, 300);
+            text3.SetColor(Color.LimeGreen);
+
+            text.SetPosition(0, 10);
+            text2.SetPosition(0, 100);
+            text3.SetPosition(0, 300);
+
 
         }
 

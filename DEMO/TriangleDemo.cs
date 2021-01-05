@@ -18,7 +18,7 @@ namespace DEMO
             };
         }
 
-        public override void VariableUpdate(float dt)
+        public override void Update(float dt)
         {
             if (Input.GamePadPressed(GamePadButtons.Back) || Input.KeyPressed(Keys.Escape))
             {
@@ -35,7 +35,7 @@ namespace DEMO
         {
             canvas.Begin();
 
-            canvas.DrawVertices(vertices);
+            canvas.DrawTriangle(vertices[0], vertices[1], vertices[2]);
 
             canvas.End();
         }

@@ -6,6 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Assets\Base\Images\**" />
+    <EmbeddedResource Remove="Assets\Base\Images\**" />
+    <None Remove="Assets\Base\Images\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\OMEGA\OMEGA.csproj" />
   </ItemGroup>
 
@@ -22,10 +28,6 @@
     <None Update="project.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Assets\Base\Images\" />
   </ItemGroup>
 
 </Project>

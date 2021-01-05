@@ -79,32 +79,37 @@ namespace OMEGA
             float line_spacing = font.LineSpacing;
             float cursor_x = X, cursor_y = Y;
             
-
             for (int i = 0; i < m_text.Length; ++i)
             {
                 var ch = m_text[i];
 
                 switch(ch)
                 {
+                    case '\r':
+                        continue;
+
                     case '\n':
                         cursor_x = X;
                         cursor_y += line_spacing;
                         break;
-                    case '\r':
-                        continue;
+                   
                     default:
                         ref readonly var glyph = ref font[ch];
                         var quad = new Quad(texture, glyph.TextureRect);
+
+                        float offset_x = glyph.Offset.X;
                         quad.Set(
-                            cursor_x + glyph.Offset.X,
+                            cursor_x + offset_x,
                             cursor_y + glyph.Offset.Y,
                             glyph.TextureRect.Width,
                             glyph.TextureRect.Height
                         );
 
+                        quad.SetColor(m_color);
+
                         cursor_x += glyph.XAdvance;
 
-                        canvas.DrawTextureQuad(in quad, texture);
+                        canvas.DrawQuad(in quad, texture);
 
                         break;
                 }

@@ -95,7 +95,7 @@ namespace OMEGA
             return texture;
         }
 
-        public void SetData(Pixmap pixmap)
+        public void UpdatePixels(Pixmap pixmap)
         {
             GraphicsContext.UpdateTexture2D(Handle, 0, 0, 0, 0, Width, Height, pixmap.Data, pixmap.Stride);
         }
@@ -147,6 +147,16 @@ namespace OMEGA
         public bool Equals(Texture2D other)
         {
             return Handle.idx == other.Handle.idx;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as Texture2D);
+        }
+
+        public override int GetHashCode()
+        {
+            return Handle.idx.GetHashCode();
         }
     }
 }

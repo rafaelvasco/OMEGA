@@ -146,6 +146,12 @@ namespace OMEGA
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static byte ClampB(byte value, byte min, byte max)
+        {
+            return (value > max) ? max : ((value < min) ? min : value);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Clamp(Array array, ref int index)
         {
             index = Clamp(index, 0, array.Length - 1);
@@ -522,6 +528,33 @@ namespace OMEGA
                 var = max + ((var - min) % max);
             else
                 var = min + var % (max - min);
+
+            return var;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float Wrap(float var, float min, float max)
+        {
+            if (var < min)
+            {
+                var += max;
+            }
+
+            var %= max;
+
+            return var;
+
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int Wrap(int var, int min, int max)
+        {
+            if (var < min)
+            {
+                var += max;
+            }
+
+            var %= max;
 
             return var;
         }

@@ -7,7 +7,7 @@ using System.Text;
 
 namespace OMEGA
 {
-    public struct FontCompileParams
+    public unsafe class FontCompileParams
     {
         public string FontName;
         public string FontFilePath;
@@ -20,11 +20,11 @@ namespace OMEGA
         public int SpacingV;
         public int TexWidth;
         public int TexHeight;
-        public string[] CharRangesInput;
+        public int CharRangeLevel;
         public CharRange[] CharRanges;
     }
 
-    public struct FontCompileResult 
+    public class FontCompileResult 
     {
         public byte[] FontImageData;
         public int FontImageWidth;
@@ -95,20 +95,6 @@ namespace OMEGA
             return last_resort;
         }
 
-        private static CharRange[] ParseCharRanges(string[] ranges)
-        {
-            var char_ranges = new CharRange[ranges.Length];
-
-            for (int i = 0; i < ranges.Length; ++i)
-            {
-                var range = ranges[i];
-
-                char_ranges[i] = m_char_range_map[range];
-            }
-
-            return char_ranges;
-        }
-
         public static FontCompileResult Compile(FontCompileParams @params)
         {
             var process_info = new ProcessStartInfo
@@ -129,13 +115,16 @@ namespace OMEGA
 
             @params.FontFilePath = font_file_copy_path;
 
-            if (@params.CharRangesInput != null && @params.CharRangesInput.Length > 0)
+            if (@params.CharRangeLevel == 0)
             {
-                @params.CharRanges = ParseCharRanges(@params.CharRangesInput);
+                @params.CharRanges = new CharRange[1];
+                @params.CharRanges[0] = CharRange.Latin;
             }
-            else
+            else if (@params.CharRangeLevel == 1)
             {
-                @params.CharRanges = new CharRange[] { CharRange.Latin };
+                @params.CharRanges = new CharRange[2];
+                @params.CharRanges[0] = CharRange.Latin;
+                @params.CharRanges[1] = CharRange.LatinSupplement;
             }
 
             int tex_size = GetOptimalTextureSize(@params.FontSize, @params.CharRanges.Length);

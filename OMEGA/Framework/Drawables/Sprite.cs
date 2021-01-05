@@ -4,6 +4,8 @@ namespace OMEGA
 {
     public class Sprite : Drawable
     {
+        public Texture2D Texture => m_texture;
+
         public Sprite(Texture2D texture) : this(texture, RectF.FromBox(0f, 0f, texture.Width, texture.Height))
         {
         }
@@ -179,7 +181,7 @@ namespace OMEGA
 
             draw_q.Set(X - origin_dx, Y - origin_dy, Width, Height);
 
-            canvas.DrawTextureQuad(in draw_q, m_texture);
+            canvas.DrawQuad(in draw_q, m_texture);
 
         }
 

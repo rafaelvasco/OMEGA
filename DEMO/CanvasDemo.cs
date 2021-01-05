@@ -23,16 +23,16 @@ namespace DEMO
         public override void Load()
         {
 
-            Engine.Canvas.StretchMode = CanvasStretchMode.Resize;
+            Engine.Canvas.StretchMode = CanvasStretchMode.LetterBox;
 
             left_view = Engine.Canvas.CreateView();
             right_view = Engine.Canvas.CreateView();
 
-            left_view.SetViewport(RectF.FromBox(0f, 0f, 0.495f, 1f));
-            right_view.SetViewport(RectF.FromBox(0.5f, 0f, 0.5f, 1f));
+            left_view.Viewport = RectF.FromBox(0f, 0f, 0.495f, 1f);
+            right_view.Viewport = RectF.FromBox(0.5f, 0f, 0.5f, 1f);
 
-            left_view.SetSize(new Vec2(0.5f, 1.0f));
-            right_view.SetSize(new Vec2(0.5f, 1.0f));
+            left_view.SizeFactor = new Vec2(0.5f, 1.0f);
+            right_view.SizeFactor = new Vec2(0.5f, 1.0f);
 
             texture = Engine.Content.Get<Texture2D>("party");
             bg_tile = Engine.Content.Get<Texture2D>("purple_tile");
@@ -79,7 +79,7 @@ namespace DEMO
 
         }
 
-        public override void VariableUpdate(float dt)
+        public override void Update(float dt)
         {
 
             var input_vector = Input.GetGamePadState().ThumbSticks.Left;
@@ -135,19 +135,14 @@ namespace DEMO
         public override void Draw(Canvas canvas, float dt)
         {
             canvas.Begin(left_view);
-            canvas.DrawTextureQuad(in bg_quad, bg_tile);
-            canvas.DrawTextureQuad(in quad, texture);
+            canvas.DrawQuad(in bg_quad, bg_tile);
+            canvas.DrawQuad(in quad, texture);
             canvas.End();
 
             canvas.Begin(right_view);
-            canvas.DrawTextureQuad(in bg_quad, bg_tile);
-            canvas.DrawTextureQuad(in quad, texture);
+            canvas.DrawQuad(in bg_quad, bg_tile);
+            canvas.DrawQuad(in quad, texture);
             canvas.End();
-
-            //canvas.Begin();
-            //canvas.DrawQuad(in bg_quad, bg_tile);
-            //canvas.DrawQuad(in quad, texture);
-            //canvas.End();
         }
 
         public override void OnDisplayResize()

@@ -23,10 +23,6 @@ namespace DEMO
 
             character.CurrentAnimation.Mode = SpriteAnimationMode.Loop;
 
-            character.CurrentAnimation.SetFrameDelay(-1, 100f);
-
-            character.CurrentAnimation.SetFrameOrigin(2, Vec2.Zero);
-
             sprite.SetPosition(Engine.Canvas.Width/2, Engine.Canvas.Height/2);
 
             character.SetPosition(sprite.X + 100 , sprite.Y + 100);

@@ -34,7 +34,7 @@ namespace OMEGA
         {
             var transient_idx_buffer = new TransientIndexBuffer(indices.Length);
 
-            var data_size = (uint)(indices.Length * Unsafe.SizeOf<ushort>());
+            var data_size = (uint)(indices.Length * sizeof(ushort));
 
             Unsafe.CopyBlock((void*)transient_idx_buffer.data, Unsafe.AsPointer(ref indices[0]), data_size);
 

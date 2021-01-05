@@ -24,8 +24,11 @@ namespace OMEGA
         [JsonPropertyName("sizes")]
         public int[] Sizes { get;set; }
 
-        [JsonPropertyName("ranges")]
-        public string[] Ranges { get;set;}
+        [JsonPropertyName("range_level")]
+        public int CharRangeLevel { get;set;}
+
+        [JsonPropertyName("padding")]
+        public int[] Padding { get;set;}
 
     }
 

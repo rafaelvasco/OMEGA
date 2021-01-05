@@ -31,7 +31,7 @@
             return ms_current_state.LeftButton == ButtonState.Released;
         }
 
-        public static bool MouseLeftJustPressed()
+        public static bool MouseLeftPressed()
         {
             return ms_current_state.LeftButton == ButtonState.Pressed && ms_prev_state.LeftButton == ButtonState.Released;
         }
@@ -46,7 +46,7 @@
             return ms_current_state.RightButton == ButtonState.Released;
         }
 
-        public static bool MouseRightJustPressed()
+        public static bool MouseRightPressed()
         {
             return ms_current_state.RightButton == ButtonState.Pressed && ms_prev_state.RightButton == ButtonState.Released;
         }
@@ -61,7 +61,7 @@
             return ms_current_state.MiddleButton == ButtonState.Released;
         }
 
-        public static bool MouseMiddleJustPressed()
+        public static bool MouseMiddlePressed()
         {
             return ms_current_state.MiddleButton == ButtonState.Pressed && ms_prev_state.MiddleButton == ButtonState.Released;
         }

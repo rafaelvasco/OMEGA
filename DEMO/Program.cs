@@ -4,7 +4,7 @@
     {
         private static void Main()
         {
-            using var demo = new TextDemo();
+            using var demo = new PixmapDemo();
             demo.Run();
         }
     }

@@ -18,7 +18,7 @@ namespace OMEGA
 
         void Load();
 
-        void VariableUpdate(float dt);
+        void Update(float dt);
 
         void FixedUpdate(float dt);
 

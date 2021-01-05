@@ -160,14 +160,14 @@ namespace OMEGA
                     // and interleave it (so game state can always get animation frame it needs)
                     if (consumed_delta_time > desired_frametime)
                     {
-                        VariableUpdate((float)fixed_deltatime);
+                        Update((float)fixed_deltatime);
                         consumed_delta_time -= desired_frametime;
                     }
 
                     frame_accum -= desired_frametime;
                 }
 
-                VariableUpdate((float)(consumed_delta_time / Platform.GetPerformanceFrequency()));
+                Update((float)(consumed_delta_time / Platform.GetPerformanceFrequency()));
 
                 if (Engine.Canvas.NeedsResetDisplay)
                 {
@@ -188,7 +188,7 @@ namespace OMEGA
                     for (int i = 0; i < update_mult; ++i)
                     {
                         FixedUpdate((float)fixed_deltatime);
-                        VariableUpdate((float)fixed_deltatime);
+                        Update((float)fixed_deltatime);
 
                         frame_accum -= desired_frametime;
                     }
@@ -205,9 +205,10 @@ namespace OMEGA
             }
 
         }
+
         public abstract void Load();
 
-        public virtual void VariableUpdate(float dt) { }
+        public virtual void Update(float dt) { }
 
         public virtual void FixedUpdate(float dt) { }
 

@@ -94,10 +94,29 @@ namespace OMEGA
             return dyn_vertex_buffer;
         }
 
+        public static DynamicIndexBufferHandle CreateDynamicIndexBuffer(int index_count, BufferFlags flags = BufferFlags.None) 
+        {
+            var dyn_index_buffer = Bgfx.create_dynamic_index_buffer((uint)index_count, (ushort)flags);
+            return dyn_index_buffer;
+        }
+
+        public static DynamicIndexBufferHandle CreateDynamicIndexBuffer(ushort[] indices, BufferFlags flags = BufferFlags.None)
+        {
+            var memory = GetMemoryBufferReference(indices);
+            var dyn_index_buffer = Bgfx.create_dynamic_index_buffer_mem(memory, (ushort)flags);
+            return dyn_index_buffer;
+        }
+
         public static void UpdateDynamicVertexBuffer(DynamicVertexBufferHandle handle, int start_vertex, Vertex[] vertices)
         {
             var memory = GetMemoryBufferReference(vertices);
             Bgfx.update_dynamic_vertex_buffer(handle, (uint)start_vertex, memory);
+        }
+
+        public static void UpdateDynamicIndexBuffer(DynamicIndexBufferHandle handle, int start_index, ushort[] indices)
+        {
+            var memory = GetMemoryBufferReference(indices);
+            Bgfx.update_dynamic_index_buffer(handle, (uint)start_index, memory);
         }
 
         public static ShaderProgram CreateShaderProgram(byte[] vertex_src, byte[] frag_src, string[] samplers, string[] _params)
@@ -153,7 +172,9 @@ namespace OMEGA
             unsafe
             {
                 Memory* data = AllocGraphicsMemoryBuffer(pixel_data);
-                return Bgfx.create_texture_2d((ushort)width, (ushort)height, has_mips, (ushort)num_layers, tex_format, (ulong)flags, data);
+                TextureHandle tex = Bgfx.create_texture_2d((ushort)width, (ushort)height, has_mips, (ushort)num_layers, tex_format, (ulong)flags, null);
+                Bgfx.update_texture_2d(tex, 0, 0, 0, 0, (ushort)width, (ushort)height, data, ushort.MaxValue);
+                return tex;
             }
         }
 

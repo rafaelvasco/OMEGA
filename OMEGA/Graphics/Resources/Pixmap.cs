@@ -36,7 +36,7 @@ namespace OMEGA
             return pixmap;
         }
 
-        public Pixmap(int width, int height, Color color)
+        public Pixmap(int width, int height, Color color = default)
         {
             this.Width = width;
             this.Height = height;
@@ -46,50 +46,11 @@ namespace OMEGA
 
             pixel_data = new byte[length];
 
-            Fill(color);
-        }
+            Blitter.Begin(this);
 
-        public unsafe void BlitColors(Color[] colors)
-        {
-            if (colors.Length > this.Width * this.Height)
-            {
-                return;
-            }
+            Blitter.Fill(color);
 
-            fixed (byte* ptr = &MemoryMarshal.GetReference<byte>(pixel_data))
-            {
-                int col_idx = 0;
-                var len = pixel_data.Length - 4;
-                for (int i = 0; i <= len; i += 4)
-                {
-                    var col = colors[col_idx++];
-
-                    *(ptr + i) = col.B;
-                    *(ptr + i + 1) = col.G;
-                    *(ptr + i + 2) = col.R;
-                    *(ptr + i + 3) = col.A;
-                }
-            }
-        }
-
-        public unsafe void Fill(Color color)
-        {
-            byte r = color.R;
-            byte g = color.G;
-            byte b = color.B;
-            byte a = color.A;
-
-            fixed (byte* ptr = &MemoryMarshal.GetReference<byte>(pixel_data))
-            {
-                var len = pixel_data.Length - 4;
-                for (int i = 0; i <= len; i += 4)
-                {
-                    *(ptr + i) = b;
-                    *(ptr + i + 1) = g;
-                    *(ptr + i + 2) = r;
-                    *(ptr + i + 3) = a;
-                }
-            }
+            Blitter.End();
         }
 
         public void SaveToFile(string path)
@@ -104,7 +65,7 @@ namespace OMEGA
         {
             var pd = pixel_data;
 
-            fixed (byte* p = &MemoryMarshal.GetReference<byte>(pd))
+            fixed (byte* p = &MemoryMarshal.GetArrayDataReference(pd))
             {
                 var len = pd.Length - 4;
                 for (int i = 0; i <= len; i += 4)
@@ -126,7 +87,7 @@ namespace OMEGA
         {
             var pd = pixel_data;
 
-            fixed (byte* p = &MemoryMarshal.GetReference<byte>(pd))
+            fixed (byte* p = &MemoryMarshal.GetArrayDataReference(pd))
             {
                 var len = pd.Length - 4;
                 for (int i = 0; i <= len; i += 4)

@@ -321,7 +321,7 @@ namespace OMEGA
                 draw_q.V2.Ty = ty;
             }
 
-            canvas.DrawTextureQuad(in draw_q, m_atlas.Texture);
+            canvas.DrawQuad(in draw_q, m_atlas.Texture);
         }
 
         private bool m_flip_x;

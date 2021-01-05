@@ -51,8 +51,18 @@ namespace OMEGA
             V3.Col = color_bottom_left;
         }
 
-        public void Set(float x, float y, float w, float h)
+        public void Set(float x, float y, float w=-1, float h=-1)
         {
+            if (w == -1)
+            {
+                w = this.Width;
+            }
+
+            if (h == -1)
+            {
+                h = this.Height;
+            }
+            
             float ax = x;
             float ay = y;
             float bx = x + w;

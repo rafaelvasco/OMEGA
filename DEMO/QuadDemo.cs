@@ -24,7 +24,7 @@ namespace DEMO
 
         }
 
-        public override void VariableUpdate(float dt)
+        public override void Update(float dt)
         {
             if (Input.GamePadPressed(GamePadButtons.Back) || Input.KeyPressed(Keys.Escape))
             {
@@ -41,7 +41,7 @@ namespace DEMO
         {
             canvas.Begin();
 
-            canvas.DrawTextureQuad(in quad);
+            canvas.DrawQuad(in quad);
 
             canvas.End();
         }

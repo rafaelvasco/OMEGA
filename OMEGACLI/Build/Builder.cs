@@ -91,7 +91,19 @@ namespace OMEGACLI
 
                             var id = font_info.Id + size;
 
-                            var font_data = FontBuilder.Build(id, font_info.Path, size, font_info.Ranges);
+                            var build_params = new FontBuildParams()
+                            {
+                                Id = id,
+                                Path = font_info.Path,
+                                Size = size,
+                                CharRangeLevel = font_info.CharRangeLevel,
+                                PaddingLeft = font_info.Padding != null ? font_info.Padding[0] : 0,
+                                PaddingRight = font_info.Padding != null ? font_info.Padding[1] : 0,
+                                PaddingUp = font_info.Padding != null ? font_info.Padding[2] : 0,
+                                PaddingDown = font_info.Padding != null ? font_info.Padding[3] : 0
+                            };
+
+                            var font_data = FontBuilder.Build(build_params);
 
                             pak.Fonts.Add(id, font_data);
 

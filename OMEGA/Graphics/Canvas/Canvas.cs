@@ -5,6 +5,8 @@ namespace OMEGA
 {
     public class Canvas
     {
+        private const uint DEFAULT_CLEAR_COLOR = 0x004DFFFF;
+
         internal bool NeedsResetDisplay { get; set; } = false;
 
         private static ushort StaticViewId = 0;
@@ -189,10 +191,7 @@ namespace OMEGA
             }
         }
 
-        private const int MAX_BATCH_VERTICES = 2048;
-
-        private VertexStream m_free_vertex_stream;
-        private VertexStream m_quad_vertex_stream;
+        private VertexStream m_vertex_stream;
 
         private bool inside_begin_block = false;
         private int draw_calls;
@@ -207,8 +206,7 @@ namespace OMEGA
         private ShaderProgram current_shader;
         private ShaderProgram base_shader;
         private Texture2D base_texture;
-        private Texture2D current_quads_texture;
-        private Texture2D current_free_vertices_texture;
+        private Texture2D current_texture;
         private CanvasView base_view;
         private List<CanvasView> additional_views = new List<CanvasView>();
         private CanvasView current_view;
@@ -218,7 +216,7 @@ namespace OMEGA
             Width = width;
             Height = height;
 
-            InitVertexStreams();
+            m_vertex_stream = new VertexStream(VertexStreamMode.Stream);
 
             InitDefaultResources();
 
@@ -239,7 +237,7 @@ namespace OMEGA
             var view = new CanvasView(1f, 1f)
             {
                 ViewId = StaticViewId++,
-                ClearColor = base_view?.ClearColor ?? Color.CornflowerBlue,
+                ClearColor = base_view?.ClearColor ?? DEFAULT_CLEAR_COLOR,
             };
 
             if (view.ViewId > 0)
@@ -264,9 +262,7 @@ namespace OMEGA
 
         private void Flush()
         {
-            RenderFreeVerticesBatch();
-            RenderQuadsBatch();
-
+            RenderBatch();
         }
 
         public void End()
@@ -281,7 +277,7 @@ namespace OMEGA
             inside_begin_block = false;
         }
 
-        public void DrawVertices(Span<Vertex> vertices, Texture2D texture = null)
+        public void DrawTriangle(Vertex v1, Vertex v2, Vertex v3, Texture2D texture = null)
         {
             if (!inside_begin_block)
             {
@@ -290,25 +286,20 @@ namespace OMEGA
 
             texture ??= base_texture;
 
-            if (current_free_vertices_texture != texture)
+            if (current_texture != texture)
             {
-                RenderFreeVerticesBatch();
-                current_free_vertices_texture = texture;
+                RenderBatch();
+                current_texture = texture;
             }
 
-            if (!m_free_vertex_stream.PutVertices(vertices))
+            if (!m_vertex_stream.PushTriangle(v1, v2, v3))
             {
-                RenderFreeVerticesBatch();
-                m_free_vertex_stream.Reset();
-
-                if (!m_free_vertex_stream.PutVertices(vertices))
-                {
-                    throw new Exception("Free Vertices Batch Overflow");
-                }
+                RenderBatch();
+                m_vertex_stream.PushTriangle(v1, v2, v3);
             }
         }
 
-        public void DrawTextureQuad(in Quad quad, Texture2D texture = null)
+        public void DrawQuad(in Quad quad, Texture2D texture = null)
         {
             if (!inside_begin_block)
             {
@@ -317,21 +308,16 @@ namespace OMEGA
 
             texture ??= base_texture;
 
-            if (current_quads_texture != texture)
+            if (current_texture != texture)
             {
-                RenderQuadsBatch();
-                current_quads_texture = texture;
+                RenderBatch();
+                current_texture = texture;
             }
 
-            if (!m_quad_vertex_stream.PutQuad(in quad))
+            if (!m_vertex_stream.PushQuad(in quad))
             {
-                RenderQuadsBatch();
-                m_quad_vertex_stream.Reset();
-
-                if (!m_quad_vertex_stream.PutQuad(in quad))
-                {
-                    throw new Exception("Quad Batch Overflow");
-                }
+                RenderBatch();
+                m_vertex_stream.PushQuad(in quad);
             }
         }
 
@@ -379,7 +365,8 @@ namespace OMEGA
                             new_view_port_y = (1 - new_view_port_h) / 2f;
                         }
 
-                        base_view.SetViewport(RectF.FromBox(new_view_port_x, new_view_port_y, new_view_port_w, new_view_port_h));
+                        base_view.Viewport = RectF.FromBox(new_view_port_x, new_view_port_y, new_view_port_w, new_view_port_h);
+
                     }
                     break;
                 case CanvasStretchMode.Stretch:
@@ -430,12 +417,10 @@ namespace OMEGA
         {
             base_view = CreateView();
 
-            base_view.ClearColor = Color.CornflowerBlue;
+            base_view.ClearColor = DEFAULT_CLEAR_COLOR;
 
             current_view = base_view;
         }
-
-
 
         private void ApplyViewProperties(CanvasView view)
         {
@@ -486,30 +471,6 @@ namespace OMEGA
             }
         }
 
-        private void InitVertexStreams()
-        {
-            /* Quad Vertex Stream */
-
-            var index_array = new ushort[MAX_BATCH_VERTICES / 4 * 6];
-
-            ushort indice_i = 0;
-
-            for (var i = 0; i < index_array.Length; i += 6, indice_i += 4)
-            {
-                index_array[i + 0] = (ushort)(indice_i + 0);
-                index_array[i + 1] = (ushort)(indice_i + 1);
-                index_array[i + 2] = (ushort)(indice_i + 2);
-                index_array[i + 3] = (ushort)(indice_i + 0);
-                index_array[i + 4] = (ushort)(indice_i + 2);
-                index_array[i + 5] = (ushort)(indice_i + 3);
-            }
-
-            m_quad_vertex_stream = new VertexStream(MAX_BATCH_VERTICES, index_array);
-
-            /* Free Layout Vertex Stream */
-
-            m_free_vertex_stream = new VertexStream(MAX_BATCH_VERTICES);
-        }
 
         private void InitDefaultResources()
         {
@@ -519,12 +480,13 @@ namespace OMEGA
 
             base_texture = Texture2D.Create(Pixmap.OnePixel(Color.White));
 
-            current_quads_texture = base_texture;
+            current_texture = base_texture;
         }
 
-        private void RenderFreeVerticesBatch()
+
+        private void RenderBatch()
         {
-            if (m_free_vertex_stream.VertexCount == 0)
+            if (m_vertex_stream.VertexCount == 0)
             {
                 return;
             }
@@ -536,36 +498,13 @@ namespace OMEGA
                 max_draw_calls = draw_calls;
             }
 
-            SetTexture(0, current_free_vertices_texture);
+            SetTexture(0, current_texture);
 
             GraphicsContext.SetState(render_state);
 
-            SubmitVertexStream(render_pass: current_view.ViewId, m_free_vertex_stream);
+            SubmitVertexStream(render_pass: current_view.ViewId, m_vertex_stream);
 
-            m_free_vertex_stream.Reset();
-        }
-
-        private void RenderQuadsBatch()
-        {
-            if (m_quad_vertex_stream.VertexCount == 0)
-            {
-                return;
-            }
-
-            draw_calls++;
-
-            if (draw_calls > max_draw_calls)
-            {
-                max_draw_calls = draw_calls;
-            }
-
-            SetTexture(0, current_quads_texture);
-
-            GraphicsContext.SetState(render_state);
-
-            SubmitVertexStream(render_pass: current_view.ViewId, m_quad_vertex_stream);
-
-            m_quad_vertex_stream.Reset();
+            m_vertex_stream.Reset();
         }
 
         private void SubmitVertexStream(
@@ -603,7 +542,7 @@ namespace OMEGA
 
         private void SetTexture(int slot, Texture2D texture)
         {
-            current_quads_texture = texture;
+            current_texture = texture;
             GraphicsContext.SetTexture(0, current_shader.Samplers[slot], texture.Handle, texture.TexFlags);
         }
         private void UpdateRenderState()
