@@ -32,23 +32,48 @@
         {
           "id": "checker",
           "path": "Images/checker.png"
+        },
+        {
+          "id": "font_sheet_test",
+          "path": "Images/font_sheet_test.png"
         }
       ],
       "fonts": [
         {
-          "id": "nokia",
+          "id": "nokia60",
           "path": "Fonts/nokiafc22.ttf",
-          "sizes": [ 60, 16 ]
+          "size": 60,
+          "dropshadow": true,
+          "shadow_offset_x": 4,
+          "shadow_offset_y": 4,
+          "shadow_color": "#222222FF"
         },
         {
-          "id": "droid",
+          "id": "nokia16",
+          "path": "Fonts/nokiafc22.ttf",
+          "size": 16,
+          "dropshadow": true,
+          "shadow_offset_x": 2,
+          "shadow_offset_y": 2,
+          "shadow_color": "#222222FF"
+        },
+        {
+          "id": "droid60",
           "path": "Fonts/droidsans.ttf",
-          "sizes": [ 60 ]
+          "size": 60,
+          "dropshadow": true,
+          "shadow_offset_x": 4,
+          "shadow_offset_y": 4,
+          "shadow_color": "#222222FF"
         },
         {
-          "id": "c64",
+          "id": "c6460",
           "path": "Fonts/c64.ttf",
-          "sizes": [ 60 ]
+          "size": 60,
+          "dropshadow": true,
+          "shadow_offset_x": 4,
+          "shadow_offset_y": 4,
+          "shadow_color": "#222222FF"
 
         }
       ],

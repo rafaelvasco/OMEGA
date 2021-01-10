@@ -3,6 +3,7 @@
     public static class Input
     {
         public delegate void GenericInputEvent();
+        public delegate void KeyInputEvent(Keys key);
 
         public static bool KeyboardActive { get; set; } = true;
         public static bool MouseActive { get; set; } = true;
@@ -12,8 +13,11 @@
 
         public static event GenericInputEvent OnMouseEnter;
         public static event GenericInputEvent OnMouseLeave;
+        public static event KeyInputEvent OnKeyPress;
 
         public static bool IsMouseOver { get; internal set; }
+
+        private static Keys m_last_pressed_key;
 
         public static Point MousePos => new Point(
           ms_current_state.X,
@@ -122,6 +126,7 @@
         {
             Platform.OnMouseEnter = OnPlatformMouseOver;
             Platform.OnMouseLeave = OnPlatformMouseLeave;
+            Platform.OnKeyDown = OnPlatformKeyDown;
 
             var gamepad_mappings_text_file = Engine.Content.Get<TextFile>("gamecontrollerdb");
 
@@ -135,6 +140,7 @@
             gp_prev_state = new GamePadState[GamePad.GAMEPAD_MAX_COUNT];
            
         }
+
 
         internal static void Update()
         {
@@ -178,6 +184,15 @@
         {
             IsMouseOver = true;
             OnMouseEnter?.Invoke();
+        }
+        private static void OnPlatformKeyDown(Keys key)
+        {
+            if (m_last_pressed_key != key)
+            {
+                m_last_pressed_key = key;
+
+                OnKeyPress?.Invoke(key);
+            }
         }
     }
 }

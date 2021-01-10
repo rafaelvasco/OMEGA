@@ -50,7 +50,7 @@ namespace OMEGA
 
         public static RenderTarget Create(int width, int height, bool filtered)
         {
-            var tex_flags = TextureFlags.ClampU | TextureFlags.ClampV;
+            var tex_flags = TextureFlags.ClampU | TextureFlags.ClampV | TextureFlags.RenderTarget ;
 
             if (!filtered)
             {

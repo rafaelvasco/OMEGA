@@ -6,7 +6,7 @@ namespace OMEGA
     public class ResourceFileGroup
     {
         [JsonPropertyName("images")]
-        public List<CommonResInfo> Images { get; set;}
+        public List<ImageResInfo> Images { get; set;}
 
         [JsonPropertyName("shaders")]
         public List<ShaderResInfo> Shaders { get;set; }

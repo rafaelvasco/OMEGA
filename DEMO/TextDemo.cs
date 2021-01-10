@@ -16,7 +16,7 @@ namespace DEMO
                 Font = Engine.Content.Get<Font>("nokia16")
             };
 
-            text.SetColor(Color.Red);
+            text.SetColor(Color.White);
 
             text2 = new Text
             {

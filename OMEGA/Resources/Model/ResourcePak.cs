@@ -11,7 +11,7 @@ namespace OMEGA
         public string Name {get;set;}
         
         [ProtoMember(2)]
-        public Dictionary<string, TextureData> Images {get;set;}
+        public Dictionary<string, ImageData> Images {get;set;}
 
         [ProtoMember(3)]
         public Dictionary<string, TextureAtlasData> Atlases { get; set;}
@@ -25,13 +25,15 @@ namespace OMEGA
         [ProtoMember(6)]
         public Dictionary<string, TextFileData> TextFiles {get;set;}
 
+        [ProtoMember(7)]
+        public int TotalResourcesCount { get;set;}
 
         public ResourcePak() {}
 
         public ResourcePak(string name)
         {
             Name = name;
-            Images = new Dictionary<string, TextureData>();
+            Images = new Dictionary<string, ImageData>();
             Shaders = new Dictionary<string, ShaderProgramData>();
             Fonts = new Dictionary<string, FontData>();
             TextFiles = new Dictionary<string, TextFileData>();

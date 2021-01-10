@@ -15,7 +15,7 @@ namespace OMEGA
         public int LineHeight { get;set;}
 
         [ProtoMember(4)]
-        public TextureData FontSheet { get; set; }
+        public ImageData FontSheet { get; set; }
 
         [ProtoMember(5)]
         public char[] Chars { get;set;}

@@ -60,9 +60,11 @@ namespace OMEGACLI
                 {
                     foreach (var image_info in resource_group.Value.Images)
                     {
-                        var pixmap_data = TextureBuilder.Build(image_info.Id, image_info.Path);
+                        var pixmap_data = ImageBuilder.Build(image_info.Id, image_info.Path);
 
                         pak.Images.Add(image_info.Id, pixmap_data);
+
+                        pak.TotalResourcesCount++;
 
                         Console.WriteLine($"Added Image: {pixmap_data.Id}");
                     }
@@ -76,6 +78,8 @@ namespace OMEGACLI
 
                         pak.Shaders.Add(shader_info.Id, shader_data);
 
+                        pak.TotalResourcesCount++;
+
                         Console.WriteLine($"Added Shader: {shader_data.Id}");
                     }
                 }
@@ -84,31 +88,30 @@ namespace OMEGACLI
                 {
                     foreach (var font_info in resource_group.Value.Fonts)
                     {
-
-                        for (int i = 0; i < font_info.Sizes.Length; ++i)
+                        var build_params = new FontBuildParams()
                         {
-                            var size = font_info.Sizes[i];
+                            Id = font_info.Id,
+                            Path = font_info.Path,
+                            Size = font_info.Size,
+                            CharRangeLevel = font_info.CharRangeLevel,
+                            PaddingLeft = font_info.Padding != null ? font_info.Padding[0] : 0,
+                            PaddingRight = font_info.Padding != null ? font_info.Padding[1] : 0,
+                            PaddingUp = font_info.Padding != null ? font_info.Padding[2] : 0,
+                            PaddingDown = font_info.Padding != null ? font_info.Padding[3] : 0,
+                            DropShadow = font_info.DropShadow,
+                            ShadowOffsetX = font_info.ShadowOffsetX,
+                            ShadowOffsetY = font_info.ShadowOffsetY,
+                            ShadowColor = font_info.ShadowColor != null ? Color.FromHex(font_info.ShadowColor) : Color.Black
+                        };
 
-                            var id = font_info.Id + size;
+                        var font_data = FontBuilder.Build(build_params);
 
-                            var build_params = new FontBuildParams()
-                            {
-                                Id = id,
-                                Path = font_info.Path,
-                                Size = size,
-                                CharRangeLevel = font_info.CharRangeLevel,
-                                PaddingLeft = font_info.Padding != null ? font_info.Padding[0] : 0,
-                                PaddingRight = font_info.Padding != null ? font_info.Padding[1] : 0,
-                                PaddingUp = font_info.Padding != null ? font_info.Padding[2] : 0,
-                                PaddingDown = font_info.Padding != null ? font_info.Padding[3] : 0
-                            };
+                        pak.Fonts.Add(font_info.Id, font_data);
 
-                            var font_data = FontBuilder.Build(build_params);
+                        pak.TotalResourcesCount++;
 
-                            pak.Fonts.Add(id, font_data);
+                        Console.WriteLine($"Added Font: {font_data.Id}");
 
-                            Console.WriteLine($"Added Font: {font_data.Id}");
-                        }
                     }
                 }
 
@@ -119,6 +122,8 @@ namespace OMEGACLI
                         var atlas_data = AtlasBuilder.Build(atlas_info.Id, atlas_info.Path, atlas_info.Regions);
 
                         pak.Atlases.Add(atlas_data.Id, atlas_data);
+
+                        pak.TotalResourcesCount++;
 
                         Console.WriteLine($"Added Atlas: {atlas_data.Id}");
                     }
@@ -131,11 +136,14 @@ namespace OMEGACLI
                         var text_file_data = TextBuilder.Build(text_file_info.Id, text_file_info.Path);
                         pak.TextFiles.Add(text_file_info.Id, text_file_data);
 
+                        pak.TotalResourcesCount++;
+
                         Console.WriteLine($"Added TextFile: {text_file_data.Id}");
                     }
                 }
 
                 results.Add(pak);
+                Console.WriteLine($"Built PAK with {pak.TotalResourcesCount} resources.");
             }
 
             return results;

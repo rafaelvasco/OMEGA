@@ -6,7 +6,7 @@ namespace OMEGA
     {
         public static TextureAtlasData Build(string id, string relative_path, Dictionary<string, SRect> atlas)
         {
-            var texture_data = TextureBuilder.Build(id, relative_path);
+            var texture_data = ImageBuilder.Build(id, relative_path);
 
             var atlas_data = new TextureAtlasData()
             {

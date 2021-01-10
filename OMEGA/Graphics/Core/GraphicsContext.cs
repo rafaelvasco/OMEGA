@@ -172,6 +172,16 @@ namespace OMEGA
             unsafe
             {
                 Memory* data = AllocGraphicsMemoryBuffer(pixel_data);
+                TextureHandle tex = Bgfx.create_texture_2d((ushort)width, (ushort)height, has_mips, (ushort)num_layers, tex_format, (ulong)flags, data);
+                return tex;
+            }
+        }
+
+        public static TextureHandle CreateDynamicTexture2D(int width, int height, bool has_mips, int num_layers, TextureFormat tex_format, TextureFlags flags, byte[] pixel_data)
+        {
+            unsafe
+            {
+                Memory* data = AllocGraphicsMemoryBuffer(pixel_data);
                 TextureHandle tex = Bgfx.create_texture_2d((ushort)width, (ushort)height, has_mips, (ushort)num_layers, tex_format, (ulong)flags, null);
                 Bgfx.update_texture_2d(tex, 0, 0, 0, 0, (ushort)width, (ushort)height, data, ushort.MaxValue);
                 return tex;
@@ -456,7 +466,7 @@ namespace OMEGA
             Bgfx.submit(viewId, program, depth, (byte)(preserve_state ? 1 : 0));
         }
 
-        /* DEBUB */
+        /* DEBUG */
         /* ==================================================================*/
 
         public static void SetDebug(DebugFlags flag)

@@ -12,6 +12,10 @@ namespace OMEGA
         public int PaddingLeft;
         public int PaddingRight;
         public int CharRangeLevel;
+        public bool DropShadow;
+        public int ShadowOffsetX;
+        public int ShadowOffsetY;
+        public uint ShadowColor;
     }
 
     public static class FontBuilder
@@ -33,19 +37,47 @@ namespace OMEGA
 
             Console.WriteLine($"Compiling Font: {@params.Id}, Size: {@params.Size}");
 
+            if (@params.DropShadow)
+            {
+                if (Calc.Abs(@params.ShadowOffsetX) > @params.PaddingLeft + @params.PaddingRight)
+                {
+                    @params.PaddingLeft = Calc.Abs(@params.ShadowOffsetX);
+                    @params.PaddingRight = Calc.Abs(@params.ShadowOffsetX);
+                }
+
+                if (Calc.Abs(@params.ShadowOffsetY) > @params.PaddingUp + @params.PaddingDown)
+                {
+                    @params.PaddingUp = Calc.Abs(@params.ShadowOffsetY);
+                    @params.PaddingDown = Calc.Abs(@params.ShadowOffsetY);
+                }
+
+                compile_params.PaddingUp = @params.PaddingUp;
+                compile_params.PaddingDown = @params.PaddingDown;
+                compile_params.PaddingLeft = @params.PaddingLeft;
+                compile_params.PaddingRight = @params.PaddingRight;
+            }
+
             var compile_result = FontCompiler.Compile(compile_params);
+
+            if (@params.DropShadow)
+            {
+                Blitter.Begin(compile_result.FontImageData, compile_result.FontImageWidth, compile_result.FontImageHeight);
+
+                Blitter.DropShadow(@params.ShadowOffsetX, @params.ShadowOffsetY, new Color(@params.ShadowColor));
+
+                Blitter.End();
+            }
 
             var font_data = new FontData()
             {
                 Id = @params.Id,
-                FontSheet = new TextureData()
+                FontSheet = new ImageData()
                 {
                     Id = @params.Id + "_texture",
                     Data = compile_result.FontImageData,
                     Width = compile_result.FontImageWidth,
-                    Height = compile_result.FontImageHeight,
+                    Height = compile_result.FontImageHeight
                 },
-                
             };
 
             FontDescrParser.ParseAndFillData(font_data, compile_result.FontDescrData);

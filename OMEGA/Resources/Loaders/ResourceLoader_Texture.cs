@@ -3,13 +3,13 @@ namespace OMEGA
 {
     public static partial class ResourceLoader
     {
-        public static Texture2D LoadTexture(TextureData texture_data)
+        public static Texture2D LoadTexture(ImageData image_data)
         {
-            var pixmap = new Pixmap(texture_data.Data, texture_data.Width, texture_data.Height);
+            var pixmap = new Pixmap(image_data.Data, image_data.Width, image_data.Height);
 
-            var texture = new Texture2D(pixmap, false, false);
-        
-            texture.Id = texture_data.Id;
+            Texture2D texture = new Texture2D(pixmap, false, false);
+
+            texture.Id = image_data.Id;
 
             return texture;
         }

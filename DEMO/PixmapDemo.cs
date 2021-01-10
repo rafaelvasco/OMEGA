@@ -1,18 +1,15 @@
 ﻿using OMEGA;
-using System;
 
 namespace DEMO
 {
     public class PixmapDemo : Game
     {
-        private Pixmap pixmap;
+        private Sprite surface;
         private Pixmap paste;
-        private Sprite sprite;
 
         public override void Load()
         {
-            pixmap = new Pixmap(512, 512, Color.Black);
-            paste = new Pixmap(16, 16, Color.Orange);
+            paste = Pixmap.Create(16, 16, Color.Orange);
             
             Blitter.Begin(paste);
 
@@ -21,80 +18,73 @@ namespace DEMO
 
             Blitter.End();
 
-            sprite = new Sprite(Texture2D.Create(pixmap));
-            sprite.SetOrigin(0, 0);
-            sprite.SetPosition(Engine.Canvas.Width/2 - sprite.Width/2, Engine.Canvas.Height/2 - sprite.Height/2);
+            surface = new Sprite(Texture2D.Create(512, 512, Color.White));
+            surface.SetOrigin(0, 0);
+            surface.SetPosition(Engine.Canvas.Width/2 - surface.Width/2, Engine.Canvas.Height/2 - surface.Height/2);
 
-
+            Input.OnKeyPress += Input_OnKeyPress;
         }
 
-        public override void Update(float dt)
+        private void Input_OnKeyPress(Keys key)
         {
-            Blitter.Begin(pixmap);
+        }
+
+        public override void FixedUpdate (float dt)
+        {
+            Blitter.Begin(surface.Texture);
 
             if (Input.MouseLeftPressed())
             {
-                int local_x = (int)(Input.MousePos.X - sprite.X);
-                int local_y = (int)(Input.MousePos.Y - sprite.Y);
+                int local_x = (int)(Input.MousePos.X - surface.X);
+                int local_y = (int)(Input.MousePos.Y - surface.Y);
 
-                Console.WriteLine($"X: {local_x}, Y: {local_y}");
-
-                Blitter.Rect(local_x - 16, local_y - 16, 32, 32, Color.White);
-                sprite.Texture.UpdatePixels(pixmap);
+                Blitter.Rect(local_x - 16, local_y - 16, 32, 32, Color.Black);
             }
 
             if (Input.MouseRightPressed())
             {
-                int local_x = (int)(Input.MousePos.X - sprite.X);
-                int local_y = (int)(Input.MousePos.Y - sprite.Y);
+                int local_x = (int)(Input.MousePos.X - surface.X);
+                int local_y = (int)(Input.MousePos.Y - surface.Y);
 
                 Blitter.Blit(paste, local_x - 32, local_y - 32, Rect.Empty, 64, 64);
-                
-                sprite.Texture.UpdatePixels(pixmap);
             }
 
-            if (Input.KeyPressed(Keys.S))
+            if (Input.KeyPressed(Keys.A))
             {
                 Blitter.ColorAdd(255, 255, 255, 0);
-                sprite.Texture.UpdatePixels(pixmap);
             }
 
             if (Input.KeyPressed(Keys.Left))
             {
                 Blitter.PixelShift(-16, 0);
-                sprite.Texture.UpdatePixels(pixmap);
             }
 
             if (Input.KeyPressed(Keys.Right))
             {
                 Blitter.PixelShift(16, 0);
-                sprite.Texture.UpdatePixels(pixmap);
             }
 
             if (Input.KeyPressed(Keys.Up))
             {
                 Blitter.PixelShift(0, -16);
-                sprite.Texture.UpdatePixels(pixmap);
             }
 
             if (Input.KeyPressed(Keys.Down))
             {
                 Blitter.PixelShift(0, 16);
-                sprite.Texture.UpdatePixels(pixmap);
             }
 
             Blitter.End();
+
         }
 
         public override void Draw(Canvas canvas, float dt)
         {
             canvas.Begin();
 
-            sprite.Draw(canvas);
-
+            surface.Draw(canvas);
             canvas.End();
         }
 
-        
     }
 }

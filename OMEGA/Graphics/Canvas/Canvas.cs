@@ -5,7 +5,7 @@ namespace OMEGA
 {
     public class Canvas
     {
-        private const uint DEFAULT_CLEAR_COLOR = 0x004DFFFF;
+        private static readonly Color DEFAULT_CLEAR_COLOR = new Color(0, 75, 255);
 
         internal bool NeedsResetDisplay { get; set; } = false;
 
@@ -432,6 +432,7 @@ namespace OMEGA
 
             GraphicsContext.SetViewRect(view.ViewId, viewport.X1, viewport.Y1, viewport.Width, viewport.Height);
             GraphicsContext.SetViewClear(view.ViewId, ClearFlags.Color | ClearFlags.Depth, view.ClearColor.RGBA);
+            GraphicsContext.Touch(view.ViewId);
 
             var projection = view.GetTransform(Width, Height);
 
@@ -478,7 +479,7 @@ namespace OMEGA
 
             current_shader = base_shader;
 
-            base_texture = Texture2D.Create(Pixmap.OnePixel(Color.White));
+            base_texture = Texture2D.Create(1, 1, Color.White);
 
             current_texture = base_texture;
         }

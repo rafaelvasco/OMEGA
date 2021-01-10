@@ -20,5 +20,8 @@ namespace OMEGA
 
         [ProtoMember(5)]
         public Dictionary<string, SRect> Atlas { get;set; }
+
+        [ProtoMember(6)]
+        public bool RuntimeUpdatable { get;set;}
     }
 }

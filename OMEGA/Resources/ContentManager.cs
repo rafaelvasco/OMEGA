@@ -5,16 +5,17 @@ namespace OMEGA
 {
     public class ContentManager
     {
-        private readonly Dictionary<string, Resource> _loaded_resources;
-
-        private readonly List<Resource> _runtime_resources;
+        private readonly Dictionary<string, Resource> m_loaded_resources;
+        private readonly Dictionary<string, string[]> m_pak_res_map;
+        private readonly List<Resource> m_runtime_resources;
 
         public ContentManager(GameInfo info)
         {
             ResourceLoader.SetRootPath(info.ResourcesFolder);
 
-            _loaded_resources = new Dictionary<string, Resource>();
-            _runtime_resources = new List<Resource>();
+            m_loaded_resources = new Dictionary<string, Resource>();
+            m_runtime_resources = new List<Resource>();
+            m_pak_res_map = new Dictionary<string, string[]>();
 
             LoadContentPack("base");
 
@@ -29,7 +30,7 @@ namespace OMEGA
 
         public T Get<T>(string resource_id) where T : Resource
         {
-            if (_loaded_resources.TryGetValue(resource_id, out Resource resource))
+            if (m_loaded_resources.TryGetValue(resource_id, out Resource resource))
             {
                 return (T)resource;
             }
@@ -40,13 +41,22 @@ namespace OMEGA
         {
             ResourcePak pak = ResourceLoader.LoadPak(pak_name);
 
+            if (pak.TotalResourcesCount == 0)
+            {
+                return;
+            }
+
+            int res_name_map_idx = 0;
+
+            m_pak_res_map.Add(pak_name, new string[pak.TotalResourcesCount]);
+
             if (pak.Images != null)
             {
                 foreach (var image_res in pak.Images)
                 {
                     Texture2D texture = ResourceLoader.LoadTexture(image_res.Value);
-
-                    _loaded_resources.Add(texture.Id, texture);
+                    m_loaded_resources.Add(texture.Id, texture);
+                    m_pak_res_map[pak_name][res_name_map_idx++] = image_res.Key;
                 }
             }
 
@@ -55,8 +65,8 @@ namespace OMEGA
                 foreach (var atlas_res in pak.Atlases)
                 {
                     TextureAtlas atlas = ResourceLoader.LoadAtlas(atlas_res.Value);
-
-                    _loaded_resources.Add(atlas.Id, atlas);
+                    m_loaded_resources.Add(atlas.Id, atlas);
+                    m_pak_res_map[pak_name][res_name_map_idx++] = atlas_res.Key;
                 }
             }
 
@@ -65,8 +75,8 @@ namespace OMEGA
                 foreach (var font_res in pak.Fonts)
                 {
                     Font font = ResourceLoader.LoadFont(font_res.Value);
-
-                    _loaded_resources.Add(font.Id, font);
+                    m_loaded_resources.Add(font.Id, font);
+                    m_pak_res_map[pak_name][res_name_map_idx++] = font_res.Key;
                 }
             }
 
@@ -75,8 +85,18 @@ namespace OMEGA
                 foreach (var shader_res in pak.Shaders)
                 {
                     ShaderProgram shader = ResourceLoader.LoadShader(shader_res.Value);
+                    m_loaded_resources.Add(shader.Id, shader);
+                    m_pak_res_map[pak_name][res_name_map_idx++] = shader_res.Key;
+                }
+            }
 
-                    _loaded_resources.Add(shader.Id, shader);
+            if (pak.TextFiles != null)
+            {
+                foreach (var txt_res in pak.TextFiles)
+                {
+                    TextFile text_file = ResourceLoader.LoadTextFile(txt_res.Value);
+                    m_loaded_resources.Add(text_file.Id, text_file);
+                    m_pak_res_map[pak_name][res_name_map_idx++] = txt_res.Key;
                 }
             }
 
@@ -93,52 +113,51 @@ namespace OMEGA
 
             //    _loaded_resources.Add(song.Id, song);
             //}
+        }
 
-            if (pak.TextFiles != null)
+        internal int RegisterRuntimeLoaded(Resource resource)
+        {
+            m_runtime_resources.Add(resource);
+            return m_runtime_resources.Count;
+        }
+
+        public void FreePack(string pack_name)
+        {
+            Console.WriteLine($" > Diposing resources from Pack: {pack_name}");
+
+            var res_ids = m_pak_res_map[pack_name];
+
+            for (int i = 0; i < res_ids.Length; ++i)
             {
-                foreach (var txt_res in pak.TextFiles)
-                {
-                    TextFile text_file = ResourceLoader.LoadTextFile(txt_res.Value);
+                var res_id = res_ids[i];
 
-                    _loaded_resources.Add(text_file.Id, text_file);
-                }
+                m_loaded_resources[res_id].Dispose();
+                Console.WriteLine($" > Disposed resource: {res_id}");
             }
-
-
-        }
-
-        internal void RegisterRuntimeLoaded(Resource resource)
-        {
-            _runtime_resources.Add(resource);
-        }
-
-        internal void DisposeRuntimeLoaded(Resource resource)
-        {
-            _runtime_resources.Remove(resource);
-
-            resource.Dispose();
         }
 
         internal void FreeEverything()
         {
-            Console.WriteLine($" > Diposing {_loaded_resources.Count} loaded resources.");
+            Console.WriteLine($" > Diposing {m_loaded_resources.Count} loaded resources.");
 
-            foreach (var resource in _loaded_resources)
+            foreach (var resource in m_loaded_resources)
             {
                 Console.WriteLine($" > Diposing {resource.Key}.");
                 resource.Value.Dispose();
             }
 
-            Console.WriteLine($" > Disposing {_runtime_resources.Count.ToString()} runtime resources.");
+            Console.WriteLine($" > Disposing {m_runtime_resources.Count} runtime resources.");
 
-            foreach (var resource in _runtime_resources)
+            foreach (var resource in m_runtime_resources)
             {
                 Console.WriteLine($" > Diposing {resource.Id}.");
                 resource.Dispose();
             }
 
-            _loaded_resources.Clear();
-            _runtime_resources.Clear();
+            m_loaded_resources.Clear();
+            m_runtime_resources.Clear();
+
+            GC.Collect();
         }
     }
 }

@@ -10,6 +10,9 @@ namespace OMEGA
     {
         public static bool UseScanCodeKeyDetection { get; set; } = true;
 
+        public static Action<Keys> OnKeyDown;
+        public static Action<Keys> OnKeyUp;
+
         public static void StartTextInput()
         {
             SDL_StartTextInput();
@@ -329,6 +332,9 @@ namespace OMEGA
             if (evt.type == SDL_EventType.SDL_KEYDOWN)
             {
                 Keys key = ConvertKey(ref evt.key.keysym);
+
+                OnKeyDown?.Invoke(key);
+
                 if (!Keyboard.Keys.Contains(key))
                 {
                     Keyboard.Keys.Add(key);
@@ -351,6 +357,9 @@ namespace OMEGA
             else if (evt.type == SDL_EventType.SDL_KEYUP)
             {
                 Keys key = ConvertKey(ref evt.key.keysym);
+
+                OnKeyUp?.Invoke(key);
+
                 if (Keyboard.Keys.Remove(key))
                 {
                     if (text_input_bindings.TryGetValue(key, out int value))

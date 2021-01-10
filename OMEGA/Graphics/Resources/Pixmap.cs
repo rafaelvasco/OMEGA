@@ -1,11 +1,12 @@
 ﻿using STB;
+using System;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace OMEGA
 {
-    public class Pixmap
+    public class Pixmap : Resource
     {
         public int Width { get; private set; }
 
@@ -19,7 +20,7 @@ namespace OMEGA
 
         private byte[] pixel_data;
 
-        public Pixmap(byte[] src_data, int width, int height)
+        internal Pixmap(byte[] src_data, int width, int height)
         {
             this.Width = width;
             this.Height = height;
@@ -30,13 +31,7 @@ namespace OMEGA
             ConvertToEngineRepresentation();
         }
 
-        public static Pixmap OnePixel(Color color)
-        {
-            var pixmap = new Pixmap(1, 1, color);
-            return pixmap;
-        }
-
-        public Pixmap(int width, int height, Color color = default)
+        internal Pixmap(int width, int height, Color fill_color = default)
         {
             this.Width = width;
             this.Height = height;
@@ -48,9 +43,25 @@ namespace OMEGA
 
             Blitter.Begin(this);
 
-            Blitter.Fill(color);
+            Blitter.Fill(fill_color);
 
             Blitter.End();
+        }
+
+        public static Pixmap Create(int width, int height, Color fill_color)
+        {
+            var pixmap = new Pixmap(width, height, fill_color);
+
+            int id = Engine.Content.RegisterRuntimeLoaded(pixmap);
+
+            pixmap.Id = $"Pixmap({id}) [{width},{height}]";
+
+            return pixmap;
+        }
+
+        protected override void FreeManaged()
+        {
+            pixel_data = null;
         }
 
         public void SaveToFile(string path)

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Buffers.Binary;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -342,11 +344,6 @@ namespace OMEGA
             return new Color(value1.Rf - value2.Rf, value1.Gf - value2.Gf, value1.Bf - value2.Bf, value1.Af - value2.Af);
         }
 
-        public static implicit operator Color(uint rgba)
-        {
-            return new Color((rgba << 24) | (rgba >> 8 << 16) | (rgba >> 16 << 8) | (rgba >> 24));
-        }
-
         public static implicit operator uint(Color color)
         {
             return color._abgr;
@@ -409,5 +406,55 @@ namespace OMEGA
         }
         
         public static readonly int SizeInBytes = Marshal.SizeOf(typeof(Color));
+
+        public static Color FromHex(string hex)
+        {
+            hex = ToRgbaHex(hex);
+
+            if (hex is null || !uint.TryParse(hex, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out uint packed_value))
+            {
+                throw new ArgumentException("Hexadecimal string is not in the correct format.", nameof(hex));
+            }
+
+            var a = (byte)(packed_value) ;
+            var b = (byte)(packed_value >> 8);
+            var g = (byte)(packed_value >> 16);
+            var r = (byte)(packed_value >> 24);
+
+            var result = new Color(r, g, b, a);
+
+            return result;
+
+        }
+
+        private static string ToRgbaHex(string hex)
+        {
+            if (hex[0] == '#')
+            {
+                hex = hex.Substring(1);
+            }
+
+            if (hex.Length == 8)
+            {
+                return hex;
+            }
+
+            if (hex.Length == 6)
+            {
+                return hex + "FF";
+            }
+
+            if (hex.Length < 3 || hex.Length > 4)
+            {
+                return null;
+            }
+
+            char r = hex[0];
+            char g = hex[1];
+            char b = hex[2];
+            char a = hex.Length == 3 ? 'F' : hex[3];
+
+            return new string(new [] { r, r, g, g, b, b, a, a });
+        }
     }
 }

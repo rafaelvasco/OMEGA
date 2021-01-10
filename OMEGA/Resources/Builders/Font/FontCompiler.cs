@@ -197,6 +197,8 @@ namespace OMEGA
 
             var args = new StringBuilder();
 
+
+
             args.Append(FONT_FILE_PARAM);
             args.Append(@params.FontFilePath);
 

@@ -6,44 +6,72 @@ namespace OMEGA
 {
     public static unsafe class Blitter
     {
-        private static byte[] pixels;
-        private static int surface_w;
-        private static int surface_h;
-        private static bool ready = false;
+        private const int AUX_BUFFER_SIZE = 1024 * 1024 * 4;
+        private const int AUX_BUFFER_STACK_SIZE = 2;
+        private static byte[] m_pixels;
+        private static byte[][] m_aux_buffers = new byte[AUX_BUFFER_STACK_SIZE][];
+        private static Texture2D m_texture_target;
+        private static bool m_blitter_dirty;
+        private static int m_aux_buffers_idx = 0;
+        private static int m_surface_w;
+        private static int m_surface_h;
+        private static bool m_ready = false;
 
         public static void Begin(byte[] pixels_array, int w, int h)
         {
-            if (ready)
+            if (m_ready)
             {
                 throw new Exception("Blitter: Dangling Begin Call");
             }
 
 
-            pixels = pixels_array;
-            surface_w = w;
-            surface_h = h;
-            ready = true;
+            m_pixels = pixels_array;
+            m_surface_w = w;
+            m_surface_h = h;
+            m_ready = true;
         }
 
         public static void Begin(Pixmap pixmap)
         {
-            if (ready)
+            if (m_ready)
             {
                 throw new Exception("Blitter: Dangling Begin Call");
             }
 
-            pixels = pixmap.Data;
-            surface_w = pixmap.Width;
-            surface_h = pixmap.Height;
-            ready = true;
+            m_pixels = pixmap.Data;
+            m_surface_w = pixmap.Width;
+            m_surface_h = pixmap.Height;
+            m_ready = true;
+        }
+
+        public static void Begin(Texture2D texture)
+        {
+            if (texture.Pixmap == null)
+            {
+                throw new Exception("This texture can't be modified with Blitter.");
+            }
+
+            m_texture_target = texture;
+
+            m_pixels = texture.Pixmap.Data;
+            m_surface_w = texture.Pixmap.Width;
+            m_surface_h = texture.Pixmap.Height;
+            m_ready = true;
         }
 
         public static void End()
         {
-            pixels = null;
-            surface_w = 0;
-            surface_h = 0;
-            ready = false;
+            m_pixels = null;
+            m_surface_w = 0;
+            m_surface_h = 0;
+            m_ready = false;
+
+            if (m_texture_target != null && m_blitter_dirty)
+            {
+                m_texture_target.ReloadPixels();
+                m_texture_target = null;
+                m_blitter_dirty = false;
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -66,7 +94,7 @@ namespace OMEGA
 
         public static void Fill(Color color)
         {
-            if (!ready)
+            if (!m_ready)
             {
                 return;
             }
@@ -76,9 +104,9 @@ namespace OMEGA
             byte b = color.B;
             byte a = color.A;
 
-            fixed (byte* ptr = &MemoryMarshal.GetArrayDataReference(pixels))
+            fixed (byte* ptr = &MemoryMarshal.GetArrayDataReference(m_pixels))
             {
-                var len = pixels.Length - 4;
+                var len = m_pixels.Length - 4;
                 for (int i = 0; i <= len; i += 4)
                 {
                     *(ptr + i) = b;
@@ -87,23 +115,25 @@ namespace OMEGA
                     *(ptr + i + 3) = a;
                 }
             }
+
+            m_blitter_dirty = true;
         }
         
         public static void Point(int x, int y, Color color)
         {
-            if (!ready)
+            if (!m_ready)
             {
                 return;
             }
 
-            int pw = surface_w;
-            int ph = surface_h;
+            int pw = m_surface_w;
+            int ph = m_surface_h;
             byte r = color.R;
             byte g = color.G;
             byte b = color.B;
             byte a = color.A;
 
-            fixed (byte* ptr = &MemoryMarshal.GetArrayDataReference(pixels))
+            fixed (byte* ptr = &MemoryMarshal.GetArrayDataReference(m_pixels))
             {
                 ClampAndWarp(ref x, ref y, pw, ph);
 
@@ -114,23 +144,25 @@ namespace OMEGA
                 *(ptr_idx + 2) = r;
                 *(ptr_idx + 3) = a;
             }
+
+            m_blitter_dirty = true;
         }
 
         public static void Rect(int x, int y, int w, int h, Color color)
         {
-            if (!ready)
+            if (!m_ready)
             {
                 return;
             }
 
-            int pw = surface_w;
-            int ph = surface_h;
+            int pw = m_surface_w;
+            int ph = m_surface_h;
             byte r = color.R;
             byte g = color.G;
             byte b = color.B;
             byte a = color.A;
 
-            fixed (byte* ptr = &MemoryMarshal.GetArrayDataReference(pixels))
+            fixed (byte* ptr = &MemoryMarshal.GetArrayDataReference(m_pixels))
             {
                 for (int px = 0; px < w; ++px)
                 {
@@ -150,18 +182,20 @@ namespace OMEGA
                     }
                 }
             }
+
+            m_blitter_dirty = true;
         }
 
         public static void ColorAdd(byte r, byte g, byte b, byte a)
         {
-            if (!ready)
+            if (!m_ready)
             {
                 return;
             }
 
-            fixed (byte* ptr = &MemoryMarshal.GetArrayDataReference(pixels))
+            fixed (byte* ptr = &MemoryMarshal.GetArrayDataReference(m_pixels))
             {
-                for (int i = 0; i < pixels.Length / 4; ++i)
+                for (int i = 0; i < m_pixels.Length / 4; ++i)
                 {
                     byte* ptr_idx = ptr + (i * 4);
 
@@ -176,20 +210,27 @@ namespace OMEGA
                     *(ptr_idx + 3) = (byte)Calc.Clamp(sa, 0, 255);
                 }
             }
+
+            m_blitter_dirty = true;
         }
 
         public static void ColorMult(float r, float g, float b, float a)
         {
-            if (!ready)
+            if (!m_ready)
             {
                 return;
             }
 
-            fixed (byte* ptr = &MemoryMarshal.GetArrayDataReference(pixels))
+            fixed (byte* ptr = &MemoryMarshal.GetArrayDataReference(m_pixels))
             {
-                for (int i = 0; i < pixels.Length / 4; ++i)
+                for (int i = 0; i < m_pixels.Length / 4; ++i)
                 {
                     byte* ptr_idx = ptr + (i * 4);
+
+                    if (*(ptr_idx + 3) == 0)
+                    {
+                        continue;
+                    }
 
                     var sb = (*(ptr_idx) * b);
                     var sg = (*(ptr_idx + 1) * g);
@@ -202,25 +243,26 @@ namespace OMEGA
                     *(ptr_idx + 3) = (byte)Calc.Clamp(sa, 0, 255);
                 }
             }
+
+            m_blitter_dirty = true;
         }
 
         public static void PixelShift(int shift_x, int shift_y)
         {
-            if (!ready)
+            if (!m_ready)
             {
                 return;
             }
 
-            Span<byte> copy = stackalloc byte[pixels.Length];
-            Unsafe.CopyBlockUnaligned(ref copy[0], ref pixels[0], (uint)pixels.Length);
+            Span<byte> copy = GetCopy(m_pixels.Length);
 
-            int pw = surface_w;
-            int ph = surface_h;
+            int pw = m_surface_w;
+            int ph = m_surface_h;
 
             int px = 0;
             int py = 0;
 
-            fixed (byte* ptr = &MemoryMarshal.GetArrayDataReference(pixels))
+            fixed (byte* ptr = &MemoryMarshal.GetArrayDataReference(m_pixels))
             fixed (byte* copy_ptr = &MemoryMarshal.GetReference(copy))
             {
                 for (int x = 0; x < pw; ++x)
@@ -253,25 +295,29 @@ namespace OMEGA
                     }
                 }
             }
+
+            m_blitter_dirty = true;
         }
 
         public static void Blit(
-            Pixmap pixmap,
-            int x, 
+            Span<byte> paste_pixels,
+            int paste_pixels_w,
+            int paste_pixels_h,
+            int x,
             int y,
             Rect region = default,
-            int w=0, 
-            int h=0
+            int w = 0,
+            int h = 0
         )
         {
-            if (!ready)
+            if (!m_ready)
             {
                 return;
             }
 
             if (region.IsEmpty)
             {
-                region = OMEGA.Rect.FromBox(0, 0, pixmap.Width, pixmap.Height);
+                region = OMEGA.Rect.FromBox(0, 0, paste_pixels_w, paste_pixels_h);
             }
 
             if (w == 0)
@@ -287,25 +333,32 @@ namespace OMEGA
             var factor_w = w / region.Width;
             var factor_h = h / region.Height;
 
-            int pw = surface_w;
-            int ph = surface_h;
+            int pw = m_surface_w;
+            int ph = m_surface_h;
 
-            int paste_w = pixmap.Width;
+            int paste_w = paste_pixels_w;
 
-            fixed (byte* ptr = &MemoryMarshal.GetArrayDataReference(pixels))
-            fixed (byte* paste = &MemoryMarshal.GetArrayDataReference(pixmap.Data))
+            fixed (byte* ptr = &MemoryMarshal.GetArrayDataReference(m_pixels))
+            fixed (byte* paste = &MemoryMarshal.GetReference(paste_pixels))
             {
                 for (int px = 0; px < w; ++px)
                 {
                     for (int py = 0; py < h; ++py)
                     {
+                        byte* src_idx = paste + (region.X1 + (px / factor_w) + (region.Y1 + (py / factor_h)) * paste_w) * 4;
+
+                        if (*(src_idx + 3) == 0)
+                        {
+                            continue;
+                        }
+
                         int blit_x = px + x;
                         int blit_y = py + y;
 
                         ClampAndWarp(ref blit_x, ref blit_y, pw, ph);
 
                         byte* ptr_idx = ptr + (blit_x + blit_y * pw) * 4;
-                        byte* src_idx = paste + ( region.X1 + (px / factor_w) + (region.Y1 + (py / factor_h) ) * paste_w) * 4;
+                        
 
                         *(ptr_idx) = *(src_idx);
                         *(ptr_idx + 1) = *(src_idx + 1);
@@ -314,6 +367,20 @@ namespace OMEGA
                     }
                 }
             }
+
+            m_blitter_dirty = true;
+        }
+
+        public static void Blit(
+            Pixmap pixmap,
+            int x, 
+            int y,
+            Rect region = default,
+            int w=0, 
+            int h=0
+        )
+        {
+            Blit(pixmap.Data, pixmap.Width, pixmap.Height, x, y, region, w, h);
         } 
 
         #region FILTERS
@@ -324,16 +391,48 @@ namespace OMEGA
         /// <param name="dist">The distance of the shadow. Can't be smaller then the shadow's size.</param>
         /// <param name="size">The Size/Blur Level of the shadow. Can't be higher than 10.</param>
         /// <param name="color">Shadow color</param>
-        public static void DropShadow(int dist, int size, Color color)
+        public static void DropShadow(int offset_x, int offset_y, Color color)
         {
-            size = Calc.Clamp(size, 0, 10);
 
-            if (dist < size)
+            byte r = color.R;
+            byte g = color.G;
+            byte b = color.B;
+            byte a = color.A;
+
+            Span<byte> copy = GetCopy(m_pixels.Length);
+
+            PixelShift(offset_x, offset_y);
+            ColorAdd(255, 255, 255, 0);
+
+            ColorMult(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
+
+            Blit(copy, m_surface_w, m_surface_h, 0, 0);
+        }
+
+        private static Span<byte> GetCopy(int length)
+        {
+            if (length > AUX_BUFFER_SIZE)
             {
-                dist = size;
+                throw new Exception($"Blitter GetCopy: Overflow. Length {length} is bigger than max {AUX_BUFFER_SIZE}");
             }
 
+            if (m_aux_buffers[m_aux_buffers_idx] == null)
+            {
+                m_aux_buffers[m_aux_buffers_idx] = new byte[AUX_BUFFER_SIZE];
+            }
 
+            Unsafe.CopyBlockUnaligned(ref m_aux_buffers[m_aux_buffers_idx][0], ref m_pixels[0], (uint)length);
+
+            var result = new Span<byte>(m_aux_buffers[m_aux_buffers_idx], 0, length);
+
+            m_aux_buffers_idx++;
+
+            if (m_aux_buffers_idx > AUX_BUFFER_STACK_SIZE - 1)
+            {
+                m_aux_buffers_idx = 0;
+            }
+
+            return result;
         }
 
         #endregion

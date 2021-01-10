@@ -9,6 +9,8 @@ namespace OMEGA
 
         internal TextureFlags TexFlags;
 
+        internal Pixmap Pixmap { get; private set; }
+
         public int Width { get; protected set; }
 
         public int Height { get; protected set; }
@@ -66,17 +68,19 @@ namespace OMEGA
 
         internal Texture2D(Pixmap pixmap, bool tiled, bool filtered, bool render_target = false)
         {
+            Pixmap = pixmap;
             Width = pixmap.Width;
             Height = pixmap.Height;
             Tiled = tiled;
             Filtered = filtered;
             RenderTarget = render_target;
-            Handle = GraphicsContext.CreateTexture2D(pixmap.Width, pixmap.Height, false, 0, TextureFormat.BGRA8, TexFlags, pixmap.Data);
+            Handle = GraphicsContext.CreateDynamicTexture2D(pixmap.Width, pixmap.Height, false, 0, TextureFormat.BGRA8, TexFlags, pixmap.Data);
             UpdateTexFlags();
         }
 
         internal Texture2D(TextureHandle tex_handle, int width, int height, bool filtered, bool tiled)
         {
+            Pixmap = null;
             this.Filtered = filtered;
             this.Tiled = tiled;
             this.Width = width;
@@ -86,35 +90,33 @@ namespace OMEGA
             UpdateTexFlags();
         }
 
+        public static Texture2D Create(int width, int height, Color fill_color, bool tiled = false, bool filtered = false)
+        {
+            var pixmap = new Pixmap(width, height, fill_color);
+
+            return Create(pixmap, tiled, filtered);
+        }
+
         public static Texture2D Create(Pixmap pixmap, bool tiled = false, bool filtered = false)
         {
             var texture = new Texture2D(pixmap, tiled, filtered);
 
-            Engine.Content.RegisterRuntimeLoaded(texture);
+            int id = Engine.Content.RegisterRuntimeLoaded(texture);
+
+            texture.Id = $"Texture({id}) [{pixmap.Width},{pixmap.Height}]";
 
             return texture;
         }
 
-        public void UpdatePixels(Pixmap pixmap)
+        internal void ReloadPixels()
         {
-            GraphicsContext.UpdateTexture2D(Handle, 0, 0, 0, 0, Width, Height, pixmap.Data, pixmap.Stride);
+            if (Pixmap == null)
+            {
+                return;
+            }
+
+            GraphicsContext.UpdateTexture2D(Handle, 0, 0, 0, 0, Width, Height, Pixmap.Data, Pixmap.Stride);
         }
-
-        //public Pixmap GetData()
-        //{
-        //    return new Pixmap(this);
-        //}
-
-        //public Pixmap GetData(int srcX, int srcY, int srcW, int srcH)
-        //{
-        //    return new Pixmap(this, srcX, srcY, srcW, srcH);
-        //}
-
-        //public void BlitTo(Texture2D texture, int srcX, int srcY, int srcW, int srcH)
-        //{
-        //    this.Texture.BlitTo(0, texture.Texture, 0, 0, srcX, srcY, srcW, srcH);
-        //}
-
 
         private void UpdateTexFlags()
         {
@@ -142,6 +144,14 @@ namespace OMEGA
         protected override void FreeUnmanaged()
         {
             GraphicsContext.DestroyTexture(Handle);
+        }
+
+        protected override void FreeManaged()
+        {
+            if (Pixmap != null)
+            {
+                Pixmap.Dispose();
+            }
         }
 
         public bool Equals(Texture2D other)
