@@ -3,18 +3,20 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
+	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ImGui.NET" Version="1.78.0" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\OMEGA\OMEGA.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Assets\demo.pak">
+    <None Update="Assets\editor.pak">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\manifest.json">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Update="project.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

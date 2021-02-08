@@ -234,10 +234,15 @@ namespace OMEGA
 
         public CanvasView CreateView()
         {
+            return CreateView(DEFAULT_CLEAR_COLOR);
+        }
+
+        public CanvasView CreateView(Color clear_color)
+        {
             var view = new CanvasView(1f, 1f)
             {
                 ViewId = StaticViewId++,
-                ClearColor = base_view?.ClearColor ?? DEFAULT_CLEAR_COLOR,
+                ClearColor = clear_color,
             };
 
             if (view.ViewId > 0)
@@ -250,6 +255,11 @@ namespace OMEGA
 
         public void Begin(CanvasView view = null)
         {
+            if (inside_begin_block)
+            {
+                throw new Exception("Cannot nest Canvas Begin Calls");
+            }
+
             inside_begin_block = true;
 
             current_view = view ?? base_view;
@@ -277,6 +287,16 @@ namespace OMEGA
             inside_begin_block = false;
         }
 
+        public void SetScissor(int x, int y, int width, int height)
+        {
+            GraphicsContext.SetScissor(x, y, width, height);
+        }
+
+        public void ClearScissor()
+        {
+            GraphicsContext.SetScissor(0, 0, 0, 0);
+        }
+
         public void DrawTriangle(Vertex v1, Vertex v2, Vertex v3, Texture2D texture = null)
         {
             if (!inside_begin_block)
@@ -288,8 +308,7 @@ namespace OMEGA
 
             if (current_texture != texture)
             {
-                RenderBatch();
-                current_texture = texture;
+                SetTexture(0, texture);
             }
 
             if (!m_vertex_stream.PushTriangle(v1, v2, v3))
@@ -310,8 +329,7 @@ namespace OMEGA
 
             if (current_texture != texture)
             {
-                RenderBatch();
-                current_texture = texture;
+                SetTexture(0, texture);
             }
 
             if (!m_vertex_stream.PushQuad(in quad))
@@ -320,7 +338,6 @@ namespace OMEGA
                 m_vertex_stream.PushQuad(in quad);
             }
         }
-
 
         internal void Frame()
         {
@@ -415,15 +432,14 @@ namespace OMEGA
 
         private void InitDefaultView()
         {
-            base_view = CreateView();
-
-            base_view.ClearColor = DEFAULT_CLEAR_COLOR;
+            base_view = CreateView(DEFAULT_CLEAR_COLOR);
 
             current_view = base_view;
         }
 
-        private void ApplyViewProperties(CanvasView view)
-        {
+        private void ApplyViewProperties(CanvasView view) 
+        { 
+            
             Console.WriteLine("Apply View");
 
             Rect viewport = GetViewPort(view);
@@ -472,7 +488,6 @@ namespace OMEGA
             }
         }
 
-
         private void InitDefaultResources()
         {
             base_shader = Engine.Content.Get<ShaderProgram>("canvas_shader");
@@ -483,7 +498,6 @@ namespace OMEGA
 
             current_texture = base_texture;
         }
-
 
         private void RenderBatch()
         {
@@ -499,16 +513,12 @@ namespace OMEGA
                 max_draw_calls = draw_calls;
             }
 
-            SetTexture(0, current_texture);
-
-            GraphicsContext.SetState(render_state);
-
             SubmitVertexStream(render_pass: current_view.ViewId, m_vertex_stream);
 
             m_vertex_stream.Reset();
         }
 
-        private void SubmitVertexStream(
+        public void SubmitVertexStream(
           ushort render_pass,
           VertexStream vertex_stream,
           int start_vertex_index,
@@ -521,6 +531,8 @@ namespace OMEGA
                 return;
             }
 
+            GraphicsContext.SetState(render_state);
+
             current_shader.Submit();
 
             vertex_stream.SubmitSpan(start_vertex_index, vertex_count, start_indice_index, index_count);
@@ -528,12 +540,14 @@ namespace OMEGA
             GraphicsContext.Submit(render_pass, current_shader.Program);
         }
 
-        private void SubmitVertexStream(ushort render_pass, VertexStream vertex_stream)
+        public void SubmitVertexStream(ushort render_pass, VertexStream vertex_stream)
         {
             if (current_shader == null)
             {
                 return;
             }
+
+            GraphicsContext.SetState(render_state);
 
             current_shader.Submit();
 
@@ -541,11 +555,31 @@ namespace OMEGA
             GraphicsContext.Submit(render_pass, current_shader.Program);
         }
 
-        private void SetTexture(int slot, Texture2D texture)
+        public void SetShaderProgram(ShaderProgram shader)
         {
-            current_texture = texture;
-            GraphicsContext.SetTexture(0, current_shader.Samplers[slot], texture.Handle, texture.TexFlags);
+            if (shader != current_shader)
+            {
+                Flush();
+
+                current_shader = shader;
+
+                if (shader == null)
+                {
+                    current_shader = base_shader;
+                }
+            }
         }
+
+        public void SetTexture(int slot, Texture2D texture)
+        {
+            if (texture != current_texture)
+            {
+                Flush();
+                current_texture = texture;
+                GraphicsContext.SetTexture(0, current_shader.Samplers[slot], texture.Handle, texture.TexFlags);
+            }
+        }
+
         private void UpdateRenderState()
         {
             render_state =
@@ -556,7 +590,6 @@ namespace OMEGA
                 depth_state |
                 cull_state;
         }
-
         private void ResetRenderState()
         {
             BlendMode = BlendMode.Alpha;

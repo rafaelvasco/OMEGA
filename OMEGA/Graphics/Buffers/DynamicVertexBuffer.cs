@@ -23,11 +23,11 @@ namespace OMEGA
             return vertex_buffer;
         }
 
-        public static DynamicVertexBuffer Create(Vertex[] vertices, BufferFlags flags = BufferFlags.None)
+        public static DynamicVertexBuffer Create(Vertex[] vertices, VertexLayout layout, BufferFlags flags = BufferFlags.None)
         {
             var vertex_buffer = new DynamicVertexBuffer
             {
-                Handle = GraphicsContext.CreateDynamicVertexBuffer(vertices, Vertex.VertexLayout, flags)
+                Handle = GraphicsContext.CreateDynamicVertexBuffer(vertices, layout, flags)
             };
 
             GraphicsContext.RegisterAllocatedResource(vertex_buffer);

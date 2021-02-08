@@ -1,0 +1,24 @@
+{
+  "resources": {
+    "editor": {
+      "shaders": [
+        {
+          "id": "imgui_shader",
+          "vs_path": "Shaders/vs_imgui.sc",
+          "fs_path": "Shaders/fs_imgui.sc"
+        },
+        {
+          "id": "imgui_shader_image",
+          "vs_path": "Shaders/vs_imgui_image.sc",
+          "fs_path": "Shaders/fs_imgui_image.sc"
+        }
+      ],
+      "images": [
+      ],
+      "fonts": [
+      ],
+      "atlases": [
+      ]
+    }
+  }
+}

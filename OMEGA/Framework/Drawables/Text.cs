@@ -50,6 +50,11 @@ namespace OMEGA
             Y = y;
         }
 
+        public override void PutOnCenter()
+        {
+            SetPosition(Engine.Canvas.Width/2 - m_size.X/2, Engine.Canvas.Height/2 - m_size.Y/2);
+        }
+
         public override void SetSize(float w, float h)
         {
             m_scale = new Vec2(w/m_size.X, h/m_size.Y);
@@ -115,5 +120,7 @@ namespace OMEGA
                 }
             }
         }
+
+        
     }
 }

@@ -43,7 +43,7 @@ namespace OMEGA
 
         internal bool NeedsUpdateTransform {get;set;} = true;
 
-        internal ushort ViewId {get;set;}
+        public ushort ViewId {get;internal set;}
 
         private Vec2 m_size_factor;
         private RectF m_viewport;

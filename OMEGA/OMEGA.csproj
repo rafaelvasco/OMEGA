@@ -15,9 +15,15 @@
         <TargetPath>bgfx.dll</TargetPath>
     </ContentWithTargetPath>
   </ItemGroup>
+	
+	<ItemGroup>
+		<PackageReference Include="protobuf-net" Version="3.0.73" />
+	</ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="protobuf-net" Version="3.0.73" />
+	  <None Update="Assets\base.pak">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
 	</ItemGroup>
 
 </Project>

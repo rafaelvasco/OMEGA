@@ -1,11 +1,11 @@
-﻿namespace DEMO
+﻿namespace OMEGAED
 {
     internal static class Program
     {
         private static void Main()
         {
-            using var demo = new SpriteDemo();
-            demo.Run();
+            using var editor = new Editor();
+            editor.Run();
         }
     }
 }

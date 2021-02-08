@@ -66,6 +66,18 @@ namespace OMEGA
 
         private bool render_target = false;
 
+        internal Texture2D(IntPtr data, int width, int height, int bytes_per_pixel)
+        {
+            Pixmap = null;
+            Width = width;
+            Height = height;
+            Tiled = false;
+            Filtered = false;
+            RenderTarget = false;
+            UpdateTexFlags();
+            Handle = GraphicsContext.CreateTexture2D(width, height, bytes_per_pixel, false, 0, TextureFormat.BGRA8, TexFlags, data);
+        }
+
         internal Texture2D(Pixmap pixmap, bool tiled, bool filtered, bool render_target = false)
         {
             Pixmap = pixmap;
@@ -74,8 +86,8 @@ namespace OMEGA
             Tiled = tiled;
             Filtered = filtered;
             RenderTarget = render_target;
-            Handle = GraphicsContext.CreateDynamicTexture2D(pixmap.Width, pixmap.Height, false, 0, TextureFormat.BGRA8, TexFlags, pixmap.Data);
             UpdateTexFlags();
+            Handle = GraphicsContext.CreateDynamicTexture2D(pixmap.Width, pixmap.Height, false, 0, TextureFormat.BGRA8, TexFlags, pixmap.Data);
         }
 
         internal Texture2D(TextureHandle tex_handle, int width, int height, bool filtered, bool tiled)
@@ -104,6 +116,17 @@ namespace OMEGA
             int id = Engine.Content.RegisterRuntimeLoaded(texture);
 
             texture.Id = $"Texture({id}) [{pixmap.Width},{pixmap.Height}]";
+
+            return texture;
+        }
+
+        public static Texture2D Create(IntPtr data, int width, int height, int bytes_per_pixel)
+        {
+            var texture = new Texture2D(data, width, height, bytes_per_pixel);
+
+            int id = Engine.Content.RegisterRuntimeLoaded(texture);
+
+            texture.Id = $"Texture({id}) [{width},{height}]";
 
             return texture;
         }

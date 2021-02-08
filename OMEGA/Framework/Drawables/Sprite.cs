@@ -76,6 +76,12 @@ namespace OMEGA
             UpdateQuadGeometry();
         }
 
+        public override void PutOnCenter()
+        {
+            SetOrigin(0.5f ,0.5f);
+            SetPosition(Engine.Canvas.Width/2, Engine.Canvas.Height/2);
+        }
+
         public override void Move(float dx, float dy)
         {
             X += dx;

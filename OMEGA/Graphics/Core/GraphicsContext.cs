@@ -16,12 +16,12 @@ namespace OMEGA
         /* INITIALIZATION */
         /* ==================================================================*/
 
-        public static void SetPlatformData(IntPtr WindowHandle)
+        public static void SetPlatformData(IntPtr window_handle)
         {
             unsafe
             {
                 PlatformPtrData platformData = new PlatformPtrData();
-                platformData.nwh = WindowHandle.ToPointer();
+                platformData.nwh = window_handle.ToPointer();
                 Bgfx.set_platform_data(&platformData);
             }
         }
@@ -172,6 +172,16 @@ namespace OMEGA
             unsafe
             {
                 Memory* data = AllocGraphicsMemoryBuffer(pixel_data);
+                TextureHandle tex = Bgfx.create_texture_2d((ushort)width, (ushort)height, has_mips, (ushort)num_layers, tex_format, (ulong)flags, data);
+                return tex;
+            }
+        }
+
+        public static TextureHandle CreateTexture2D(int width, int height, int bytes_per_pixel, bool has_mips, int num_layers, TextureFormat tex_format, TextureFlags flags, IntPtr pixel_data)
+        {
+            unsafe
+            {
+                Memory* data = AllocGraphicsMemoryBuffer(pixel_data, width * height * bytes_per_pixel);
                 TextureHandle tex = Bgfx.create_texture_2d((ushort)width, (ushort)height, has_mips, (ushort)num_layers, tex_format, (ulong)flags, data);
                 return tex;
             }
@@ -539,7 +549,14 @@ namespace OMEGA
         {
             var size = (uint)(array.Length * Unsafe.SizeOf<T>());
             var data = Bgfx.alloc(size);
-            Unsafe.CopyBlock(data->data, Unsafe.AsPointer(ref array[0]), size);
+            Unsafe.CopyBlockUnaligned(data->data, Unsafe.AsPointer(ref array[0]), size);
+            return data;
+        }
+
+        private static unsafe Memory* AllocGraphicsMemoryBuffer(IntPtr data_ptr, int data_size)
+        {
+            var data = Bgfx.alloc((uint)data_size);
+            Unsafe.CopyBlockUnaligned(data->data, data_ptr.ToPointer(), (uint)data_size);
             return data;
         }
 

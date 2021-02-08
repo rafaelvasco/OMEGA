@@ -1,4 +1,5 @@
 ﻿using OMEGA;
+using System;
 
 namespace DEMO
 {
@@ -29,12 +30,14 @@ namespace DEMO
         {
         }
 
-        public override void FixedUpdate (float dt)
+        public override void Update(float dt)
         {
             Blitter.Begin(surface.Texture);
 
             if (Input.MouseLeftPressed())
             {
+                Console.WriteLine("Mouse Pressed");
+
                 int local_x = (int)(Input.MousePos.X - surface.X);
                 int local_y = (int)(Input.MousePos.Y - surface.Y);
 
@@ -43,6 +46,8 @@ namespace DEMO
 
             if (Input.MouseRightPressed())
             {
+                Console.WriteLine("Mouse Right Pressed");
+
                 int local_x = (int)(Input.MousePos.X - surface.X);
                 int local_y = (int)(Input.MousePos.Y - surface.Y);
 
@@ -75,13 +80,11 @@ namespace DEMO
             }
 
             Blitter.End();
-
         }
 
         public override void Draw(Canvas canvas, float dt)
         {
             canvas.Begin();
-
             surface.Draw(canvas);
             canvas.End();
         }

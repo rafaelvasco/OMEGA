@@ -208,6 +208,8 @@ namespace OMEGA
 
         public abstract void Load();
 
+        public virtual void Unload() { }
+
         public virtual void Update(float dt) { }
 
         public virtual void FixedUpdate(float dt) { }
@@ -216,6 +218,8 @@ namespace OMEGA
 
         public void Dispose()
         {
+            Unload();
+
             GC.SuppressFinalize(this);
             Engine.Shutdown();
         }

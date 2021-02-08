@@ -12,6 +12,8 @@
 
         public abstract void SetPosition(float x, float y);
 
+        public abstract void PutOnCenter();
+
         public abstract void SetSize(float w, float h);
 
         public abstract void Move(float dx, float dy);

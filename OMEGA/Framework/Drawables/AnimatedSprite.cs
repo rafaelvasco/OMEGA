@@ -233,6 +233,11 @@ namespace OMEGA
             Y = y;
         }
 
+        public override void PutOnCenter()
+        {
+            SetPosition(Engine.Canvas.Width / 2 - Width / 2, Engine.Canvas.Height / 2 - Height / 2);
+        }
+
         public override void Move(float dx, float dy)
         {
             X += dx;

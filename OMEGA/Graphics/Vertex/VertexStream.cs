@@ -4,16 +4,16 @@ using System.Runtime.InteropServices;
 
 namespace OMEGA
 {
-    internal enum VertexStreamMode
+    public enum VertexStreamMode
     {
         Static,
         Dynamic,
         Stream
     }
 
-    internal unsafe class VertexStream : IDisposable
+    public unsafe class VertexStream : IDisposable
     {
-        private const int INITIAL_MAX_BUFFER = 1024;
+        private const int INITIAL_MAX_BUFFER = 32767;
         private const int MAX_SIZE_BUFFER = sizeof(ushort);
 
         public int VertexCount => m_vertex_count;
@@ -26,9 +26,15 @@ namespace OMEGA
         private readonly VertexStreamMode m_stream_mode;
         private Vertex[] m_vertices;
         private ushort[] m_indices;
+        private VertexLayout m_vertex_layout = Vertex.VertexLayout;
         private bool m_stream_changed = true;
         private int m_vertex_count;
         private int m_index_count;
+
+        public void SetVertexLayout(VertexLayout layout)
+        {
+            m_vertex_layout = layout;
+        }
 
         public VertexStream(VertexStreamMode stream_mode = VertexStreamMode.Stream)
         {
@@ -44,7 +50,7 @@ namespace OMEGA
 
             if (stream_mode == VertexStreamMode.Dynamic)
             {
-                m_dynamic_vertex_buffer = DynamicVertexBuffer.Create(m_vertices);
+                m_dynamic_vertex_buffer = DynamicVertexBuffer.Create(m_vertices, m_vertex_layout);
                 m_dynamic_index_buffer = DynamicIndexBuffer.Create(m_indices);
             }
 
@@ -70,13 +76,33 @@ namespace OMEGA
             m_index_count = indices.Length;
 
             m_static_index_buffer = IndexBuffer.Create(m_indices);
-            m_static_vertex_buffer = VertexBuffer.Create(m_vertices);
+            m_static_vertex_buffer = VertexBuffer.Create(m_vertices, m_vertex_layout);
         }
 
         public void Reset()
         {
             m_vertex_count = 0;
             m_index_count = 0;
+        }
+
+        public bool PushVertices(IntPtr vertices, IntPtr indices, int vertices_data_size, int indices_data_size)
+        {
+            if (vertices_data_size > m_vertices.Length * Unsafe.SizeOf<Vertex>()) 
+            {
+                Console.WriteLine("Resize Vertex Stream Vertices");
+                Array.Resize(ref m_vertices, m_vertices.Length * 2);
+            }
+
+            if (indices_data_size > m_indices.Length * sizeof(ushort))
+            {
+                Console.WriteLine("Resize Vertex Stream Indices");
+                Array.Resize(ref m_indices, m_indices.Length * 2);
+            }
+
+            Unsafe.CopyBlockUnaligned(Unsafe.AsPointer(ref m_vertices[0]), vertices.ToPointer(), (uint)vertices_data_size);
+            Unsafe.CopyBlockUnaligned(Unsafe.AsPointer(ref m_indices[0]), indices.ToPointer(), (uint)indices_data_size);
+
+            return true;
         }
 
         public bool PushTriangle(Vertex v1, Vertex v2, Vertex v3)
@@ -234,7 +260,7 @@ namespace OMEGA
 
                 case VertexStreamMode.Stream:
                     var vertices_span = new Span<Vertex>(m_vertices, start_vertex_index, vertex_count);
-                    var transient_buffer = TransientVertexBuffer.Create(vertices_span, Vertex.VertexLayout);
+                    var transient_buffer = TransientVertexBuffer.Create(vertices_span, m_vertex_layout);
 
                     var indices_span = new Span<ushort>(m_indices, start_indice_index, index_count);
                     var transient_idx_buffer = TransientIndexBuffer.Create(indices_span);

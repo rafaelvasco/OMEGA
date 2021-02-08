@@ -15,6 +15,8 @@ namespace OMEGA
 
         public static IGame RunningGame => running_game;
 
+        public static IntPtr DisplaySurfaceHandle => Platform.GetRenderSurfaceHandle();
+
         public static bool Active
         {
             get
