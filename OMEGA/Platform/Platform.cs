@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using static SDL2.SDL;
+using static SDL2.Sdl;
 
 namespace OMEGA
 {
@@ -53,34 +53,34 @@ namespace OMEGA
 
         public static void PollEvents()
         {
-            while (SDL_PollEvent(out SDL_Event evt) == 1)
+            while (SDL_PollEvent(out SdlEvent evt) == 1)
             {
-                if (evt.type == SDL_EventType.SDL_KEYDOWN || evt.type == SDL_EventType.SDL_KEYUP)
+                if (evt.type == SdlEventType.SdlKeydown || evt.type == SdlEventType.SdlKeyup)
                 {
                     ProcessKeyEvent(evt);
                 }
 
-                else if (evt.type == SDL_EventType.SDL_MOUSEBUTTONDOWN || evt.type == SDL_EventType.SDL_MOUSEWHEEL)
+                else if (evt.type == SdlEventType.SdlMousemotion || evt.type == SdlEventType.SdlMousebuttondown || evt.type == SdlEventType.SdlMousebuttonup || evt.type == SdlEventType.SdlMousewheel)
                 {
                     ProcessMouseEvent(evt);
                 }
 
-                else if (evt.type == SDL_EventType.SDL_WINDOWEVENT)
+                else if (evt.type == SdlEventType.SdlWindowevent)
                 {
                     ProcessWindowEvent(evt);
                 }
 
-                else if (evt.type == SDL_EventType.SDL_CONTROLLERDEVICEADDED || evt.type == SDL_EventType.SDL_CONTROLLERDEVICEREMOVED)
+                else if (evt.type == SdlEventType.SdlControllerdeviceadded || evt.type == SdlEventType.SdlControllerdeviceremoved)
                 {
                     ProcessGamePadEvent(evt);
                 }
 
-                else if (evt.type == SDL_EventType.SDL_TEXTINPUT || evt.type == SDL_EventType.SDL_TEXTEDITING)
+                else if (evt.type == SdlEventType.SdlTextinput || evt.type == SdlEventType.SdlTextediting)
                 {
                     ProcessTextInputEvent(evt);
                 }
 
-                else if (evt.type == SDL_EventType.SDL_QUIT)
+                else if (evt.type == SdlEventType.SdlQuit)
                 {
                     Engine.Exit();
                     break;
@@ -106,7 +106,7 @@ namespace OMEGA
         public static void ShowRuntimeError(string title, string message)
         {
             SDL_ShowSimpleMessageBox(
-                SDL_MessageBoxFlags.SDL_MESSAGEBOX_ERROR,
+                SdlMessageBoxFlags.SdlMessageboxError,
                 title ?? "",
                 message ?? "",
                 IntPtr.Zero

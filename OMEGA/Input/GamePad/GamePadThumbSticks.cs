@@ -7,24 +7,24 @@ namespace OMEGA
 		{
 			get
 			{
-				return left;
+				return _left;
 			}
 		}
 		public Vec2 Right
 		{
 			get
 			{
-				return right;
+				return _right;
 			}
 		}
 
-		private Vec2 left;
-		private Vec2 right;
+		private Vec2 _left;
+		private Vec2 _right;
 
 		public GamePadThumbSticks(Vec2 leftPosition, Vec2 rightPosition)
 		{
-			left = leftPosition;
-			right = rightPosition;
+			_left = leftPosition;
+			_right = rightPosition;
 			ApplySquareClamp();
 		}
 
@@ -33,8 +33,8 @@ namespace OMEGA
 			Vec2 rightPosition,
 			GamePadDeadZone deadZoneMode
 		) {
-			left = leftPosition;
-			right = rightPosition;
+			_left = leftPosition;
+			_right = rightPosition;
 			ApplyDeadZone(deadZoneMode);
 			if (deadZoneMode == GamePadDeadZone.Circular)
 			{
@@ -53,35 +53,35 @@ namespace OMEGA
 				case GamePadDeadZone.None:
 					break;
 				case GamePadDeadZone.IndependentAxes:
-					left.X = GamePad.ExcludeAxisDeadZone(left.X, GamePad.LeftDeadZone);
-					left.Y = GamePad.ExcludeAxisDeadZone(left.Y, GamePad.LeftDeadZone);
-					right.X = GamePad.ExcludeAxisDeadZone(right.X, GamePad.RightDeadZone);
-					right.Y = GamePad.ExcludeAxisDeadZone(right.Y, GamePad.RightDeadZone);
+					_left.X = GamePad.ExcludeAxisDeadZone(_left.X, GamePad.LEFT_DEAD_ZONE);
+					_left.Y = GamePad.ExcludeAxisDeadZone(_left.Y, GamePad.LEFT_DEAD_ZONE);
+					_right.X = GamePad.ExcludeAxisDeadZone(_right.X, GamePad.RIGHT_DEAD_ZONE);
+					_right.Y = GamePad.ExcludeAxisDeadZone(_right.Y, GamePad.RIGHT_DEAD_ZONE);
 					break;
 				case GamePadDeadZone.Circular:
-					left = ExcludeCircularDeadZone(left, GamePad.LeftDeadZone);
-					right = ExcludeCircularDeadZone(right, GamePad.RightDeadZone);
+					_left = ExcludeCircularDeadZone(_left, GamePad.LEFT_DEAD_ZONE);
+					_right = ExcludeCircularDeadZone(_right, GamePad.RIGHT_DEAD_ZONE);
 					break;
 			}
 		}
 
 		private void ApplySquareClamp()
 		{
-			left.X = Calc.Clamp(left.X, -1.0f, 1.0f);
-			left.Y = Calc.Clamp(left.Y, -1.0f, 1.0f);
-			right.X = Calc.Clamp(right.X, -1.0f, 1.0f);
-			right.Y = Calc.Clamp(right.Y, -1.0f, 1.0f);
+			_left.X = Calc.Clamp(_left.X, -1.0f, 1.0f);
+			_left.Y = Calc.Clamp(_left.Y, -1.0f, 1.0f);
+			_right.X = Calc.Clamp(_right.X, -1.0f, 1.0f);
+			_right.Y = Calc.Clamp(_right.Y, -1.0f, 1.0f);
 		}
 
 		private void ApplyCircularClamp()
 		{
-			if (left.LengthSquared() > 1.0f)
+			if (_left.LengthSquared() > 1.0f)
 			{
-				left.Normalize();
+				_left.Normalize();
 			}
-			if (right.LengthSquared() > 1.0f)
+			if (_right.LengthSquared() > 1.0f)
 			{
-				right.Normalize();
+				_right.Normalize();
 			}
 		}
 
@@ -108,7 +108,7 @@ namespace OMEGA
 		/// </returns>
 		public static bool operator ==(GamePadThumbSticks left, GamePadThumbSticks right)
 		{
-			return (left.left == right.left) && (left.right == right.right);
+			return (left._left == right._left) && (left._right == right._right);
 		}
 
 		/// <summary>

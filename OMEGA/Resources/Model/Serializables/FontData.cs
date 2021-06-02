@@ -1,32 +1,35 @@
-﻿using ProtoBuf;
+﻿using MessagePack;
 
 namespace OMEGA
 {
-    [ProtoContract]
+    [MessagePackObject]
     public class FontData
     {
-        [ProtoMember(1)]
+        [Key(0)]
         public string Id { get; set; }
 
-        [ProtoMember(2)]
-        public int Size { get;set;}
-
-        [ProtoMember(3)]
-        public int LineHeight { get;set;}
-
-        [ProtoMember(4)]
+        [Key(1)]
         public ImageData FontSheet { get; set; }
 
-        [ProtoMember(5)]
+        [Key(2)]
         public char[] Chars { get;set;}
 
-        [ProtoMember(6)]
+        [Key(3)]
         public SRect[] GlyphRects { get; set; }
 
-        [ProtoMember(7)]
-        public SVec2[] GlyphOffsets { get;set; }
+        [Key(4)]
+        public SRect[] GlyphCroppings { get;set; }
 
-        [ProtoMember(8)]
-        public float[] GlyphXAdvances { get;set;}
+        [Key(5)]
+        public SVec3[] GlyphKernings { get;set;}
+
+        [Key(6)]
+        public int LineSpacing { get; set; }
+
+        [Key(7)]
+        public int Spacing { get; set; }
+
+        [Key(8)]
+        public char DefaultChar { get; set; }
     }
 }

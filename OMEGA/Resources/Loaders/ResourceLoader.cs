@@ -1,21 +1,22 @@
-﻿using ProtoBuf;
+﻿
 using System.IO;
 using System.Text.Json;
+
 
 namespace OMEGA
 {
     public static partial class ResourceLoader
     {
-        private static string root_path;
+        private static string _rootPath;
 
-        public static string GetFullResourcePath(string relative_res_path)
+        public static string GetFullResourcePath(string relativeResPath)
         {
-            if (root_path == null)
+            if (_rootPath == null)
             {
-                return relative_res_path;
+                return relativeResPath;
             }
 
-            string full_path = Path.Combine(root_path, relative_res_path);
+            string full_path = Path.Combine(_rootPath, relativeResPath);
 
             if (Platform.RunningPlatform == RunningPlatform.Windows)
             {
@@ -27,20 +28,26 @@ namespace OMEGA
 
         public static void SetRootPath(string path)
         {
-            root_path = path;
+            _rootPath = path;
         }
-        public static ResourcePak LoadPak(string pak_name)
+
+        /// <summary>
+        /// Used by Game to Load Game Assets Pak
+        /// </summary>
+        /// <param name="pak_name"></param>
+        /// <returns></returns>
+        public static ResourcePak LoadPak(string pakName)
         {
-            var path = Path.Combine(root_path,
-                !pak_name.Contains(".pak") ? pak_name + ".pak" : pak_name);
+            var path = Path.Combine(_rootPath,
+                !pakName.Contains(".pak") ? pakName + ".pak" : pakName);
 
-            using var file = File.OpenRead(path);
-
-            ResourcePak pak = Serializer.Deserialize<ResourcePak>(file);
-
-            return pak;
+            return PakLoader.Load(path);
         }
 
+        /// <summary>
+        /// Used by Game to Load Game Properties
+        /// </summary>
+        /// <returns>GameInfo</returns>
         public static GameInfo LoadGameInfo()
         {
             var json_game_info_file = File.ReadAllText("project.json");
@@ -50,9 +57,14 @@ namespace OMEGA
             return game_info_file;
         }
 
-        public static GameAssetsManifest LoadGameAssetsManifest(string resources_folder)
+        /// <summary>
+        /// User by Assets Builder
+        /// </summary>
+        /// <param name="resources_folder"></param>
+        /// <returns>GameAssetsManifest</returns>
+        public static GameAssetsManifest LoadGameAssetsManifest(string resourcesFolder)
         {
-            var json_game_assets_manifest = File.ReadAllText(Path.Combine(resources_folder, "manifest.json"));
+            var json_game_assets_manifest = File.ReadAllText(Path.Combine(resourcesFolder, "manifest.json"));
 
             GameAssetsManifest manifest = JsonSerializer.Deserialize<GameAssetsManifest>(json_game_assets_manifest);
 

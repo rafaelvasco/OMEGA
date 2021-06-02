@@ -4,16 +4,16 @@ namespace OMEGA
 {
     public static partial class ResourceLoader
     {
-        public static ShaderProgram LoadShader(ShaderProgramData shader_data)
+        public static ShaderProgram LoadShader(ShaderProgramData shaderData)
         {
             var shader_program =
                 GraphicsContext.CreateShaderProgram(
-                    shader_data.VertexShader,
-            shader_data.FragmentShader,
-                    shader_data.Samplers,
-                    shader_data.Params);
+                    shaderData.VertexShader,
+            shaderData.FragmentShader,
+                    shaderData.Samplers,
+                    shaderData.Params);
 
-            shader_program.Id = shader_data.Id;
+            shader_program.Id = shaderData.Id;
 
             return shader_program;
         }

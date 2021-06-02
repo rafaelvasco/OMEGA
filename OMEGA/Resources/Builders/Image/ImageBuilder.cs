@@ -5,9 +5,9 @@ namespace OMEGA
 {
     public static class ImageBuilder
     {
-        public static ImageData Build(string id, string relative_path)
+        public static ImageData Build(string id, string relativePath)
         {
-            using var file = File.OpenRead(ResourceLoader.GetFullResourcePath(relative_path));
+            using var file = File.OpenRead(ResourceLoader.GetFullResourcePath(relativePath));
 
             var image = ImageResult.FromStream(file, ColorComponents.RedGreenBlueAlpha);
 

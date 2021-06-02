@@ -28,7 +28,7 @@ namespace OMEGA
 
         void OnDisplayResize();
 
-        void Draw(Canvas canvas, float dt);
+        void Draw(Canvas2D canvas, float dt);
 
     }
 }

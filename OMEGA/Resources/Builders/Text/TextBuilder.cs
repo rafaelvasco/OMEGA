@@ -6,9 +6,9 @@ namespace OMEGA
 {
     public static class TextBuilder
     {
-        public static TextFileData Build(string id, string relative_path)
+        public static TextFileData Build(string id, string relativePath)
         {
-            var text = File.ReadAllLines(ResourceLoader.GetFullResourcePath(relative_path));
+            var text = File.ReadAllLines(ResourceLoader.GetFullResourcePath(relativePath));
 
             var text_file_data = new TextFileData()
             {

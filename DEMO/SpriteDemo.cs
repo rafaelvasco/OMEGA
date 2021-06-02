@@ -23,9 +23,9 @@ namespace DEMO
 
             character.CurrentAnimation.Mode = SpriteAnimationMode.Loop;
 
-            sprite.SetPosition(Engine.Canvas.Width/2, Engine.Canvas.Height/2);
+            sprite.SetPosition(Engine.Canvas.Width / 2.0f, Engine.Canvas.Height / 2.0f);
 
-            character.SetPosition(sprite.X + 100 , sprite.Y + 100);
+            character.SetPosition(sprite.X + 100, sprite.Y + 100);
 
             sprite.SetSize(sprite.Width * 2f, sprite.Height * 2f);
 
@@ -36,6 +36,14 @@ namespace DEMO
         public override void FixedUpdate(float dt)
         {
             character.Update();
+        }
+
+        public override void Update(float dt)
+        {
+            if (Input.KeyPressed(Keys.F11))
+            {
+                Engine.ToggleFullscreen();
+            }
 
             if (Input.KeyPressed(Keys.Left))
             {
@@ -49,26 +57,26 @@ namespace DEMO
 
             if (Input.KeyDown(Keys.Left))
             {
-                character.Move(-5f, 0f);
+                character.Move(-300f * dt, 0f);
             }
 
             if (Input.KeyDown(Keys.Right))
             {
-                character.Move(5f, 0f);
+                character.Move(300f * dt, 0f);
             }
 
             if (Input.KeyDown(Keys.Up))
             {
-                character.Move(0f, -5f);
+                character.Move(0f, -300f * dt);
             }
 
             if (Input.KeyDown(Keys.Down))
             {
-                character.Move(0f, 5f);
+                character.Move(0f, 300f * dt);
             }
         }
 
-        public override void Draw(Canvas canvas, float dt)
+        public override void Draw(Canvas2D canvas, float dt)
         {
             canvas.Begin();
 

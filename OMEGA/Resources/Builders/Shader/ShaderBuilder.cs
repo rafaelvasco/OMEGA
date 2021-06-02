@@ -5,11 +5,11 @@ namespace OMEGA
 {
     public static class ShaderBuilder
     {
-        public static ShaderProgramData Build(string id, string relative_vs_path, string relative_fs_path)
+        public static ShaderProgramData Build(string id, string relativeVsPath, string relativeFsPath)
         {
             Console.WriteLine($"Compiling Shader: {id}");
 
-            var result = ShaderCompiler.Compile(ResourceLoader.GetFullResourcePath(relative_vs_path), ResourceLoader.GetFullResourcePath(relative_fs_path));
+            var result = ShaderCompiler.Compile(ResourceLoader.GetFullResourcePath(relativeVsPath), ResourceLoader.GetFullResourcePath(relativeFsPath));
 
             var shader_program_data = new ShaderProgramData()
             {

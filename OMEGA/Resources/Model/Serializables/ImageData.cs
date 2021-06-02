@@ -1,20 +1,20 @@
-﻿using ProtoBuf;
+﻿using MessagePack;
 
 namespace OMEGA
 {
-    [ProtoContract]
+    [MessagePackObject]
     public class ImageData
     {
-        [ProtoMember(1)]
+        [Key(0)]
         public string Id {get;set;}
 
-        [ProtoMember(2)]
+        [Key(1)]
         public byte[] Data {get;set;}
 
-        [ProtoMember(3)]
+        [Key(2)]
         public int Width {get;set;}
 
-        [ProtoMember(4)]
+        [Key(3)]
         public int Height {get;set;}
 
     }

@@ -12,8 +12,6 @@
 
         public abstract void SetPosition(float x, float y);
 
-        public abstract void PutOnCenter();
-
         public abstract void SetSize(float w, float h);
 
         public abstract void Move(float dx, float dy);
@@ -22,6 +20,6 @@
 
         public bool Visible { get;set;} = true;
 
-        public abstract void Draw(Canvas canvas);
+        public abstract void Draw(Canvas2D canvas);
     }
 }

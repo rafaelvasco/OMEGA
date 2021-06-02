@@ -4,29 +4,29 @@ namespace OMEGA
 {
     public class TextureAtlas : Resource
     {
-        public RectF this[int index] => m_regions[index];
+        public RectF this[int index] => _mRegions[index];
 
         public RectF this[string name]
         {
             get
             {
-                if (m_name_map.TryGetValue(name, out int index))
+                if (_mNameMap.TryGetValue(name, out int index))
                 {
-                    return m_regions[index];
+                    return _mRegions[index];
                 }
 
                 return default;
             }
         }
 
-        public Texture2D Texture => m_texture;
+        public Texture2D Texture => _mTexture;
 
-        public int Count => m_regions.Length;
+        public int Count => _mRegions.Length;
 
 
-        private readonly RectF[] m_regions;
-        private readonly Texture2D m_texture;
-        private Dictionary<string, int> m_name_map;
+        private readonly RectF[] _mRegions;
+        private readonly Texture2D _mTexture;
+        private Dictionary<string, int> _mNameMap;
 
         public static TextureAtlas FromGrid(Texture2D texture, int rows, int columns)
         {
@@ -70,7 +70,7 @@ namespace OMEGA
                 idx++;
             }
 
-            var tex_atlas = new TextureAtlas(texture, regions) { m_name_map = map };
+            var tex_atlas = new TextureAtlas(texture, regions) { _mNameMap = map };
 
             return tex_atlas;
 
@@ -78,22 +78,22 @@ namespace OMEGA
 
         private TextureAtlas(Texture2D texture, RectF[] regions)
         {
-            m_texture = texture;
+            _mTexture = texture;
 
-            m_regions = new RectF[regions.Length];
+            _mRegions = new RectF[regions.Length];
 
             for (int i = 0; i < regions.Length; ++i)
             {
                 var region = regions[i];
 
-                m_regions[i] = RectF.FromBox(region.X1, region.Y1, region.Width, region.Height);
+                _mRegions[i] = RectF.FromBox(region.X1, region.Y1, region.Width, region.Height);
 
             }
         }
 
         protected override void FreeUnmanaged()
         {
-            m_texture.Dispose();
+            _mTexture.Dispose();
         }
     }
 }

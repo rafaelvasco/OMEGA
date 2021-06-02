@@ -4,7 +4,7 @@
     {
         private static void Main()
         {
-            using var demo = new SpriteDemo();
+            using var demo = new TextDemo();
             demo.Run();
         }
     }

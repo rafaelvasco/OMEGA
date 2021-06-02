@@ -13,27 +13,27 @@ namespace OMEGA
         public readonly string[] Samplers;
         public readonly string[] Params;
 
-        public ShaderCompileResult(byte[] vs_bytes, byte[] fs_bytes, string[] samplers, string[] _params)
+        public ShaderCompileResult(byte[] vsBytes, byte[] fsBytes, string[] samplers, string[] @params)
         {
-            this.VsBytes = vs_bytes;
-            this.FsBytes = fs_bytes;
+            this.VsBytes = vsBytes;
+            this.FsBytes = fsBytes;
             this.Samplers = samplers;
-            this.Params = _params;
+            this.Params = @params;
         }
     }
     
     public static class ShaderCompiler
     {
-        private const string COMPILER_PATH = "shaderc.exe";
-        private const string INCLUDE_PATH = "shader_includes";
-        private const string SAMPLER_REGEX_VAR = "sampler";
-        private const string SAMPLER_REGEX = @"SAMPLER2D\s*\(\s*(?<sampler>\w+)\s*\,\s*(?<index>\d+)\s*\)\s*\;";
-        private const string PARAM_REGEX_VAR = "param";
-        private const string VEC_PARAM_REGEX = @"uniform\s+vec4\s+(?<param>\w+)\s*\;";
+        private const string CompilerPath = "shaderc.exe";
+        private const string IncludePath = "shader_includes";
+        private const string SamplerRegexVar = "sampler";
+        private const string SamplerRegex = @"SAMPLER2D\s*\(\s*(?<sampler>\w+)\s*\,\s*(?<index>\d+)\s*\)\s*\;";
+        private const string ParamRegexVar = "param";
+        private const string VecParamRegex = @"uniform\s+vec4\s+(?<param>\w+)\s*\;";
         
-        public static ShaderCompileResult Compile(string vs_src_path, string fs_src_path)
+        public static ShaderCompileResult Compile(string vsSrcPath, string fsSrcPath)
         {
-            var directory = Path.GetDirectoryName(vs_src_path);
+            var directory = Path.GetDirectoryName(vsSrcPath);
 
             Process proc_vs;
             Process proc_fs;
@@ -47,20 +47,20 @@ namespace OMEGA
             var process_info = new ProcessStartInfo
             {
                 UseShellExecute = false,
-                FileName = COMPILER_PATH
+                FileName = CompilerPath
             };
 
             try
             {
                 var vs_args = "--platform windows -p vs_5_0 -O 3 --type vertex -f $path -o $output -i $include";
 
-                vs_args = vs_args.Replace("$path", vs_src_path);
+                vs_args = vs_args.Replace("$path", vsSrcPath);
 
-                temp_vs_bin_output = Path.Combine(Path.GetTempPath(), "dx_" + Path.GetFileNameWithoutExtension(vs_src_path) + ".bin");
+                temp_vs_bin_output = Path.Combine(Path.GetTempPath(), "dx_" + Path.GetFileNameWithoutExtension(vsSrcPath) + ".bin");
 
                 vs_args = vs_args.Replace("$output", temp_vs_bin_output);
 
-                vs_args = vs_args.Replace("$include", INCLUDE_PATH);
+                vs_args = vs_args.Replace("$include", IncludePath);
 
                 process_info.Arguments = vs_args;
                 
@@ -83,13 +83,13 @@ namespace OMEGA
             {
                 var fs_args = "--platform windows -p ps_5_0 -O 3 --type fragment -f $path -o $output -i $include";
 
-                fs_args = fs_args.Replace("$path", fs_src_path);
+                fs_args = fs_args.Replace("$path", fsSrcPath);
 
-                temp_fs_bin_output = Path.Combine(Path.GetTempPath(), "dx_" + Path.GetFileNameWithoutExtension(fs_src_path) + ".bin");
+                temp_fs_bin_output = Path.Combine(Path.GetTempPath(), "dx_" + Path.GetFileNameWithoutExtension(fsSrcPath) + ".bin");
 
                 fs_args = fs_args.Replace("$output", temp_fs_bin_output);
 
-                fs_args = fs_args.Replace("$include", INCLUDE_PATH);
+                fs_args = fs_args.Replace("$include", IncludePath);
 
                 process_info.Arguments = fs_args;
                 
@@ -116,11 +116,11 @@ namespace OMEGA
                 var vs_bytes = File.ReadAllBytes(temp_vs_bin_output);
                 var fs_bytes = File.ReadAllBytes(temp_fs_bin_output);
 
-                var fs_stream = File.OpenRead(fs_src_path);
+                var fs_stream = File.OpenRead(fsSrcPath);
                 
-                ParseUniforms(fs_stream, out var samplers, out var _params);
+                ParseUniforms(fs_stream, out var samplers, out var @params);
                 
-                var result = new ShaderCompileResult(vs_bytes, fs_bytes, samplers, _params);
+                var result = new ShaderCompileResult(vs_bytes, fs_bytes, samplers, @params);
                 
                 File.Delete(temp_vs_bin_output);
                 File.Delete(temp_fs_bin_output);
@@ -141,24 +141,24 @@ namespace OMEGA
                 
                 if (!vs_ok)
                 {
-                    throw new Exception("Error building vertex shader on " + vs_src_path + " : " + vs_build_result);
+                    throw new Exception("Error building vertex shader on " + vsSrcPath + " : " + vs_build_result);
                 }
                 
-                throw new Exception("Error building fragment shader on " + fs_src_path + " : " + fs_build_result);
+                throw new Exception("Error building fragment shader on " + fsSrcPath + " : " + fs_build_result);
             }
         }
 
-        public static void ParseUniforms(Stream fs_stream, out string[] samplers, out string[] _params)
+        public static void ParseUniforms(Stream fsStream, out string[] samplers, out string[] @params)
         {
             string line;
             
-            Regex sampler_regex = new Regex(SAMPLER_REGEX);
-            Regex param_regex = new Regex(VEC_PARAM_REGEX);
+            Regex sampler_regex = new Regex(SamplerRegex);
+            Regex param_regex = new Regex(VecParamRegex);
             
             var samplers_list = new List<string>();
             var params_list = new List<string>();
             
-            using (var reader = new StreamReader(fs_stream))
+            using (var reader = new StreamReader(fsStream))
             {
                 while ((line = reader.ReadLine()) != null)
                 {
@@ -167,7 +167,7 @@ namespace OMEGA
                     
                     if (sampler_match.Success)
                     {
-                        string sampler_name = sampler_match.Groups[SAMPLER_REGEX_VAR].Value;
+                        string sampler_name = sampler_match.Groups[SamplerRegexVar].Value;
                         samplers_list.Add(sampler_name);
                     }
                     else
@@ -176,7 +176,7 @@ namespace OMEGA
 
                         if (param_match.Success)
                         {
-                            string param_name = param_match.Groups[PARAM_REGEX_VAR].Value;
+                            string param_name = param_match.Groups[ParamRegexVar].Value;
                             
                             params_list.Add(param_name);
                         }
@@ -186,7 +186,7 @@ namespace OMEGA
 
             samplers = samplers_list.Count > 0 ? samplers_list.ToArray() : Array.Empty<string>();
 
-            _params = params_list.Count > 0 ? params_list.ToArray() : Array.Empty<string>();
+            @params = params_list.Count > 0 ? params_list.ToArray() : Array.Empty<string>();
             
         }
     }

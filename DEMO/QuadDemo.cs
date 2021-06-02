@@ -16,10 +16,10 @@ namespace DEMO
             ));
 
             quad.SetColors(
-                color_top_left: Color.Red,
-                color_top_right: Color.Orange,
-                color_bottom_left: Color.PeachPuff,
-                color_bottom_right: Color.GreenYellow
+                colorTopLeft: Color.Red,
+                colorTopRight: Color.Orange,
+                colorBottomLeft: Color.PeachPuff,
+                colorBottomRight: Color.GreenYellow
             );
 
         }
@@ -37,7 +37,7 @@ namespace DEMO
             }
         }
 
-        public override void Draw(Canvas canvas, float dt)
+        public override void Draw(Canvas2D canvas, float dt)
         {
             canvas.Begin();
 

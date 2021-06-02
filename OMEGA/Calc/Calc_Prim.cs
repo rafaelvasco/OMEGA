@@ -93,7 +93,7 @@ namespace OMEGA
 
         // ==================================================================
 
-        private static void MatProjXYWH(ref Mat4 result, float x, float y, float w, float h, float near, float far)
+        private static void MatProjXywh(ref Mat4 result, float x, float y, float w, float h, float near, float far)
         {
             float diff = far - near;
             float aa = far / diff;
@@ -114,7 +114,7 @@ namespace OMEGA
         {
             float height = (float)(1.0f / Math.Tan(ToRadians(fov) * 0.5f));
             float width = height * 1.0f / aspect;
-            MatProjXYWH(ref result, 0.0f, 0.0f, width, height, near, far);
+            MatProjXywh(ref result, 0.0f, 0.0f, width, height, near, far);
         }
 
         public static void MatOrtho(ref Mat4 result, float left, float right, float bottom, float top, float near, float far, float offset = 0f)
@@ -165,7 +165,7 @@ namespace OMEGA
             result.M44 = 1.0f;
         }
 
-        public static void MatRotateXY(ref Mat4 result, float rx, float ry)
+        public static void MatRotateXy(ref Mat4 result, float rx, float ry)
         {
             float sx = Sin(rx);
             float cx = Cos(rx);

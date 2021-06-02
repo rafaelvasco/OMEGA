@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "OMEGA": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

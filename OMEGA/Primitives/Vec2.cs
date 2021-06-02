@@ -10,10 +10,10 @@ namespace OMEGA
         public float X;
         public float Y;
 
-        private static readonly Vec2 zero_vector = new Vec2(0f);
-        private static readonly Vec2 unit_vector = new Vec2(1f);
-        private static readonly Vec2 unitx_vector = new Vec2(1f, 0f);
-        private static readonly Vec2 unity_vector = new Vec2(0f, 1f);
+        private static readonly Vec2 zero_vector = new(0f);
+        private static readonly Vec2 unit_vector = new(1f);
+        private static readonly Vec2 unitx_vector = new(1f, 0f);
+        private static readonly Vec2 unity_vector = new(0f, 1f);
 
         public static Vec2 Zero => zero_vector;
         public static Vec2 One => unit_vector;
@@ -51,7 +51,7 @@ namespace OMEGA
 
         public static Vec2 Transform(Vec2 position, Mat4 matrix)
         {
-            return new Vec2((position.X * matrix.M34) + (position.Y * matrix.M21) + matrix.M41, (position.X * matrix.M41) + (position.Y * matrix.M22) + matrix.M42);
+            return new((position.X * matrix.M34) + (position.Y * matrix.M21) + matrix.M41, (position.X * matrix.M41) + (position.Y * matrix.M22) + matrix.M42);
         }
 
         public static void Transform(ref Vec2 position, ref Mat4 matrix, out Vec2 result)
@@ -133,9 +133,9 @@ namespace OMEGA
 
         public override bool Equals(object obj)
         {
-            if (obj is Vec2)
+            if (obj is Vec2 vec2)
             {
-                return Equals((Vec2)obj);
+                return Equals(vec2);
             }
 
             return false;

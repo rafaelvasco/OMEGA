@@ -1,4 +1,4 @@
-﻿using static SDL2.SDL;
+﻿using static SDL2.Sdl;
 
 using System.Collections.Generic;
 using System;
@@ -10,8 +10,16 @@ namespace OMEGA
     {
         public static bool UseScanCodeKeyDetection { get; set; } = true;
 
-        public static Action<Keys> OnKeyDown;
-        public static Action<Keys> OnKeyUp;
+        public static Action<Keys> KeyDown;
+        public static Action<Keys> KeyUp;
+        public static Action<char> CharInput;
+
+        private static readonly List<Keys> MKeys = new (10);
+
+        public static KeyboardState GetKeyboardState()
+        {
+            return new KeyboardState(MKeys);
+        }
 
         public static void StartTextInput()
         {
@@ -23,252 +31,227 @@ namespace OMEGA
             SDL_StopTextInput();
         }
 
-        private static readonly Dictionary<int, Keys> keycode_map = new Dictionary<int, Keys>()
+        private static readonly Dictionary<int, Keys> KeycodeMap = new()
         {
-            { (int) SDL_Keycode.SDLK_a,         Keys.A },
-            { (int) SDL_Keycode.SDLK_b,         Keys.B },
-            { (int) SDL_Keycode.SDLK_c,         Keys.C },
-            { (int) SDL_Keycode.SDLK_d,         Keys.D },
-            { (int) SDL_Keycode.SDLK_e,         Keys.E },
-            { (int) SDL_Keycode.SDLK_f,         Keys.F },
-            { (int) SDL_Keycode.SDLK_g,         Keys.G },
-            { (int) SDL_Keycode.SDLK_h,         Keys.H },
-            { (int) SDL_Keycode.SDLK_i,         Keys.I },
-            { (int) SDL_Keycode.SDLK_j,         Keys.J },
-            { (int) SDL_Keycode.SDLK_k,         Keys.K },
-            { (int) SDL_Keycode.SDLK_l,         Keys.L },
-            { (int) SDL_Keycode.SDLK_m,         Keys.M },
-            { (int) SDL_Keycode.SDLK_n,         Keys.N },
-            { (int) SDL_Keycode.SDLK_o,         Keys.O },
-            { (int) SDL_Keycode.SDLK_p,         Keys.P },
-            { (int) SDL_Keycode.SDLK_q,         Keys.Q },
-            { (int) SDL_Keycode.SDLK_r,         Keys.R },
-            { (int) SDL_Keycode.SDLK_s,         Keys.S },
-            { (int) SDL_Keycode.SDLK_t,         Keys.T },
-            { (int) SDL_Keycode.SDLK_u,         Keys.U },
-            { (int) SDL_Keycode.SDLK_v,         Keys.V },
-            { (int) SDL_Keycode.SDLK_w,         Keys.W },
-            { (int) SDL_Keycode.SDLK_x,         Keys.X },
-            { (int) SDL_Keycode.SDLK_y,         Keys.Y },
-            { (int) SDL_Keycode.SDLK_z,         Keys.Z },
-            { (int) SDL_Keycode.SDLK_0,         Keys.D0 },
-            { (int) SDL_Keycode.SDLK_1,         Keys.D1 },
-            { (int) SDL_Keycode.SDLK_2,         Keys.D2 },
-            { (int) SDL_Keycode.SDLK_3,         Keys.D3 },
-            { (int) SDL_Keycode.SDLK_4,         Keys.D4 },
-            { (int) SDL_Keycode.SDLK_5,         Keys.D5 },
-            { (int) SDL_Keycode.SDLK_6,         Keys.D6 },
-            { (int) SDL_Keycode.SDLK_7,         Keys.D7 },
-            { (int) SDL_Keycode.SDLK_8,         Keys.D8 },
-            { (int) SDL_Keycode.SDLK_9,         Keys.D9 },
-            { (int) SDL_Keycode.SDLK_KP_0,      Keys.NumPad0 },
-            { (int) SDL_Keycode.SDLK_KP_1,      Keys.NumPad1 },
-            { (int) SDL_Keycode.SDLK_KP_2,      Keys.NumPad2 },
-            { (int) SDL_Keycode.SDLK_KP_3,      Keys.NumPad3 },
-            { (int) SDL_Keycode.SDLK_KP_4,      Keys.NumPad4 },
-            { (int) SDL_Keycode.SDLK_KP_5,      Keys.NumPad5 },
-            { (int) SDL_Keycode.SDLK_KP_6,      Keys.NumPad6 },
-            { (int) SDL_Keycode.SDLK_KP_7,      Keys.NumPad7 },
-            { (int) SDL_Keycode.SDLK_KP_8,      Keys.NumPad8 },
-            { (int) SDL_Keycode.SDLK_KP_9,      Keys.NumPad9 },
-            { (int) SDL_Keycode.SDLK_KP_DECIMAL,    Keys.Decimal },
-            { (int) SDL_Keycode.SDLK_KP_DIVIDE,     Keys.Divide },
-            { (int) SDL_Keycode.SDLK_KP_ENTER,      Keys.Enter },
-            { (int) SDL_Keycode.SDLK_KP_MINUS,      Keys.Subtract },
-            { (int) SDL_Keycode.SDLK_KP_MULTIPLY,   Keys.Multiply },
-            { (int) SDL_Keycode.SDLK_KP_PLUS,       Keys.Add },
-            { (int) SDL_Keycode.SDLK_F1,        Keys.F1 },
-            { (int) SDL_Keycode.SDLK_F2,        Keys.F2 },
-            { (int) SDL_Keycode.SDLK_F3,        Keys.F3 },
-            { (int) SDL_Keycode.SDLK_F4,        Keys.F4 },
-            { (int) SDL_Keycode.SDLK_F5,        Keys.F5 },
-            { (int) SDL_Keycode.SDLK_F6,        Keys.F6 },
-            { (int) SDL_Keycode.SDLK_F7,        Keys.F7 },
-            { (int) SDL_Keycode.SDLK_F8,        Keys.F8 },
-            { (int) SDL_Keycode.SDLK_F9,        Keys.F9 },
-            { (int) SDL_Keycode.SDLK_F10,       Keys.F10 },
-            { (int) SDL_Keycode.SDLK_F11,       Keys.F11 },
-            { (int) SDL_Keycode.SDLK_F12,       Keys.F12 },
-            { (int) SDL_Keycode.SDLK_F13,       Keys.F13 },
-            { (int) SDL_Keycode.SDLK_F14,       Keys.F14 },
-            { (int) SDL_Keycode.SDLK_F15,       Keys.F15 },
-            { (int) SDL_Keycode.SDLK_F16,       Keys.F16 },
-            { (int) SDL_Keycode.SDLK_F17,       Keys.F17 },
-            { (int) SDL_Keycode.SDLK_F18,       Keys.F18 },
-            { (int) SDL_Keycode.SDLK_F19,       Keys.F19 },
-            { (int) SDL_Keycode.SDLK_F20,       Keys.F20 },
-            { (int) SDL_Keycode.SDLK_F21,       Keys.F21 },
-            { (int) SDL_Keycode.SDLK_F22,       Keys.F22 },
-            { (int) SDL_Keycode.SDLK_F23,       Keys.F23 },
-            { (int) SDL_Keycode.SDLK_F24,       Keys.F24 },
-            { (int) SDL_Keycode.SDLK_SPACE,     Keys.Space },
-            { (int) SDL_Keycode.SDLK_UP,        Keys.Up },
-            { (int) SDL_Keycode.SDLK_DOWN,      Keys.Down },
-            { (int) SDL_Keycode.SDLK_LEFT,      Keys.Left },
-            { (int) SDL_Keycode.SDLK_RIGHT,     Keys.Right },
-            { (int) SDL_Keycode.SDLK_LALT,      Keys.LeftAlt },
-            { (int) SDL_Keycode.SDLK_RALT,      Keys.RightAlt },
-            { (int) SDL_Keycode.SDLK_LCTRL,     Keys.LeftControl },
-            { (int) SDL_Keycode.SDLK_RCTRL,     Keys.RightControl },
-            { (int) SDL_Keycode.SDLK_LSHIFT,        Keys.LeftShift },
-            { (int) SDL_Keycode.SDLK_RSHIFT,        Keys.RightShift },
-            { (int) SDL_Keycode.SDLK_CAPSLOCK,      Keys.CapsLock },
-            { (int) SDL_Keycode.SDLK_DELETE,        Keys.Delete },
-            { (int) SDL_Keycode.SDLK_END,       Keys.End },
-            { (int) SDL_Keycode.SDLK_BACKSPACE,     Keys.Back },
-            { (int) SDL_Keycode.SDLK_RETURN,        Keys.Enter },
-            { (int) SDL_Keycode.SDLK_ESCAPE,        Keys.Escape },
-            { (int) SDL_Keycode.SDLK_HOME,      Keys.Home },
-            { (int) SDL_Keycode.SDLK_PAGEUP,        Keys.PageUp },
-            { (int) SDL_Keycode.SDLK_PAGEDOWN,      Keys.PageDown },
-            { (int) SDL_Keycode.SDLK_PAUSE,     Keys.Pause },
-            { (int) SDL_Keycode.SDLK_TAB,       Keys.Tab },
-            { (int) SDL_Keycode.SDLK_VOLUMEUP,      Keys.VolumeUp },
-            { (int) SDL_Keycode.SDLK_VOLUMEDOWN,    Keys.VolumeDown },
-            { (int) SDL_Keycode.SDLK_UNKNOWN,       Keys.None }
+            { (int) SdlKeycode.SdlkA,         Keys.A },
+            { (int) SdlKeycode.SdlkB,         Keys.B },
+            { (int) SdlKeycode.SdlkC,         Keys.C },
+            { (int) SdlKeycode.SdlkD,         Keys.D },
+            { (int) SdlKeycode.SdlkE,         Keys.E },
+            { (int) SdlKeycode.SdlkF,         Keys.F },
+            { (int) SdlKeycode.SdlkG,         Keys.G },
+            { (int) SdlKeycode.SdlkH,         Keys.H },
+            { (int) SdlKeycode.SdlkI,         Keys.I },
+            { (int) SdlKeycode.SdlkJ,         Keys.J },
+            { (int) SdlKeycode.SdlkK,         Keys.K },
+            { (int) SdlKeycode.SdlkL,         Keys.L },
+            { (int) SdlKeycode.SdlkM,         Keys.M },
+            { (int) SdlKeycode.SdlkN,         Keys.N },
+            { (int) SdlKeycode.SdlkO,         Keys.O },
+            { (int) SdlKeycode.SdlkP,         Keys.P },
+            { (int) SdlKeycode.SdlkQ,         Keys.Q },
+            { (int) SdlKeycode.SdlkR,         Keys.R },
+            { (int) SdlKeycode.SdlkS,         Keys.S },
+            { (int) SdlKeycode.SdlkT,         Keys.T },
+            { (int) SdlKeycode.SdlkU,         Keys.U },
+            { (int) SdlKeycode.SdlkV,         Keys.V },
+            { (int) SdlKeycode.SdlkW,         Keys.W },
+            { (int) SdlKeycode.SdlkX,         Keys.X },
+            { (int) SdlKeycode.SdlkY,         Keys.Y },
+            { (int) SdlKeycode.SdlkZ,         Keys.Z },
+            { (int) SdlKeycode.Sdlk0,         Keys.D0 },
+            { (int) SdlKeycode.Sdlk1,         Keys.D1 },
+            { (int) SdlKeycode.Sdlk2,         Keys.D2 },
+            { (int) SdlKeycode.Sdlk3,         Keys.D3 },
+            { (int) SdlKeycode.Sdlk4,         Keys.D4 },
+            { (int) SdlKeycode.Sdlk5,         Keys.D5 },
+            { (int) SdlKeycode.Sdlk6,         Keys.D6 },
+            { (int) SdlKeycode.Sdlk7,         Keys.D7 },
+            { (int) SdlKeycode.Sdlk8,         Keys.D8 },
+            { (int) SdlKeycode.Sdlk9,         Keys.D9 },
+            { (int) SdlKeycode.SdlkKp0,      Keys.NumPad0 },
+            { (int) SdlKeycode.SdlkKp1,      Keys.NumPad1 },
+            { (int) SdlKeycode.SdlkKp2,      Keys.NumPad2 },
+            { (int) SdlKeycode.SdlkKp3,      Keys.NumPad3 },
+            { (int) SdlKeycode.SdlkKp4,      Keys.NumPad4 },
+            { (int) SdlKeycode.SdlkKp5,      Keys.NumPad5 },
+            { (int) SdlKeycode.SdlkKp6,      Keys.NumPad6 },
+            { (int) SdlKeycode.SdlkKp7,      Keys.NumPad7 },
+            { (int) SdlKeycode.SdlkKp8,      Keys.NumPad8 },
+            { (int) SdlKeycode.SdlkKp9,      Keys.NumPad9 },
+            { (int) SdlKeycode.SdlkKpDecimal,    Keys.Decimal },
+            { (int) SdlKeycode.SdlkKpDivide,     Keys.Divide },
+            { (int) SdlKeycode.SdlkKpEnter,      Keys.Enter },
+            { (int) SdlKeycode.SdlkKpMinus,      Keys.Subtract },
+            { (int) SdlKeycode.SdlkKpMultiply,   Keys.Multiply },
+            { (int) SdlKeycode.SdlkKpPlus,       Keys.Add },
+            { (int) SdlKeycode.SdlkF1,        Keys.F1 },
+            { (int) SdlKeycode.SdlkF2,        Keys.F2 },
+            { (int) SdlKeycode.SdlkF3,        Keys.F3 },
+            { (int) SdlKeycode.SdlkF4,        Keys.F4 },
+            { (int) SdlKeycode.SdlkF5,        Keys.F5 },
+            { (int) SdlKeycode.SdlkF6,        Keys.F6 },
+            { (int) SdlKeycode.SdlkF7,        Keys.F7 },
+            { (int) SdlKeycode.SdlkF8,        Keys.F8 },
+            { (int) SdlKeycode.SdlkF9,        Keys.F9 },
+            { (int) SdlKeycode.SdlkF10,       Keys.F10 },
+            { (int) SdlKeycode.SdlkF11,       Keys.F11 },
+            { (int) SdlKeycode.SdlkF12,       Keys.F12 },
+            { (int) SdlKeycode.SdlkF13,       Keys.F13 },
+            { (int) SdlKeycode.SdlkF14,       Keys.F14 },
+            { (int) SdlKeycode.SdlkF15,       Keys.F15 },
+            { (int) SdlKeycode.SdlkF16,       Keys.F16 },
+            { (int) SdlKeycode.SdlkF17,       Keys.F17 },
+            { (int) SdlKeycode.SdlkF18,       Keys.F18 },
+            { (int) SdlKeycode.SdlkF19,       Keys.F19 },
+            { (int) SdlKeycode.SdlkF20,       Keys.F20 },
+            { (int) SdlKeycode.SdlkF21,       Keys.F21 },
+            { (int) SdlKeycode.SdlkF22,       Keys.F22 },
+            { (int) SdlKeycode.SdlkF23,       Keys.F23 },
+            { (int) SdlKeycode.SdlkF24,       Keys.F24 },
+            { (int) SdlKeycode.SdlkSpace,     Keys.Space },
+            { (int) SdlKeycode.SdlkUp,        Keys.Up },
+            { (int) SdlKeycode.SdlkDown,      Keys.Down },
+            { (int) SdlKeycode.SdlkLeft,      Keys.Left },
+            { (int) SdlKeycode.SdlkRight,     Keys.Right },
+            { (int) SdlKeycode.SdlkLalt,      Keys.LeftAlt },
+            { (int) SdlKeycode.SdlkRalt,      Keys.RightAlt },
+            { (int) SdlKeycode.SdlkLctrl,     Keys.LeftControl },
+            { (int) SdlKeycode.SdlkRctrl,     Keys.RightControl },
+            { (int) SdlKeycode.SdlkLshift,        Keys.LeftShift },
+            { (int) SdlKeycode.SdlkRshift,        Keys.RightShift },
+            { (int) SdlKeycode.SdlkCapslock,      Keys.CapsLock },
+            { (int) SdlKeycode.SdlkDelete,        Keys.Delete },
+            { (int) SdlKeycode.SdlkEnd,       Keys.End },
+            { (int) SdlKeycode.SdlkBackspace,     Keys.Back },
+            { (int) SdlKeycode.SdlkReturn,        Keys.Enter },
+            { (int) SdlKeycode.SdlkEscape,        Keys.Escape },
+            { (int) SdlKeycode.SdlkHome,      Keys.Home },
+            { (int) SdlKeycode.SdlkPageup,        Keys.PageUp },
+            { (int) SdlKeycode.SdlkPagedown,      Keys.PageDown },
+            { (int) SdlKeycode.SdlkPause,     Keys.Pause },
+            { (int) SdlKeycode.SdlkTab,       Keys.Tab },
+            { (int) SdlKeycode.SdlkVolumeup,      Keys.VolumeUp },
+            { (int) SdlKeycode.SdlkVolumedown,    Keys.VolumeDown },
+            { (int) SdlKeycode.SdlkUnknown,       Keys.None }
         };
-        private static Dictionary<int, Keys> keyscan_map = new Dictionary<int, Keys>()
+        private static readonly Dictionary<int, Keys> KeyscanMap = new()
         {
-            { (int) SDL_Scancode.SDL_SCANCODE_A,        Keys.A },
-            { (int) SDL_Scancode.SDL_SCANCODE_B,        Keys.B },
-            { (int) SDL_Scancode.SDL_SCANCODE_C,        Keys.C },
-            { (int) SDL_Scancode.SDL_SCANCODE_D,        Keys.D },
-            { (int) SDL_Scancode.SDL_SCANCODE_E,        Keys.E },
-            { (int) SDL_Scancode.SDL_SCANCODE_F,        Keys.F },
-            { (int) SDL_Scancode.SDL_SCANCODE_G,        Keys.G },
-            { (int) SDL_Scancode.SDL_SCANCODE_H,        Keys.H },
-            { (int) SDL_Scancode.SDL_SCANCODE_I,        Keys.I },
-            { (int) SDL_Scancode.SDL_SCANCODE_J,        Keys.J },
-            { (int) SDL_Scancode.SDL_SCANCODE_K,        Keys.K },
-            { (int) SDL_Scancode.SDL_SCANCODE_L,        Keys.L },
-            { (int) SDL_Scancode.SDL_SCANCODE_M,        Keys.M },
-            { (int) SDL_Scancode.SDL_SCANCODE_N,        Keys.N },
-            { (int) SDL_Scancode.SDL_SCANCODE_O,        Keys.O },
-            { (int) SDL_Scancode.SDL_SCANCODE_P,        Keys.P },
-            { (int) SDL_Scancode.SDL_SCANCODE_Q,        Keys.Q },
-            { (int) SDL_Scancode.SDL_SCANCODE_R,        Keys.R },
-            { (int) SDL_Scancode.SDL_SCANCODE_S,        Keys.S },
-            { (int) SDL_Scancode.SDL_SCANCODE_T,        Keys.T },
-            { (int) SDL_Scancode.SDL_SCANCODE_U,        Keys.U },
-            { (int) SDL_Scancode.SDL_SCANCODE_V,        Keys.V },
-            { (int) SDL_Scancode.SDL_SCANCODE_W,        Keys.W },
-            { (int) SDL_Scancode.SDL_SCANCODE_X,        Keys.X },
-            { (int) SDL_Scancode.SDL_SCANCODE_Y,        Keys.Y },
-            { (int) SDL_Scancode.SDL_SCANCODE_Z,        Keys.Z },
-            { (int) SDL_Scancode.SDL_SCANCODE_0,        Keys.D0 },
-            { (int) SDL_Scancode.SDL_SCANCODE_1,        Keys.D1 },
-            { (int) SDL_Scancode.SDL_SCANCODE_2,        Keys.D2 },
-            { (int) SDL_Scancode.SDL_SCANCODE_3,        Keys.D3 },
-            { (int) SDL_Scancode.SDL_SCANCODE_4,        Keys.D4 },
-            { (int) SDL_Scancode.SDL_SCANCODE_5,        Keys.D5 },
-            { (int) SDL_Scancode.SDL_SCANCODE_6,        Keys.D6 },
-            { (int) SDL_Scancode.SDL_SCANCODE_7,        Keys.D7 },
-            { (int) SDL_Scancode.SDL_SCANCODE_8,        Keys.D8 },
-            { (int) SDL_Scancode.SDL_SCANCODE_9,        Keys.D9 },
-            { (int) SDL_Scancode.SDL_SCANCODE_KP_0,     Keys.NumPad0 },
-            { (int) SDL_Scancode.SDL_SCANCODE_KP_1,     Keys.NumPad1 },
-            { (int) SDL_Scancode.SDL_SCANCODE_KP_2,     Keys.NumPad2 },
-            { (int) SDL_Scancode.SDL_SCANCODE_KP_3,     Keys.NumPad3 },
-            { (int) SDL_Scancode.SDL_SCANCODE_KP_4,     Keys.NumPad4 },
-            { (int) SDL_Scancode.SDL_SCANCODE_KP_5,     Keys.NumPad5 },
-            { (int) SDL_Scancode.SDL_SCANCODE_KP_6,     Keys.NumPad6 },
-            { (int) SDL_Scancode.SDL_SCANCODE_KP_7,     Keys.NumPad7 },
-            { (int) SDL_Scancode.SDL_SCANCODE_KP_8,     Keys.NumPad8 },
-            { (int) SDL_Scancode.SDL_SCANCODE_KP_9,     Keys.NumPad9 },
-            { (int) SDL_Scancode.SDL_SCANCODE_KP_DECIMAL,   Keys.Decimal },
-            { (int) SDL_Scancode.SDL_SCANCODE_KP_DIVIDE,    Keys.Divide },
-            { (int) SDL_Scancode.SDL_SCANCODE_KP_ENTER,     Keys.Enter },
-            { (int) SDL_Scancode.SDL_SCANCODE_KP_MINUS,     Keys.Subtract },
-            { (int) SDL_Scancode.SDL_SCANCODE_KP_MULTIPLY,  Keys.Multiply },
-            { (int) SDL_Scancode.SDL_SCANCODE_KP_PLUS,      Keys.Add },
-            { (int) SDL_Scancode.SDL_SCANCODE_F1,       Keys.F1 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F2,       Keys.F2 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F3,       Keys.F3 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F4,       Keys.F4 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F5,       Keys.F5 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F6,       Keys.F6 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F7,       Keys.F7 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F8,       Keys.F8 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F9,       Keys.F9 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F10,      Keys.F10 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F11,      Keys.F11 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F12,      Keys.F12 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F13,      Keys.F13 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F14,      Keys.F14 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F15,      Keys.F15 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F16,      Keys.F16 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F17,      Keys.F17 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F18,      Keys.F18 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F19,      Keys.F19 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F20,      Keys.F20 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F21,      Keys.F21 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F22,      Keys.F22 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F23,      Keys.F23 },
-            { (int) SDL_Scancode.SDL_SCANCODE_F24,      Keys.F24 },
-            { (int) SDL_Scancode.SDL_SCANCODE_SPACE,        Keys.Space },
-            { (int) SDL_Scancode.SDL_SCANCODE_UP,       Keys.Up },
-            { (int) SDL_Scancode.SDL_SCANCODE_DOWN,     Keys.Down },
-            { (int) SDL_Scancode.SDL_SCANCODE_LEFT,     Keys.Left },
-            { (int) SDL_Scancode.SDL_SCANCODE_RIGHT,        Keys.Right },
-            { (int) SDL_Scancode.SDL_SCANCODE_LALT,     Keys.LeftAlt },
-            { (int) SDL_Scancode.SDL_SCANCODE_RALT,     Keys.RightAlt },
-            { (int) SDL_Scancode.SDL_SCANCODE_LCTRL,        Keys.LeftControl },
-            { (int) SDL_Scancode.SDL_SCANCODE_RCTRL,        Keys.RightControl },
-            { (int) SDL_Scancode.SDL_SCANCODE_LSHIFT,       Keys.LeftShift },
-            { (int) SDL_Scancode.SDL_SCANCODE_RSHIFT,       Keys.RightShift },
-            { (int) SDL_Scancode.SDL_SCANCODE_CAPSLOCK,     Keys.CapsLock },
-            { (int) SDL_Scancode.SDL_SCANCODE_DELETE,       Keys.Delete },
-            { (int) SDL_Scancode.SDL_SCANCODE_END,      Keys.End },
-            { (int) SDL_Scancode.SDL_SCANCODE_BACKSPACE,    Keys.Back },
-            { (int) SDL_Scancode.SDL_SCANCODE_RETURN,       Keys.Enter },
-            { (int) SDL_Scancode.SDL_SCANCODE_ESCAPE,       Keys.Escape },
-            { (int) SDL_Scancode.SDL_SCANCODE_HOME,     Keys.Home },
-            { (int) SDL_Scancode.SDL_SCANCODE_PAGEUP,       Keys.PageUp },
-            { (int) SDL_Scancode.SDL_SCANCODE_PAGEDOWN,     Keys.PageDown },
-            { (int) SDL_Scancode.SDL_SCANCODE_PAUSE,        Keys.Pause },
-            { (int) SDL_Scancode.SDL_SCANCODE_TAB,      Keys.Tab },
-            { (int) SDL_Scancode.SDL_SCANCODE_VOLUMEUP,     Keys.VolumeUp },
-            { (int) SDL_Scancode.SDL_SCANCODE_VOLUMEDOWN,   Keys.VolumeDown },
-            { (int) SDL_Scancode.SDL_SCANCODE_UNKNOWN,      Keys.None },
-        };
-
-        private static readonly char[] text_input_chars = new char[]
-        {
-            (char) 2,	// Home
-			(char) 3,	// End
-			(char) 8,	// Backspace
-			(char) 9,	// Tab
-			(char) 13,	// Enter
-			(char) 127,	// Delete
-			(char) 22   // Ctrl+V (Paste)
+            { (int) SdlScancode.SdlScancodeA,        Keys.A },
+            { (int) SdlScancode.SdlScancodeB,        Keys.B },
+            { (int) SdlScancode.SdlScancodeC,        Keys.C },
+            { (int) SdlScancode.SdlScancodeD,        Keys.D },
+            { (int) SdlScancode.SdlScancodeE,        Keys.E },
+            { (int) SdlScancode.SdlScancodeF,        Keys.F },
+            { (int) SdlScancode.SdlScancodeG,        Keys.G },
+            { (int) SdlScancode.SdlScancodeH,        Keys.H },
+            { (int) SdlScancode.SdlScancodeI,        Keys.I },
+            { (int) SdlScancode.SdlScancodeJ,        Keys.J },
+            { (int) SdlScancode.SdlScancodeK,        Keys.K },
+            { (int) SdlScancode.SdlScancodeL,        Keys.L },
+            { (int) SdlScancode.SdlScancodeM,        Keys.M },
+            { (int) SdlScancode.SdlScancodeN,        Keys.N },
+            { (int) SdlScancode.SdlScancodeO,        Keys.O },
+            { (int) SdlScancode.SdlScancodeP,        Keys.P },
+            { (int) SdlScancode.SdlScancodeQ,        Keys.Q },
+            { (int) SdlScancode.SdlScancodeR,        Keys.R },
+            { (int) SdlScancode.SdlScancodeS,        Keys.S },
+            { (int) SdlScancode.SdlScancodeT,        Keys.T },
+            { (int) SdlScancode.SdlScancodeU,        Keys.U },
+            { (int) SdlScancode.SdlScancodeV,        Keys.V },
+            { (int) SdlScancode.SdlScancodeW,        Keys.W },
+            { (int) SdlScancode.SdlScancodeX,        Keys.X },
+            { (int) SdlScancode.SdlScancodeY,        Keys.Y },
+            { (int) SdlScancode.SdlScancodeZ,        Keys.Z },
+            { (int) SdlScancode.SdlScancode0,        Keys.D0 },
+            { (int) SdlScancode.SdlScancode1,        Keys.D1 },
+            { (int) SdlScancode.SdlScancode2,        Keys.D2 },
+            { (int) SdlScancode.SdlScancode3,        Keys.D3 },
+            { (int) SdlScancode.SdlScancode4,        Keys.D4 },
+            { (int) SdlScancode.SdlScancode5,        Keys.D5 },
+            { (int) SdlScancode.SdlScancode6,        Keys.D6 },
+            { (int) SdlScancode.SdlScancode7,        Keys.D7 },
+            { (int) SdlScancode.SdlScancode8,        Keys.D8 },
+            { (int) SdlScancode.SdlScancode9,        Keys.D9 },
+            { (int) SdlScancode.SdlScancodeKp0,     Keys.NumPad0 },
+            { (int) SdlScancode.SdlScancodeKp1,     Keys.NumPad1 },
+            { (int) SdlScancode.SdlScancodeKp2,     Keys.NumPad2 },
+            { (int) SdlScancode.SdlScancodeKp3,     Keys.NumPad3 },
+            { (int) SdlScancode.SdlScancodeKp4,     Keys.NumPad4 },
+            { (int) SdlScancode.SdlScancodeKp5,     Keys.NumPad5 },
+            { (int) SdlScancode.SdlScancodeKp6,     Keys.NumPad6 },
+            { (int) SdlScancode.SdlScancodeKp7,     Keys.NumPad7 },
+            { (int) SdlScancode.SdlScancodeKp8,     Keys.NumPad8 },
+            { (int) SdlScancode.SdlScancodeKp9,     Keys.NumPad9 },
+            { (int) SdlScancode.SdlScancodeKpDecimal,   Keys.Decimal },
+            { (int) SdlScancode.SdlScancodeKpDivide,    Keys.Divide },
+            { (int) SdlScancode.SdlScancodeKpEnter,     Keys.Enter },
+            { (int) SdlScancode.SdlScancodeKpMinus,     Keys.Subtract },
+            { (int) SdlScancode.SdlScancodeKpMultiply,  Keys.Multiply },
+            { (int) SdlScancode.SdlScancodeKpPlus,      Keys.Add },
+            { (int) SdlScancode.SdlScancodeF1,       Keys.F1 },
+            { (int) SdlScancode.SdlScancodeF2,       Keys.F2 },
+            { (int) SdlScancode.SdlScancodeF3,       Keys.F3 },
+            { (int) SdlScancode.SdlScancodeF4,       Keys.F4 },
+            { (int) SdlScancode.SdlScancodeF5,       Keys.F5 },
+            { (int) SdlScancode.SdlScancodeF6,       Keys.F6 },
+            { (int) SdlScancode.SdlScancodeF7,       Keys.F7 },
+            { (int) SdlScancode.SdlScancodeF8,       Keys.F8 },
+            { (int) SdlScancode.SdlScancodeF9,       Keys.F9 },
+            { (int) SdlScancode.SdlScancodeF10,      Keys.F10 },
+            { (int) SdlScancode.SdlScancodeF11,      Keys.F11 },
+            { (int) SdlScancode.SdlScancodeF12,      Keys.F12 },
+            { (int) SdlScancode.SdlScancodeF13,      Keys.F13 },
+            { (int) SdlScancode.SdlScancodeF14,      Keys.F14 },
+            { (int) SdlScancode.SdlScancodeF15,      Keys.F15 },
+            { (int) SdlScancode.SdlScancodeF16,      Keys.F16 },
+            { (int) SdlScancode.SdlScancodeF17,      Keys.F17 },
+            { (int) SdlScancode.SdlScancodeF18,      Keys.F18 },
+            { (int) SdlScancode.SdlScancodeF19,      Keys.F19 },
+            { (int) SdlScancode.SdlScancodeF20,      Keys.F20 },
+            { (int) SdlScancode.SdlScancodeF21,      Keys.F21 },
+            { (int) SdlScancode.SdlScancodeF22,      Keys.F22 },
+            { (int) SdlScancode.SdlScancodeF23,      Keys.F23 },
+            { (int) SdlScancode.SdlScancodeF24,      Keys.F24 },
+            { (int) SdlScancode.SdlScancodeSpace,        Keys.Space },
+            { (int) SdlScancode.SdlScancodeUp,       Keys.Up },
+            { (int) SdlScancode.SdlScancodeDown,     Keys.Down },
+            { (int) SdlScancode.SdlScancodeLeft,     Keys.Left },
+            { (int) SdlScancode.SdlScancodeRight,        Keys.Right },
+            { (int) SdlScancode.SdlScancodeLalt,     Keys.LeftAlt },
+            { (int) SdlScancode.SdlScancodeRalt,     Keys.RightAlt },
+            { (int) SdlScancode.SdlScancodeLctrl,        Keys.LeftControl },
+            { (int) SdlScancode.SdlScancodeRctrl,        Keys.RightControl },
+            { (int) SdlScancode.SdlScancodeLshift,       Keys.LeftShift },
+            { (int) SdlScancode.SdlScancodeRshift,       Keys.RightShift },
+            { (int) SdlScancode.SdlScancodeCapslock,     Keys.CapsLock },
+            { (int) SdlScancode.SdlScancodeDelete,       Keys.Delete },
+            { (int) SdlScancode.SdlScancodeEnd,      Keys.End },
+            { (int) SdlScancode.SdlScancodeBackspace,    Keys.Back },
+            { (int) SdlScancode.SdlScancodeReturn,       Keys.Enter },
+            { (int) SdlScancode.SdlScancodeEscape,       Keys.Escape },
+            { (int) SdlScancode.SdlScancodeHome,     Keys.Home },
+            { (int) SdlScancode.SdlScancodePageup,       Keys.PageUp },
+            { (int) SdlScancode.SdlScancodePagedown,     Keys.PageDown },
+            { (int) SdlScancode.SdlScancodePause,        Keys.Pause },
+            { (int) SdlScancode.SdlScancodeTab,      Keys.Tab },
+            { (int) SdlScancode.SdlScancodeVolumeup,     Keys.VolumeUp },
+            { (int) SdlScancode.SdlScancodeVolumedown,   Keys.VolumeDown },
+            { (int) SdlScancode.SdlScancodeUnknown,      Keys.None },
         };
 
-        private static readonly Dictionary<Keys, int> text_input_bindings = new Dictionary<Keys, int>()
-        {
-            { Keys.Home, 0 },
-            { Keys.End, 1 },
-            { Keys.Back, 2 },
-            { Keys.Tab, 3 },
-            { Keys.Enter, 4 },
-            { Keys.Delete, 5 }
-        };
-
-        private static readonly bool[] text_input_control_down = new bool[text_input_chars.Length];
-        private static readonly int[] text_input_control_repeat = new int[text_input_chars.Length];
-        private static bool text_input_suppress = false;
-
-        private static Keys ConvertKey(ref SDL_Keysym key)
+        private static Keys ConvertKey(ref SdlKeysym key)
         {
             if (UseScanCodeKeyDetection)
             {
-                if (keyscan_map.TryGetValue((int)key.scancode, out Keys retVal))
+                if (KeyscanMap.TryGetValue((int)key.scancode, out Keys retVal))
                 {
                     return retVal;
                 }
             }
             else
             {
-                if (keycode_map.TryGetValue((int)key.sym, out Keys retVal))
+                if (KeycodeMap.TryGetValue((int)key.sym, out Keys retVal))
                 {
                     return retVal;
                 }
@@ -277,9 +260,9 @@ namespace OMEGA
             return Keys.None;
         }
 
-        private static void ProcessTextInputEvent(SDL_Event evt)
+        private static void ProcessTextInputEvent(SdlEvent evt)
         {
-            if (evt.type == SDL_EventType.SDL_TEXTINPUT && !text_input_suppress)
+            if (evt.type == SdlEventType.SdlTextinput)
             {
                 unsafe
                 {
@@ -296,82 +279,33 @@ namespace OMEGA
 
                         for (int i = 0; i < chars; i += 1)
                         {
-                            TextInput.ProcessTextInput(chars_buffer[i]);
+                            CharInput?.Invoke(chars_buffer[i]);
                         }
-                    }
-                }
-            }
-
-            else if (evt.type == SDL_EventType.SDL_TEXTEDITING)
-            {
-                unsafe
-                {
-                    int bytes = MeasureStringLength(evt.edit.text);
-                    if (bytes > 0)
-                    {
-                        char* charsBuffer = stackalloc char[bytes];
-                        int chars = Encoding.UTF8.GetChars(
-                            evt.edit.text,
-                            bytes,
-                            charsBuffer,
-                            bytes
-                        );
-                        string text = new string(charsBuffer, 0, chars);
-                        TextInput.ProcessTextEditing(text, evt.edit.start, evt.edit.length);
-                    }
-                    else
-                    {
-                        TextInput.ProcessTextEditing(null, 0, 0);
                     }
                 }
             }
         }
 
-        private static void ProcessKeyEvent(SDL_Event evt)
+        private static void ProcessKeyEvent(SdlEvent evt)
         {
-            if (evt.type == SDL_EventType.SDL_KEYDOWN)
+            if (evt.type == SdlEventType.SdlKeydown)
             {
                 Keys key = ConvertKey(ref evt.key.keysym);
 
-                OnKeyDown?.Invoke(key);
+                KeyDown.Invoke(key);
 
-                if (!Keyboard.Keys.Contains(key))
+                if (!MKeys.Contains(key))
                 {
-                    Keyboard.Keys.Add(key);
-
-                    if (text_input_bindings.TryGetValue(key, out int text_index))
-                    {
-                        text_input_control_down[text_index] = true;
-                        text_input_control_repeat[text_index] = Environment.TickCount + 400;
-                        TextInput.ProcessTextInput(text_input_chars[text_index]);
-                    }
-                    else if (Keyboard.Keys.Contains(Keys.LeftControl) && key == Keys.V)
-                    {
-                        text_input_control_down[6] = true;
-                        text_input_control_repeat[6] = Environment.TickCount + 400;
-                        TextInput.ProcessTextInput(text_input_chars[6]);
-                        text_input_suppress = true;
-                    }
+                    MKeys.Add(key);
                 }
             }
-            else if (evt.type == SDL_EventType.SDL_KEYUP)
+            else if (evt.type == SdlEventType.SdlKeyup)
             {
                 Keys key = ConvertKey(ref evt.key.keysym);
 
-                OnKeyUp?.Invoke(key);
+                KeyUp.Invoke(key);
 
-                if (Keyboard.Keys.Remove(key))
-                {
-                    if (text_input_bindings.TryGetValue(key, out int value))
-                    {
-                        text_input_control_down[value] = false;
-                    }
-                    else if ((!Keyboard.Keys.Contains(Keys.LeftControl) && text_input_control_down[3]) || key == Keys.V)
-                    {
-                        text_input_control_down[6] = false;
-                        text_input_suppress = false;
-                    }
-                }
+                MKeys.Remove(key);
             }
         }
 

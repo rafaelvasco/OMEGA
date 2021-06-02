@@ -3,13 +3,14 @@ namespace OMEGA
 {
     public static partial class ResourceLoader
     {
-        public static Font LoadFont(FontData font_data)
+        public static TextureFont LoadFont(FontData fontData)
         {
-            var texture = LoadTexture(font_data.FontSheet);
+            var texture = LoadTexture(fontData.FontSheet);
 
-            var font = new Font(texture, font_data);
-
-            font.Id = font_data.Id;
+            var font = new TextureFont(texture, fontData)
+            {
+                Id = fontData.Id
+            };
 
             return font;
         }

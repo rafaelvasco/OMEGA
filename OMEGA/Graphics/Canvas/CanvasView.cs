@@ -6,24 +6,24 @@ namespace OMEGA
     {
         public Color ClearColor
         {
-            get => m_clear_color;
+            get => _mClearColor;
             set
             {
-                if (m_clear_color != value)
+                if (_mClearColor != value)
                 {
-                    m_clear_color = value;
+                    _mClearColor = value;
                     Applied = false;
                 }
             }
         }
         public Vec2 SizeFactor
         {
-            get => m_size_factor;
+            get => _mSizeFactor;
             set
             {
-                if (m_size_factor != value)
+                if (_mSizeFactor != value)
                 {
-                    m_size_factor = value;
+                    _mSizeFactor = value;
                     NeedsUpdateTransform = true;
                     Applied = false;
                 }
@@ -31,10 +31,29 @@ namespace OMEGA
         }
         public RectF Viewport
         {
-            get => m_viewport;
+            get => _mViewport;
             set
             {
-                m_viewport = value;
+                _mViewport = value;
+                Applied = false;
+            }
+        }
+
+        public RectF AbsoluteViewport
+        {
+            get => Engine.Canvas.GetAbsoluteViewport(this);
+            set {
+                _mViewport = RectF.FromBox(value.X1 / Engine.Canvas.Width, value.Y1 / Engine.Canvas.Height, value.Width / Engine.Canvas.Width, value.Height / Engine.Canvas.Height);
+                Applied = false;
+            }
+        }
+
+        public RenderTarget RenderTarget
+        {
+            get => _mRenderTarget;
+            set
+            {
+                _mRenderTarget = value;
                 Applied = false;
             }
         }
@@ -45,29 +64,30 @@ namespace OMEGA
 
         public ushort ViewId {get;internal set;}
 
-        private Vec2 m_size_factor;
-        private RectF m_viewport;
-        private Transform m_transform;
-        private Transform m_inverse_transform;
-        private bool m_inv_transform_updated;
-        private Color m_clear_color;
+        private Vec2 _mSizeFactor;
+        private RectF _mViewport;
+        private Transform _mTransform;
+        private Transform _mInverseTransform;
+        private bool _mInvTransformUpdated;
+        private Color _mClearColor;
+        private RenderTarget _mRenderTarget;
 
-        internal CanvasView(float size_factor_x, float size_factor_y)
+        internal CanvasView(float sizeFactorX, float sizeFactorY)
         {
-            m_viewport = RectF.FromBox(0f, 0f, 1f, 1f);
-            m_size_factor = new Vec2(size_factor_x, size_factor_y);
+            _mViewport = RectF.FromBox(0f, 0f, 1f, 1f);
+            _mSizeFactor = new Vec2(sizeFactorX, sizeFactorY);
 
         }
 
-        internal ref readonly Transform GetTransform(int canvas_width, int canvas_height)
+        internal ref readonly Transform GetTransform(int canvasWidth, int canvasHeight)
         {
             if (NeedsUpdateTransform)
             {
-                float size_w = canvas_width * m_size_factor.X;
-                float size_h = canvas_height * m_size_factor.Y;
+                float size_w = canvasWidth * _mSizeFactor.X;
+                float size_h = canvasHeight * _mSizeFactor.Y;
 
-                float center_x = canvas_width / 2.0f;
-                float center_y = canvas_height / 2.0f;
+                float center_x = canvasWidth / 2.0f;
+                float center_y = canvasHeight / 2.0f;
 
                 // Projection Components
 
@@ -76,31 +96,31 @@ namespace OMEGA
                 float c = -a * center_x;
                 float d = -b * center_y;
 
-                m_transform = new Transform(
+                _mTransform = new Transform(
                     a,  0f, c,
                     0f, b,  d,
                     0f, 0f, 1f
                 );
 
                 NeedsUpdateTransform = false;
-                m_inv_transform_updated = false;
+                _mInvTransformUpdated = false;
 
                 Console.WriteLine("Update View Transform");
                     
             }
 
-            return ref m_transform;
+            return ref _mTransform;
         }
 
         public ref readonly Transform GetInverseTransform()
         {
-            if (!m_inv_transform_updated)
+            if (!_mInvTransformUpdated)
             {
-                m_inverse_transform = GetTransform(Engine.Canvas.Width, Engine.Canvas.Height).GetInverse();
-                m_inv_transform_updated = true;
+                _mInverseTransform = GetTransform(Engine.Canvas.Width, Engine.Canvas.Height).GetInverse();
+                _mInvTransformUpdated = true;
             }
 
-            return ref m_inverse_transform;
+            return ref _mInverseTransform;
         }
     }
 }

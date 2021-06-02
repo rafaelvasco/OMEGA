@@ -1,88 +1,148 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace OMEGA
 {
-    public struct FontBuildParams
-    {
-        public string Id;
-        public string Path;
-        public int Size;
-        public int PaddingUp;
-        public int PaddingDown;
-        public int PaddingLeft;
-        public int PaddingRight;
-        public int CharRangeLevel;
-        public bool DropShadow;
-        public int ShadowOffsetX;
-        public int ShadowOffsetY;
-        public uint ShadowColor;
-    }
-
     public static class FontBuilder
     {
+        private static readonly Dictionary<int, int> FontSizeTextSizeMap = new()
+        {
+            { 25, 256},
+            { 50, 512 },
+            { 100, 1024 },
+            { 200, 2048 }
+        };
+
+        private const int MaxPermittedTexSize = 8192;
+
+        private static int GetOptimalTextureSize(IReadOnlyCollection<FontFace> faces)
+        {
+            int mediamGlyphSize = (int)faces.Select(f => f.Size).Average();
+            int totalRanges = faces.Sum(f => f.CharRanges.Count);
+
+            foreach (var key in FontSizeTextSizeMap.Keys)
+            {
+                if (mediamGlyphSize <= key)
+                {
+                    int size = FontSizeTextSizeMap[key] * totalRanges;
+
+                    size = Calc.Min(size, MaxPermittedTexSize);
+
+                    return size;
+                }
+            }
+
+            return 4096;
+        }
+
+        private static void PopulateFontData(FontData fontData, FontBakerResult result)
+        {
+            PopulateFontImageData(fontData, result);
+            PopulateFontGlyphData(fontData, result);
+        }
+
+        private static void PopulateFontImageData(FontData fontData, FontBakerResult result)
+        {
+            fontData.FontSheet.Width = result.Width;
+            fontData.FontSheet.Height = result.Height;
+
+            fontData.FontSheet.Data = new byte[result.Width * result.Height * 4];
+
+            var idx = 0;
+
+            for (int i = 0; i < result.Bitmap.Length; ++i)
+            {
+                var b = result.Bitmap[i];
+
+                fontData.FontSheet.Data[idx] = b;
+                fontData.FontSheet.Data[idx+1] = b;
+                fontData.FontSheet.Data[idx+2] = b;
+                fontData.FontSheet.Data[idx+3] = b;
+
+                idx += 4;
+            }
+        }
+
+        private static void PopulateFontGlyphData(FontData fontData, FontBakerResult result)
+        {
+            var charCount = result.Glyphs.Count;
+
+            var chars = new char[charCount];
+            var glyphRects = new SRect[charCount];
+            var glyphCroppings = new SRect[charCount];
+            var glyphKernings = new SVec3[charCount];
+
+            var index = 0;
+
+            var orderedGlyphKeys = result.Glyphs.Keys.OrderBy(g => g);
+
+            foreach (var charKey in orderedGlyphKeys)
+            {
+                chars[index] = (char)charKey;
+
+                var glyph = result.Glyphs[charKey];
+
+                var glyphRect = new SRect(glyph.X, glyph.Y, glyph.Width, glyph.Height);
+
+                glyphRects[index] = glyphRect;
+
+                glyphCroppings[index] = new SRect(glyph.XOffset, glyph.YOffset, glyphRect.W, glyphRect.H);
+
+                glyphKernings[index] = new SVec3(0, glyphRect.W, glyph.XAdvance - glyphRect.W);
+
+                ++index;
+            }
+
+            fontData.Chars = chars;
+            fontData.GlyphRects = glyphRects;
+            fontData.GlyphCroppings = glyphCroppings;
+            fontData.GlyphKernings = glyphKernings;
+        }
+
         public static FontData Build(FontBuildParams @params)
         {
-            var compile_params = new FontCompileParams() {
-                CharRangeLevel = @params.CharRangeLevel,
-                FontFilePath = ResourceLoader.GetFullResourcePath(@params.Path),
-                FontName = @params.Id,
-                FontSize = @params.Size,
-                SpacingH = 1,
-                SpacingV = 1,
-                PaddingUp = @params.PaddingUp,
-                PaddingDown = @params.PaddingDown,
-                PaddingLeft = @params.PaddingLeft,
-                PaddingRight = @params.PaddingRight
-            };     
+            var fontBaker = new FontBaker();
 
-            Console.WriteLine($"Compiling Font: {@params.Id}, Size: {@params.Size}");
+            Console.WriteLine($"Compiling Font: {@params.Id}");
 
-            if (@params.DropShadow)
+            int optimalTextureSize = GetOptimalTextureSize(@params.Faces);
+
+            fontBaker.Begin(optimalTextureSize, optimalTextureSize);
+
+            foreach (var fontFace in @params.Faces)
             {
-                if (Calc.Abs(@params.ShadowOffsetX) > @params.PaddingLeft + @params.PaddingRight)
+                Console.WriteLine($"Compiling face with size {fontFace.Size} and char ranges:");
+                fontFace.CharRanges.ForEach((cr) =>
                 {
-                    @params.PaddingLeft = Calc.Abs(@params.ShadowOffsetX);
-                    @params.PaddingRight = Calc.Abs(@params.ShadowOffsetX);
-                }
+                    Console.WriteLine(cr.Name);
+                });
 
-                if (Calc.Abs(@params.ShadowOffsetY) > @params.PaddingUp + @params.PaddingDown)
-                {
-                    @params.PaddingUp = Calc.Abs(@params.ShadowOffsetY);
-                    @params.PaddingDown = Calc.Abs(@params.ShadowOffsetY);
-                }
+                var fontFileDataPath = ResourceLoader.GetFullResourcePath(fontFace.Path);
 
-                compile_params.PaddingUp = @params.PaddingUp;
-                compile_params.PaddingDown = @params.PaddingDown;
-                compile_params.PaddingLeft = @params.PaddingLeft;
-                compile_params.PaddingRight = @params.PaddingRight;
+                var fontFaceBytes = File.ReadAllBytes(fontFileDataPath);
+
+                fontBaker.Add(fontFaceBytes, fontFace.Size, fontFace.CharRanges);
             }
 
-            var compile_result = FontCompiler.Compile(compile_params);
+            var fontBakerResult = fontBaker.End();
 
-            if (@params.DropShadow)
-            {
-                Blitter.Begin(compile_result.FontImageData, compile_result.FontImageWidth, compile_result.FontImageHeight);
-
-                Blitter.DropShadow(@params.ShadowOffsetX, @params.ShadowOffsetY, new Color(@params.ShadowColor));
-
-                Blitter.End();
-            }
-
-            var font_data = new FontData()
+            var fontData = new FontData()
             {
                 Id = @params.Id,
+                Spacing = @params.Spacing,
+                LineSpacing = @params.LineSpacing,
+                DefaultChar = @params.DefaultChar,
                 FontSheet = new ImageData()
                 {
-                    Id = @params.Id + "_texture",
-                    Data = compile_result.FontImageData,
-                    Width = compile_result.FontImageWidth,
-                    Height = compile_result.FontImageHeight
-                },
+                    Id = @params.Id + "_texture"
+                }
             };
 
-            FontDescrParser.ParseAndFillData(font_data, compile_result.FontDescrData);
+            PopulateFontData(fontData, fontBakerResult);
 
-            return font_data;
+            return fontData;
         }
     }
 }

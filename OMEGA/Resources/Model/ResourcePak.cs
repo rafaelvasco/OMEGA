@@ -1,34 +1,38 @@
-﻿using ProtoBuf;
+﻿using MessagePack;
 using System.Collections.Generic;
 
 namespace OMEGA
 {
-    [ProtoContract]
+    [MessagePackObject]
     public class ResourcePak
     {
 
-        [ProtoMember(1)]
+        [Key(0)]
         public string Name {get;set;}
         
-        [ProtoMember(2)]
+        [Key(1)]
         public Dictionary<string, ImageData> Images {get;set;}
 
-        [ProtoMember(3)]
+        [Key(2)]
         public Dictionary<string, TextureAtlasData> Atlases { get; set;}
 
-        [ProtoMember(4)]
+        [Key(3)]
         public Dictionary<string, ShaderProgramData> Shaders {get;set;}
 
-        [ProtoMember(5)]
+        [Key(4)]
         public Dictionary<string, FontData> Fonts {get;set;}
 
-        [ProtoMember(6)]
+        [Key(5)]
         public Dictionary<string, TextFileData> TextFiles {get;set;}
 
-        [ProtoMember(7)]
+        [Key(6)]
         public int TotalResourcesCount { get;set;}
 
-        public ResourcePak() {}
+        //public ResourcePak() 
+        //{
+        //    Name = null;
+            
+        //}
 
         public ResourcePak(string name)
         {
@@ -38,6 +42,7 @@ namespace OMEGA
             Fonts = new Dictionary<string, FontData>();
             TextFiles = new Dictionary<string, TextFileData>();
             Atlases = new Dictionary<string, TextureAtlasData>();
+            TotalResourcesCount = 0;
         }
         
     }

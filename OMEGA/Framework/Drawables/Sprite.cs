@@ -4,7 +4,7 @@ namespace OMEGA
 {
     public class Sprite : Drawable
     {
-        public Texture2D Texture => m_texture;
+        public Texture2D Texture => _mTexture;
 
         public Sprite(Texture2D texture) : this(texture, RectF.FromBox(0f, 0f, texture.Width, texture.Height))
         {
@@ -15,48 +15,48 @@ namespace OMEGA
 
         }
 
-        public Sprite(Texture2D texture, RectF src_rect)
+        public Sprite(Texture2D texture, RectF srcRect)
         {
-            m_texture = texture;
-            m_quad = new Quad(texture, src_rect);
-            Width = m_quad.Width;
-            Height = m_quad.Height;
+            _mTexture = texture;
+            _mQuad = new Quad(texture, srcRect);
+            Width = _mQuad.Width;
+            Height = _mQuad.Height;
 
-            m_origin_x = 0.5f;
-            m_origin_y = 0.5f;
+            _mOriginX = 0.5f;
+            _mOriginY = 0.5f;
 
-            m_flip_x = false;
+            _mFlipX = false;
 
-            m_flip_y = false;
+            _mFlipY = false;
         }
 
 
-        private bool m_flip_x;
-        private bool m_flip_y;
-        private float m_origin_x;
-        private float m_origin_y;
-        private Color m_color = Color.White;
+        private bool _mFlipX;
+        private bool _mFlipY;
+        private float _mOriginX;
+        private float _mOriginY;
+        private Color _mColor = Color.White;
 
-        private Texture2D m_texture;
-        private BlendMode m_blend_mode = BlendMode.Alpha;
-        private Quad m_quad;
+        private Texture2D _mTexture;
+        private BlendMode _mBlendMode = BlendMode.Alpha;
+        private Quad _mQuad;
 
-        public void SetTextureRegion(RectF rect, bool reset_size)
+        public void SetTextureRegion(RectF rect, bool resetSize)
         {
-            if (reset_size)
+            if (resetSize)
             {
                 Width = rect.Width;
                 Height = rect.Height;
             }
 
-            m_quad = new Quad(m_texture, rect, RectF.FromBox(0, 0, Width, Height));
+            _mQuad = new Quad(_mTexture, rect, RectF.FromBox(0, 0, Width, Height));
 
         }
 
-        public void SetTextureRegion(Texture2D texture, RectF region, bool reset_size)
+        public void SetTextureRegion(Texture2D texture, RectF region, bool resetSize)
         {
-            m_texture = texture;
-            SetTextureRegion(region, reset_size);
+            _mTexture = texture;
+            SetTextureRegion(region, resetSize);
         }
 
         public void SetAtlasFrame(TextureAtlas atlas, int frame)
@@ -73,121 +73,105 @@ namespace OMEGA
         {
             X = x;
             Y = y;
-            UpdateQuadGeometry();
-        }
-
-        public override void PutOnCenter()
-        {
-            SetOrigin(0.5f ,0.5f);
-            SetPosition(Engine.Canvas.Width/2, Engine.Canvas.Height/2);
         }
 
         public override void Move(float dx, float dy)
         {
             X += dx;
             Y += dy;
-            UpdateQuadGeometry();
         }
 
         public override void SetSize(float w, float h)
         {
             Width = w;
             Height = h;
-
-            UpdateQuadGeometry();
         }
 
         public override void SetColor(Color color)
         {
-            if (color == m_color)
+            if (color == _mColor)
             {
                 return;
             }
 
-            m_color = color;
+            _mColor = color;
 
-            m_quad.V0.Col = color;
-            m_quad.V1.Col = color;
-            m_quad.V2.Col = color;
-            m_quad.V3.Col = color;
+            _mQuad.TopLeft.Col = color;
+            _mQuad.TopRight.Col = color;
+            _mQuad.BottomRight.Col = color;
+            _mQuad.BottomLeft.Col = color;
         }
 
         public void FlipHorizontal(bool flip)
         {
-            SetFlip(flip, m_flip_y);
+            SetFlip(flip, _mFlipY);
         }
 
         public void FlipVertical(bool flip)
         {
-            SetFlip(m_flip_x, flip);
+            SetFlip(_mFlipX, flip);
         }
 
-        public void SetFlip(bool flip_h, bool flip_v)
+        public void SetFlip(bool flipH, bool flipV)
         {
-            if (m_flip_x == flip_h && m_flip_y == flip_v)
+            if (_mFlipX == flipH && _mFlipY == flipV)
             {
                 return;
             }
 
-            m_flip_x = flip_h;
-            m_flip_y = flip_v;
+            _mFlipX = flipH;
+            _mFlipY = flipV;
 
             float tx, ty;
 
-            if (flip_h != m_flip_x)
+            if (flipH != _mFlipX)
             {
-                tx = m_quad.V0.Tx;
-                m_quad.V0.Tx = m_quad.V1.Tx;
-                m_quad.V1.Tx = tx;
+                tx = _mQuad.TopLeft.Tx;
+                _mQuad.TopLeft.Tx = _mQuad.TopRight.Tx;
+                _mQuad.TopRight.Tx = tx;
 
-                tx = m_quad.V3.Tx;
-                m_quad.V3.Tx = m_quad.V2.Tx;
-                m_quad.V2.Tx = tx;
+                tx = _mQuad.BottomLeft.Tx;
+                _mQuad.BottomLeft.Tx = _mQuad.BottomRight.Tx;
+                _mQuad.BottomRight.Tx = tx;
             }
 
-            if (flip_v != m_flip_y)
+            if (flipV != _mFlipY)
             {
-                ty = m_quad.V0.Ty;
-                m_quad.V0.Ty = m_quad.V3.Ty;
-                m_quad.V3.Ty = ty;
+                ty = _mQuad.TopLeft.Ty;
+                _mQuad.TopLeft.Ty = _mQuad.BottomLeft.Ty;
+                _mQuad.BottomLeft.Ty = ty;
 
-                ty = m_quad.V1.Ty;
-                m_quad.V1.Ty = m_quad.V2.Ty;
-                m_quad.V2.Ty = ty;
+                ty = _mQuad.TopRight.Ty;
+                _mQuad.TopRight.Ty = _mQuad.BottomRight.Ty;
+                _mQuad.BottomRight.Ty = ty;
             }
         }
 
         public void SetOrigin(float x, float y)
         {
-            m_origin_x = x;
-            m_origin_y = y;
+            _mOriginX = x;
+            _mOriginY = y;
         }
 
         public void SetBlend(BlendMode mode)
         {
-            m_blend_mode = mode;
+            _mBlendMode = mode;
         }
 
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateQuadGeometry()
+        public override void Draw(Canvas2D canvas)
         {
-            m_quad.Set(X, Y, Width, Height);
-        }
-
-        public override void Draw(Canvas canvas)
-        {
-            canvas.BlendMode = m_blend_mode;
+            canvas.BlendMode = _mBlendMode;
             
 
-            var origin_dx = m_origin_x * Width;
-            var origin_dy = m_origin_y * Height;
+            var origin_dx = _mOriginX * Width;
+            var origin_dy = _mOriginY * Height;
 
-            var draw_q = m_quad;
+            var draw_q = _mQuad;
 
             draw_q.Set(X - origin_dx, Y - origin_dy, Width, Height);
 
-            canvas.DrawQuad(in draw_q, m_texture);
+            canvas.DrawQuad(in draw_q, _mTexture);
 
         }
 

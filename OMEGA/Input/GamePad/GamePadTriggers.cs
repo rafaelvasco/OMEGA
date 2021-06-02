@@ -6,24 +6,24 @@
         {
             get
             {
-                return left;
+                return _left;
             }
         }
         public float Right
         {
             get
             {
-                return right;
+                return _right;
             }
         }
 
-        private float left;
-        private float right;
+        private float _left;
+        private float _right;
 
         public GamePadTriggers(float leftTrigger, float rightTrigger)
         {
-            left = Calc.Clamp(leftTrigger, 0.0f, 1.0f);
-            right = Calc.Clamp(rightTrigger, 0.0f, 1.0f);
+            _left = Calc.Clamp(leftTrigger, 0.0f, 1.0f);
+            _right = Calc.Clamp(rightTrigger, 0.0f, 1.0f);
         }
 
         internal GamePadTriggers(
@@ -38,23 +38,23 @@
 			 */
             if (deadZoneMode == GamePadDeadZone.None)
             {
-                left = Calc.Clamp(leftTrigger, 0.0f, 1.0f);
-                right = Calc.Clamp(rightTrigger, 0.0f, 1.0f);
+                _left = Calc.Clamp(leftTrigger, 0.0f, 1.0f);
+                _right = Calc.Clamp(rightTrigger, 0.0f, 1.0f);
             }
             else
             {
-                left = Calc.Clamp(
+                _left = Calc.Clamp(
                     GamePad.ExcludeAxisDeadZone(
                         leftTrigger,
-                        GamePad.TriggerThreshold
+                        GamePad.TRIGGER_THRESHOLD
                     ),
                     0.0f,
                     1.0f
                 );
-                right = Calc.Clamp(
+                _right = Calc.Clamp(
                     GamePad.ExcludeAxisDeadZone(
                         rightTrigger,
-                        GamePad.TriggerThreshold
+                        GamePad.TRIGGER_THRESHOLD
                     ),
                     0.0f,
                     1.0f
@@ -74,8 +74,8 @@
         /// </returns>
         public static bool operator ==(GamePadTriggers left, GamePadTriggers right)
         {
-            return ((Calc.WithinEpsilon(left.left, right.left)) &&
-                    (Calc.WithinEpsilon(left.right, right.right)));
+            return ((Calc.WithinEpsilon(left._left, right._left)) &&
+                    (Calc.WithinEpsilon(left._right, right._right)));
         }
 
         /// <summary>

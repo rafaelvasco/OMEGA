@@ -11,19 +11,19 @@ namespace STB
         public const long DBL_MANT_MASK = 0x000fffffffffffffL;
         public const long DBL_EXP_CLR_MASK = DBL_SGN_MASK | DBL_MANT_MASK;
 
-        public static void* malloc(ulong size)
+        public static void* Malloc(ulong size)
         {
-            return malloc((long)size);
+            return Malloc((long)size);
         }
 
-        public static void* malloc(long size)
+        public static void* Malloc(long size)
         {
             var ptr = Marshal.AllocHGlobal((int)size);
 
             return ptr.ToPointer();
         }
 
-        public static void memcpy(void* a, void* b, long size)
+        public static void Memcpy(void* a, void* b, long size)
         {
             var ap = (byte*)a;
             var bp = (byte*)b;
@@ -31,35 +31,35 @@ namespace STB
                 *ap++ = *bp++;
         }
 
-        public static void memcpy(void* a, void* b, ulong size)
+        public static void Memcpy(void* a, void* b, ulong size)
         {
-            memcpy(a, b, (long)size);
+            Memcpy(a, b, (long)size);
         }
 
-        public static void memmove(void* a, void* b, long size)
+        public static void Memmove(void* a, void* b, long size)
         {
             void* temp = null;
 
             try
             {
-                temp = malloc(size);
-                memcpy(temp, b, size);
-                memcpy(a, temp, size);
+                temp = Malloc(size);
+                Memcpy(temp, b, size);
+                Memcpy(a, temp, size);
             }
 
             finally
             {
                 if (temp != null)
-                    free(temp);
+                    Free(temp);
             }
         }
 
-        public static void memmove(void* a, void* b, ulong size)
+        public static void Memmove(void* a, void* b, ulong size)
         {
-            memmove(a, b, (long)size);
+            Memmove(a, b, (long)size);
         }
 
-        public static int memcmp(void* a, void* b, long size)
+        public static int Memcmp(void* a, void* b, long size)
         {
             var result = 0;
             var ap = (byte*)a;
@@ -76,20 +76,20 @@ namespace STB
             return result;
         }
 
-        public static int memcmp(void* a, void* b, ulong size)
+        public static int Memcmp(void* a, void* b, ulong size)
         {
-            return memcmp(a, b, (long)size);
+            return Memcmp(a, b, (long)size);
         }
 
-        public static int memcmp(byte* a, byte[] b, ulong size)
+        public static int Memcmp(byte* a, byte[] b, ulong size)
         {
             fixed (void* bptr = b)
             {
-                return memcmp(a, bptr, (long)size);
+                return Memcmp(a, bptr, (long)size);
             }
         }
 
-        public static void free(void* a)
+        public static void Free(void* a)
         {
             if (a == null)
                 return;
@@ -104,7 +104,7 @@ namespace STB
 		/// <param name="number"></param>
 		/// <param name="exponent"></param>
 		/// <returns></returns>
-		public static double frexp(double number, int* exponent)
+		public static double Frexp(double number, int* exponent)
         {
             var bits = BitConverter.DoubleToInt64Bits(number);
             var exp = (int)((bits & DBL_EXP_MASK) >> DBL_MANT_BITS);
@@ -132,7 +132,7 @@ namespace STB
             return number;
         }
 
-        public static void memset(void* ptr, int value, long size)
+        public static void Memset(void* ptr, int value, long size)
         {
             var bptr = (byte*)ptr;
             var bval = (byte)value;
@@ -140,9 +140,9 @@ namespace STB
                 *bptr++ = bval;
         }
 
-        public static void memset(void* ptr, int value, ulong size)
+        public static void Memset(void* ptr, int value, ulong size)
         {
-            memset(ptr, value, (long)size);
+            Memset(ptr, value, (long)size);
         }
 
         public static uint _lrotl(uint x, int y)
@@ -150,10 +150,10 @@ namespace STB
             return (x << y) | (x >> (32 - y));
         }
 
-        public static void* realloc(void* a, long newSize)
+        public static void* Realloc(void* a, long newSize)
         {
             if (a == null)
-                return malloc(newSize);
+                return Malloc(newSize);
 
             var ptr = new IntPtr(a);
             var result = Marshal.ReAllocHGlobal(ptr, new IntPtr(newSize));
@@ -161,54 +161,54 @@ namespace STB
             return result.ToPointer();
         }
 
-        public static void* realloc(void* a, ulong newSize)
+        public static void* Realloc(void* a, ulong newSize)
         {
-            return realloc(a, (long)newSize);
+            return Realloc(a, (long)newSize);
         }
 
-        public static int abs(int v)
+        public static int Abs(int v)
         {
             return Math.Abs(v);
         }
 
-        public static float fabs(double a)
+        public static float Fabs(double a)
         {
             return (float)Math.Abs(a);
         }
 
-        public static double sqrt(double val)
+        public static double Sqrt(double val)
         {
             return Math.Sqrt(val);
         }
 
-        public static double ceil(double a)
+        public static double Ceil(double a)
         {
             return Math.Ceiling(a);
         }
-        public static double floor(double a)
+        public static double Floor(double a)
         {
             return Math.Floor(a);
         }
-        public static double pow(double a, double b)
+        public static double Pow(double a, double b)
         {
             return Math.Pow(a, b);
         }
 
-        public static double fmod(double x, double y)
+        public static double Fmod(double x, double y)
         {
             return x % y;
         }
-        public static double cos(double value)
+        public static double Cos(double value)
         {
             return Math.Cos(value);
         }
 
-        public static double acos(double value)
+        public static double Acos(double value)
         {
             return Math.Acos(value);
         }
 
-        public static ulong strlen(sbyte* str)
+        public static ulong Strlen(sbyte* str)
         {
             var ptr = str;
 

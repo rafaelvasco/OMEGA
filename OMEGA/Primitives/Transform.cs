@@ -6,24 +6,24 @@ namespace OMEGA
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct Transform : IEquatable<Transform>
     {
-        public float M0;
-        public float M1;
-        public float M2;
-        public float M3;
-        public float M4;
-        public float M5;
-        public float M6;
-        public float M7;
-        public float M8;
-        public float M9;
-        public float M10;
-        public float M11;
+        public float M11;  
         public float M12;
         public float M13;
         public float M14;
-        public float M15;
+        public float M21;
+        public float M22;
+        public float M23;
+        public float M24;
+        public float M31;
+        public float M32;
+        public float M33;
+        public float M34;
+        public float M41;
+        public float M42;
+        public float M43;
+        public float M44;
 
-        public static Transform Identity => new Transform(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+        public static Transform Identity => new(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
         private Transform(
             float a0, float a1, float a2, float a3,
@@ -32,22 +32,22 @@ namespace OMEGA
             float a12, float a13, float a14, float a15
         )
         {
-            M0 = a0;
-            M1 = a1;
-            M2 = a2;
-            M3 = a3;
-            M4 = a4;
-            M5 = a5;
-            M6 = a6;
-            M7 = a7;
-            M8 = a8;
-            M9 = a9;
-            M10 = a10;
-            M11 = a11;
-            M12 = a12;
-            M13 = a13;
-            M14 = a14;
-            M15 = a15;
+            M11 = a0;
+            M12 = a1;
+            M13 = a2;
+            M14 = a3;
+            M21 = a4;
+            M22 = a5;
+            M23 = a6;
+            M24 = a7;
+            M31 = a8;
+            M32 = a9;
+            M33 = a10;
+            M34 = a11;
+            M41 = a12;
+            M42 = a13;
+            M43 = a14;
+            M44 = a15;
         }
 
         public Transform(
@@ -56,44 +56,44 @@ namespace OMEGA
             float a20, float a21, float a22
         )
         {
-            M0 = a00;
-            M1 = a10;
-            M2 = 0f;
-            M3 = a20;
-            M4 = a01;
-            M5 = a11;
-            M6 = 0f;
-            M7 = a21;
-            M8 = 0f;
-            M9 = 0f;
-            M10 = -1f;
-            M11 = 0f;
-            M12 = a02;
-            M13 = a12;
-            M14 = 0f;
-            M15 = a22;
+            M11 = a00;
+            M12 = a10;
+            M13 = 0f;
+            M14 = a20;
+            M21 = a01;
+            M22 = a11;
+            M23 = 0f;
+            M24 = a21;
+            M31 = 0f;
+            M32 = 0f;
+            M33 = -1f;
+            M34 = 0f;
+            M41 = a02;
+            M42 = a12;
+            M43 = 0f;
+            M44 = a22;
 
         }
 
         public Transform GetInverse()
         {
             float determinant =
-                M0 * (M15 * M5 - M7 * M13) -
-                M1 * (M15 * M4 - M7 * M12) +
-                M3 * (M13 * M4 - M5 * M12);
+                M11 * (M44 * M22 - M24 * M42) -
+                M12 * (M44 * M21 - M24 * M41) +
+                M14 * (M42 * M21 - M22 * M41);
 
             if (determinant != 0f)
             {
                 return new Transform(
-                    (M15 * M5 - M7 * M13) / determinant,
-                    -(M15 * M4 - M7 * M12) / determinant,
-                    (M13 * M4 - M5 * M12) / determinant,
-                    -(M15 * M1 - M3 * M13) / determinant,
-                    (M15 * M0 - M3 * M12) / determinant,
-                    -(M13 * M0 - M1 * M12) / determinant,
-                    (M7 * M1 - M3 * M5) / determinant,
-                    -(M7 * M0 - M3 * M4) / determinant,
-                    (M5 * M0 - M1 * M4) / determinant
+                    (M44 * M22 - M24 * M42) / determinant,
+                    -(M44 * M21 - M24 * M41) / determinant,
+                    (M42 * M21 - M22 * M41) / determinant,
+                    -(M44 * M12 - M14 * M42) / determinant,
+                    (M44 * M11 - M14 * M41) / determinant,
+                    -(M42 * M11 - M12 * M41) / determinant,
+                    (M24 * M12 - M14 * M22) / determinant,
+                    -(M24 * M11 - M14 * M21) / determinant,
+                    (M22 * M11 - M12 * M21) / determinant
                 );
             }
             else
@@ -102,28 +102,29 @@ namespace OMEGA
             }
         }
 
-        Vec2 TransformPoint(float x, float y)
+        public static void TransformPoint(ref Vec2 point, ref Transform transform, out Vec2 result)
         {
-            return new Vec2(
-                M0 * x + M4 * y + M12,
-                M1 * x + M5 * y + M13
-            );
+            var x = transform.M11 * point.X + transform.M21 * point.Y + transform.M41;
+            var y = transform.M12 * point.X + transform.M22 * point.Y + transform.M42;
+
+            result.X = x;
+            result.Y = y;
         }
 
-        Vec2 TransformPoint(Vec2 point)
-        {
-            return TransformPoint(point.X, point.Y);
-        }
-
-        RectF TransformRect(RectF rect)
+        public static void TransformRect(ref RectF rect, ref Transform transform, out RectF result)
         {
             // Transform the 4 corners of the rect
             Span<Vec2> points = stackalloc Vec2[4];
 
-            points[0] = TransformPoint(rect.X1, rect.Y1);
-            points[1] = TransformPoint(rect.X1, rect.Y2);
-            points[2] = TransformPoint(rect.X2, rect.Y1);
-            points[3] = TransformPoint(rect.X2, rect.Y2);
+            var corner1 = rect.TopLeft;
+            var corner2 = rect.TopRight;
+            var corner3 = rect.BottomLeft;
+            var corner4 = rect.BottomRight;
+
+            TransformPoint(ref corner1, ref transform, out points[0]);
+            TransformPoint(ref corner2, ref transform, out points[1]);
+            TransformPoint(ref corner3, ref transform, out points[2]);
+            TransformPoint(ref corner3, ref transform, out points[3]);
 
             // Compute the bounding rect of the transformed points
             float left = points[0].X;
@@ -151,38 +152,47 @@ namespace OMEGA
                 }
             }
 
-            return new RectF(left, top, right, bottom);
-
+            result.X1 = left;
+            result.Y1 = top;
+            result.X2 = right;
+            result.Y2 = bottom;
         }
 
-        public Transform Combine(Transform transform)
+        public static void Combine(ref Transform transformA, ref Transform transformB, out Transform result)
         {
-            return new Transform(
-                M0 * transform.M0  + M4 * transform.M1  + M12 * transform.M3,
-                M0 * transform.M4  + M4 * transform.M5  + M12 * transform.M7,
-                M0 * transform.M12 + M4 * transform.M13 + M12 * transform.M15,
-                M1 * transform.M0  + M5 * transform.M1  + M13 * transform.M3,
-                M1 * transform.M4  + M5 * transform.M5  + M13 * transform.M7,
-                M1 * transform.M12 + M5 * transform.M13 + M13 * transform.M15,
-                M3 * transform.M0  + M7 * transform.M1  + M15 * transform.M3,
-                M3 * transform.M4  + M7 * transform.M5  + M15 * transform.M7,
-                M3 * transform.M12 + M7 * transform.M13 + M15 * transform.M15  
-            );
+            result.M11 = transformA.M11 * transformB.M11 + transformA.M21 * transformB.M12 + transformA.M41 * transformB.M14;
+            result.M12 = transformA.M11 * transformB.M21 + transformA.M21 * transformB.M22 + transformA.M41 * transformB.M24;
+            result.M13 = 0f;
+            result.M14 = transformA.M11 * transformB.M41 + transformA.M21 * transformB.M42 + transformA.M41 * transformB.M44;
+            result.M21 = transformA.M12 * transformB.M11 + transformA.M22 * transformB.M12 + transformA.M42 * transformB.M14;
+            result.M22 = transformA.M12 * transformB.M21 + transformA.M22 * transformB.M22 + transformA.M42 * transformB.M24;
+            result.M23 = 0f;
+            result.M24 = transformA.M12 * transformB.M41 + transformA.M22 * transformB.M42 + transformA.M42 * transformB.M44;
+            result.M31 = 0f;
+            result.M32 = 0f;
+            result.M33 = -1f;
+            result.M34 = 0f;
+            result.M41 = transformA.M14 * transformB.M11 + transformA.M24 * transformB.M12 + transformA.M44 * transformB.M14;
+            result.M42 = transformA.M14 * transformB.M21 + transformA.M24 * transformB.M22 + transformA.M44 * transformB.M24;
+            result.M43 = 0f;
+            result.M44 = transformA.M14 * transformB.M41 + transformA.M24 * transformB.M42 + transformA.M44 * transformB.M44;
         }
 
-        public Transform Translate(float x, float y)
+        public static void Translate(ref Transform transform, float x, float y)
         {
             var translation = new Transform(1f, 0f, x, 0f, 1f, y, 0f, 0f, 1f);
 
-            return Combine(translation);
+            Combine(ref transform, ref translation, out transform);
         }
 
-        public Transform Translate(Vec2 offset)
+        public static void Translate(ref Transform transform, ref Vec2 offset)
         {
-            return Translate(offset.X, offset.Y);
+            var translation = new Transform(1f, 0f, offset.X, 0f, 1f, offset.Y, 0f, 0f, 1f);
+            Combine(ref transform, ref translation, out transform);
         }
 
-        public Transform Rotate(float angle)
+
+        public static void Rotate(ref Transform transform, float angle)
         {
             float rad = Calc.ToRadians(angle);
             float cos = Calc.Cos(rad);
@@ -190,92 +200,81 @@ namespace OMEGA
 
             var rotation = new Transform(cos, -sin, 0f, sin, cos, 0f, 0f, 0f, 1f);
 
-            return Combine(rotation);
+            Combine(ref transform, ref rotation, out transform);
         }
            
-        public Transform Rotate(float angle, float center_x, float center_y)
+        public static void Rotate(ref Transform transform, float angle, float centerX, float centerY)
         {
             float rad = Calc.ToRadians(angle);
             float cos = Calc.Cos(rad);
             float sin = Calc.Sin(rad);
 
             var rotation = new Transform(
-                cos, -sin, center_x * (1 - cos) + center_y * sin,
-                sin, cos, center_y * (1 - cos) - center_x * sin,
+                cos, -sin, centerX * (1 - cos) + centerY * sin,
+                sin, cos, centerY * (1 - cos) - centerX * sin,
                 0f, 0f, 1f
             );
 
-            return Combine(rotation);
+            Combine(ref transform, ref rotation, out transform);
         }
 
 
-        public Transform Rotate(float angle, Vec2 center)
+        public static void Rotate(ref Transform transform, float angle, Vec2 center)
         {
-            return Rotate(angle, center.X, center.Y);
+            Rotate(ref transform, angle, center.X, center.Y);
         }
 
-        public Transform Scale(float scale_x, float scale_y)
+        public static void Scale(ref Transform transform, float scaleX, float scaleY)
         {
             var scaling = new Transform(
-                scale_x, 0f, 0f,
-                0, scale_y, 0f,
+                scaleX, 0f, 0f,
+                0, scaleY, 0f,
                 0f, 0f, 1f
             );
 
-            return Combine(scaling);
+            Combine(ref transform, ref scaling, out transform);
         }
 
-        public Transform Scale(float scale_x, float scale_y, float center_x, float center_y)
+        public static void Scale(ref Transform transform, float scaleX, float scaleY, float centerX, float centerY)
         {
             var scaling = new Transform(
-                scale_x, 0f,      center_x * (1 - scale_x),
-                0f,      scale_y, center_y * (1 - scale_y),
+                scaleX, 0f,      centerX * (1 - scaleX),
+                0f,      scaleY, centerY * (1 - scaleY),
                 0f,      0f,      1f
             );
 
-            return Combine(scaling);
+            Combine(ref transform, ref scaling, out transform);
         }
 
-        public Transform Scale(Vec2 factors)
+        public static void Scale(ref Transform transform, Vec2 factors)
         {
-            return Scale(factors.X, factors.Y);
+            Scale(ref transform, factors.X, factors.Y);
         }
            
-        public Transform Scale(Vec2 factors, Vec2 center)
+        public static void Scale(ref Transform transform, Vec2 factors, Vec2 center)
         {
-            return Scale(factors.X, factors.Y, center.X, center.Y);
+            Scale(ref transform, factors.X, factors.Y, center.X, center.Y);
         }
 
-
-        public static Transform operator * (Transform left, Transform right)
-        {
-            return left.Combine(right);
-        }
-
-        public static Vec2 operator * (Transform left, Vec2 right)
-        {
-            return left.TransformPoint(right);
-        }
-       
         public static bool operator == (Transform left, Transform right)
         {
             return (
-                left.M0 == right.M0 &&    
-                left.M1 == right.M1 &&
-                left.M2 == right.M2 &&
-                left.M3 == right.M3 &&
-                left.M4 == right.M4 &&
-                left.M5 == right.M5 &&
-                left.M6 == right.M6 &&
-                left.M7 == right.M7 &&
-                left.M8 == right.M8 &&
-                left.M9 == right.M9 &&
-                left.M10 == right.M10 &&
-                left.M11 == right.M11 &&
+                left.M11 == right.M11 &&    
                 left.M12 == right.M12 &&
                 left.M13 == right.M13 &&
                 left.M14 == right.M14 &&
-                left.M15 == right.M15
+                left.M21 == right.M21 &&
+                left.M22 == right.M22 &&
+                left.M23 == right.M23 &&
+                left.M24 == right.M24 &&
+                left.M31 == right.M31 &&
+                left.M32 == right.M32 &&
+                left.M33 == right.M33 &&
+                left.M34 == right.M34 &&
+                left.M41 == right.M41 &&
+                left.M42 == right.M42 &&
+                left.M43 == right.M43 &&
+                left.M44 == right.M44
             );
         }
 
@@ -297,31 +296,31 @@ namespace OMEGA
         public bool Equals(Transform other)
         {
              return (
-                M0 == other.M0 &&    
-                M1 == other.M1 &&
-                M2 == other.M2 &&
-                M3 == other.M3 &&
-                M4 == other.M4 &&
-                M5 == other.M5 &&
-                M6 == other.M6 &&
-                M7 == other.M7 &&
-                M8 == other.M8 &&
-                M9 == other.M9 &&
-                M10 == other.M10 &&
-                M11 == other.M11 &&
+                M11 == other.M11 &&    
                 M12 == other.M12 &&
                 M13 == other.M13 &&
                 M14 == other.M14 &&
-                M15 == other.M15
+                M21 == other.M21 &&
+                M22 == other.M22 &&
+                M23 == other.M23 &&
+                M24 == other.M24 &&
+                M31 == other.M31 &&
+                M32 == other.M32 &&
+                M33 == other.M33 &&
+                M34 == other.M34 &&
+                M41 == other.M41 &&
+                M42 == other.M42 &&
+                M43 == other.M43 &&
+                M44 == other.M44
             );
         }
 
         public override int GetHashCode()
         {
-            return M0.GetHashCode() + M1.GetHashCode() + M2.GetHashCode() + M3.GetHashCode() +
-                   M4.GetHashCode() + M5.GetHashCode() + M6.GetHashCode() + M7.GetHashCode() +
-                   M8.GetHashCode() + M9.GetHashCode() + M10.GetHashCode() + M11.GetHashCode() +
-                   M12.GetHashCode() + M13.GetHashCode() + M14.GetHashCode() + M15.GetHashCode();
+            return M11.GetHashCode() + M12.GetHashCode() + M13.GetHashCode() + M14.GetHashCode() +
+                   M21.GetHashCode() + M22.GetHashCode() + M23.GetHashCode() + M24.GetHashCode() +
+                   M31.GetHashCode() + M32.GetHashCode() + M33.GetHashCode() + M34.GetHashCode() +
+                   M41.GetHashCode() + M42.GetHashCode() + M43.GetHashCode() + M44.GetHashCode();
         }
     }
 }

@@ -5,17 +5,17 @@ namespace OMEGA
 {
     public class ContentManager
     {
-        private readonly Dictionary<string, Resource> m_loaded_resources;
-        private readonly Dictionary<string, string[]> m_pak_res_map;
-        private readonly List<Resource> m_runtime_resources;
+        private readonly Dictionary<string, Resource> _loadedResources;
+        private readonly Dictionary<string, string[]> _pakMap;
+        private readonly Dictionary<string, Resource> _runtimeResources;
 
         public ContentManager(GameInfo info)
         {
             ResourceLoader.SetRootPath(info.ResourcesFolder);
 
-            m_loaded_resources = new Dictionary<string, Resource>();
-            m_runtime_resources = new List<Resource>();
-            m_pak_res_map = new Dictionary<string, string[]>();
+            _loadedResources = new Dictionary<string, Resource>();
+            _runtimeResources = new Dictionary<string, Resource>();
+            _pakMap = new Dictionary<string, string[]>();
 
             LoadContentPack("base");
 
@@ -28,18 +28,18 @@ namespace OMEGA
             }
         }
 
-        public T Get<T>(string resource_id) where T : Resource
+        public T Get<T>(string resourceId) where T : Resource
         {
-            if (m_loaded_resources.TryGetValue(resource_id, out Resource resource))
+            if (_loadedResources.TryGetValue(resourceId, out var resource))
             {
                 return (T)resource;
             }
 
-            throw new Exception($"Can't find resource with ID: {resource_id}");
+            throw new Exception($"Can't find resource with ID: {resourceId}");
         }
-        public void LoadContentPack(string pak_name)
+        public void LoadContentPack(string pakName)
         {
-            ResourcePak pak = ResourceLoader.LoadPak(pak_name);
+            ResourcePak pak = ResourceLoader.LoadPak(pakName);
 
             if (pak.TotalResourcesCount == 0)
             {
@@ -48,55 +48,55 @@ namespace OMEGA
 
             int res_name_map_idx = 0;
 
-            m_pak_res_map.Add(pak_name, new string[pak.TotalResourcesCount]);
+            _pakMap.Add(pakName, new string[pak.TotalResourcesCount]);
 
             if (pak.Images != null)
             {
-                foreach (var image_res in pak.Images)
+                foreach (var (imageKey, imageData) in pak.Images)
                 {
-                    Texture2D texture = ResourceLoader.LoadTexture(image_res.Value);
-                    m_loaded_resources.Add(texture.Id, texture);
-                    m_pak_res_map[pak_name][res_name_map_idx++] = image_res.Key;
+                    Texture2D texture = ResourceLoader.LoadTexture(imageData);
+                    _loadedResources.Add(texture.Id, texture);
+                    _pakMap[pakName][res_name_map_idx++] = imageKey;
                 }
             }
 
             if (pak.Atlases != null)
             {
-                foreach (var atlas_res in pak.Atlases)
+                foreach (var (atlasKey, atlasData) in pak.Atlases)
                 {
-                    TextureAtlas atlas = ResourceLoader.LoadAtlas(atlas_res.Value);
-                    m_loaded_resources.Add(atlas.Id, atlas);
-                    m_pak_res_map[pak_name][res_name_map_idx++] = atlas_res.Key;
+                    TextureAtlas atlas = ResourceLoader.LoadAtlas(atlasData);
+                    _loadedResources.Add(atlas.Id, atlas);
+                    _pakMap[pakName][res_name_map_idx++] = atlasKey;
                 }
             }
 
             if (pak.Fonts != null)
             {
-                foreach (var font_res in pak.Fonts)
+                foreach (var (fontKey, fontData) in pak.Fonts)
                 {
-                    Font font = ResourceLoader.LoadFont(font_res.Value);
-                    m_loaded_resources.Add(font.Id, font);
-                    m_pak_res_map[pak_name][res_name_map_idx++] = font_res.Key;
+                    TextureFont font = ResourceLoader.LoadFont(fontData);
+                    _loadedResources.Add(font.Id, font);
+                    _pakMap[pakName][res_name_map_idx++] = fontKey;
                 }
             }
 
             if (pak.Shaders != null)
             {
-                foreach (var shader_res in pak.Shaders)
+                foreach (var (shaderKey, shaderProgramData) in pak.Shaders)
                 {
-                    ShaderProgram shader = ResourceLoader.LoadShader(shader_res.Value);
-                    m_loaded_resources.Add(shader.Id, shader);
-                    m_pak_res_map[pak_name][res_name_map_idx++] = shader_res.Key;
+                    ShaderProgram shader = ResourceLoader.LoadShader(shaderProgramData);
+                    _loadedResources.Add(shader.Id, shader);
+                    _pakMap[pakName][res_name_map_idx++] = shaderKey;
                 }
             }
 
             if (pak.TextFiles != null)
             {
-                foreach (var txt_res in pak.TextFiles)
+                foreach (var (txtKey, textFileData) in pak.TextFiles)
                 {
-                    TextFile text_file = ResourceLoader.LoadTextFile(txt_res.Value);
-                    m_loaded_resources.Add(text_file.Id, text_file);
-                    m_pak_res_map[pak_name][res_name_map_idx++] = txt_res.Key;
+                    TextFile text_file = ResourceLoader.LoadTextFile(textFileData);
+                    _loadedResources.Add(text_file.Id, text_file);
+                    _pakMap[pakName][res_name_map_idx++] = txtKey;
                 }
             }
 
@@ -113,51 +113,66 @@ namespace OMEGA
 
             //    _loaded_resources.Add(song.Id, song);
             //}
+
         }
 
-        internal int RegisterRuntimeLoaded(Resource resource)
+        internal void RegisterRuntimeLoaded(Resource resource)
         {
-            m_runtime_resources.Add(resource);
-            return m_runtime_resources.Count;
+            resource.Id = Guid.NewGuid().ToString();
+            _runtimeResources.Add(resource.Id, resource);
         }
 
-        public void FreePack(string pack_name)
+        public void FreePack(string packName)
         {
-            Console.WriteLine($" > Diposing resources from Pack: {pack_name}");
+            Console.WriteLine($" > Diposing resources from Pack: {packName}");
 
-            var res_ids = m_pak_res_map[pack_name];
+            var res_ids = _pakMap[packName];
 
             for (int i = 0; i < res_ids.Length; ++i)
             {
                 var res_id = res_ids[i];
-
-                m_loaded_resources[res_id].Dispose();
+                _loadedResources[res_id].Dispose();
+                _loadedResources.Remove(res_id);
                 Console.WriteLine($" > Disposed resource: {res_id}");
+            }
+        }
+
+        public void Free(Resource resource)
+        {
+            if (_loadedResources.TryGetValue(resource.Id, out var asset))
+            {
+                asset.Dispose();
+
+                _loadedResources.Remove(resource.Id);
+            }
+            else if (_runtimeResources.TryGetValue(resource.Id, out var asset2))
+            {
+                asset2.Dispose();
+
+                _runtimeResources.Remove(resource.Id);
             }
         }
 
         internal void FreeEverything()
         {
-            Console.WriteLine($" > Diposing {m_loaded_resources.Count} loaded resources.");
+            Console.WriteLine($" > Diposing {_loadedResources.Count} loaded resources.");
 
-            foreach (var resource in m_loaded_resources)
+            foreach (var (resKey, resource) in _loadedResources)
             {
-                Console.WriteLine($" > Diposing {resource.Key}.");
-                resource.Value.Dispose();
-            }
-
-            Console.WriteLine($" > Disposing {m_runtime_resources.Count} runtime resources.");
-
-            foreach (var resource in m_runtime_resources)
-            {
-                Console.WriteLine($" > Diposing {resource.Id}.");
+                Console.WriteLine($" > Diposing {resKey}.");
                 resource.Dispose();
             }
 
-            m_loaded_resources.Clear();
-            m_runtime_resources.Clear();
+            Console.WriteLine($" > Disposing {_runtimeResources.Count} runtime resources.");
 
-            GC.Collect();
+            foreach (var (resKey, resource) in _runtimeResources)
+            {
+                Console.WriteLine($" > Diposing {resKey}.");
+                resource.Dispose();
+            }
+
+            _loadedResources.Clear();
+            _runtimeResources.Clear();
         }
     }
 }

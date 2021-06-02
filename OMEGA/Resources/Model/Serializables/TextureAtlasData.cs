@@ -1,27 +1,27 @@
-﻿using ProtoBuf;
+﻿using MessagePack;
 using System.Collections.Generic;
 
 namespace OMEGA
 {
-    [ProtoContract]
+    [MessagePackObject]
     public class TextureAtlasData
     {
-        [ProtoMember(1)]
+        [Key(0)]
         public string Id { get; set; }
 
-        [ProtoMember(2)]
+        [Key(1)]
         public byte[] Data { get; set; }
 
-        [ProtoMember(3)]
+        [Key(2)]
         public int Width { get; set; }
 
-        [ProtoMember(4)]
+        [Key(3)]
         public int Height { get; set; }
 
-        [ProtoMember(5)]
+        [Key(4)]
         public Dictionary<string, SRect> Atlas { get;set; }
 
-        [ProtoMember(6)]
+        [Key(5)]
         public bool RuntimeUpdatable { get;set;}
     }
 }

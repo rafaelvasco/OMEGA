@@ -44,38 +44,38 @@ namespace DEMO
 
             quad = new Quad(texture);
 
-            quad.V0.X = canvas_w / 2 - texture.Width / 2;
-            quad.V0.Y = canvas_h / 2 - texture.Height / 2;
-            quad.V1.X = quad.V0.X + texture.Width;
-            quad.V1.Y = quad.V0.Y;
-            quad.V2.X = quad.V1.X;
-            quad.V2.Y = quad.V0.Y + texture.Height;
-            quad.V3.X = quad.V0.X;
-            quad.V3.Y = quad.V2.Y;
+            quad.TopLeft.X = canvas_w / 2 - texture.Width / 2;
+            quad.TopLeft.Y = canvas_h / 2 - texture.Height / 2;
+            quad.TopRight.X = quad.TopLeft.X + texture.Width;
+            quad.TopRight.Y = quad.TopLeft.Y;
+            quad.BottomRight.X = quad.TopRight.X;
+            quad.BottomRight.Y = quad.TopLeft.Y + texture.Height;
+            quad.BottomLeft.X = quad.TopLeft.X;
+            quad.BottomLeft.Y = quad.BottomRight.Y;
 
             bg_quad = new Quad();
 
-            bg_quad.V0.X = 0;
-            bg_quad.V0.Y = 0;
-            bg_quad.V0.Col = 0xFFFFFFFF;
-            bg_quad.V1.X = canvas_w;
-            bg_quad.V1.Y = 0;
-            bg_quad.V1.Col = 0xFFFFFFFF;
-            bg_quad.V2.X = canvas_w;
-            bg_quad.V2.Y = canvas_h;
-            bg_quad.V2.Col = 0xFFFFFFFF;
-            bg_quad.V3.X = 0;
-            bg_quad.V3.Y = canvas_h;
-            bg_quad.V3.Col = 0xFFFFFFFF;
+            bg_quad.TopLeft.X = 0;
+            bg_quad.TopLeft.Y = 0;
+            bg_quad.TopLeft.Col = 0xFFFFFFFF;
+            bg_quad.TopRight.X = canvas_w;
+            bg_quad.TopRight.Y = 0;
+            bg_quad.TopRight.Col = 0xFFFFFFFF;
+            bg_quad.BottomRight.X = canvas_w;
+            bg_quad.BottomRight.Y = canvas_h;
+            bg_quad.BottomRight.Col = 0xFFFFFFFF;
+            bg_quad.BottomLeft.X = 0;
+            bg_quad.BottomLeft.Y = canvas_h;
+            bg_quad.BottomLeft.Col = 0xFFFFFFFF;
 
-            bg_quad.V0.Tx = 0;
-            bg_quad.V0.Ty = 0;
-            bg_quad.V1.Tx = canvas_w / 64f;
-            bg_quad.V1.Ty = 0;
-            bg_quad.V2.Tx = canvas_w / 64f;
-            bg_quad.V2.Ty = canvas_h / 64f;
-            bg_quad.V3.Tx = 0;
-            bg_quad.V3.Ty = canvas_h / 64f;
+            bg_quad.TopLeft.Tx = 0;
+            bg_quad.TopLeft.Ty = 0;
+            bg_quad.TopRight.Tx = canvas_w / 64f;
+            bg_quad.TopRight.Ty = 0;
+            bg_quad.BottomRight.Tx = canvas_w / 64f;
+            bg_quad.BottomRight.Ty = canvas_h / 64f;
+            bg_quad.BottomLeft.Tx = 0;
+            bg_quad.BottomLeft.Ty = canvas_h / 64f;
 
         }
 
@@ -103,28 +103,28 @@ namespace DEMO
             vx *= friction;
             vy *= friction;
 
-            quad.V0.X += vx;
-            quad.V0.Y += vy;
-            quad.V1.X += vx;
-            quad.V1.Y += vy;
-            quad.V2.X += vx;
-            quad.V2.Y += vy;
-            quad.V3.X += vx;
-            quad.V3.Y += vy;
+            quad.TopLeft.X += vx;
+            quad.TopLeft.Y += vy;
+            quad.TopRight.X += vx;
+            quad.TopRight.Y += vy;
+            quad.BottomRight.X += vx;
+            quad.BottomRight.Y += vy;
+            quad.BottomLeft.X += vx;
+            quad.BottomLeft.Y += vy;
 
             bg_scroll_value += bg_scroll_speed * dt;
 
             int canvas_w = Engine.Canvas.Width;
             int canvas_h = Engine.Canvas.Height;
 
-            bg_quad.V0.Tx = bg_scroll_value;
-            bg_quad.V0.Ty = bg_scroll_value;
-            bg_quad.V1.Tx = bg_scroll_value + canvas_w / 64f;
-            bg_quad.V1.Ty = bg_scroll_value;
-            bg_quad.V2.Tx = bg_scroll_value + canvas_w / 64f;
-            bg_quad.V2.Ty = bg_scroll_value + canvas_h / 64f;
-            bg_quad.V3.Tx = bg_scroll_value;
-            bg_quad.V3.Ty = bg_scroll_value + canvas_h / 64f;
+            bg_quad.TopLeft.Tx = bg_scroll_value;
+            bg_quad.TopLeft.Ty = bg_scroll_value;
+            bg_quad.TopRight.Tx = bg_scroll_value + canvas_w / 64f;
+            bg_quad.TopRight.Ty = bg_scroll_value;
+            bg_quad.BottomRight.Tx = bg_scroll_value + canvas_w / 64f;
+            bg_quad.BottomRight.Ty = bg_scroll_value + canvas_h / 64f;
+            bg_quad.BottomLeft.Tx = bg_scroll_value;
+            bg_quad.BottomLeft.Ty = bg_scroll_value + canvas_h / 64f;
 
             if (bg_scroll_value > 1.0f)
             {
@@ -132,7 +132,7 @@ namespace DEMO
             }
         }
 
-        public override void Draw(Canvas canvas, float dt)
+        public override void Draw(Canvas2D canvas, float dt)
         {
             canvas.Begin(left_view);
             canvas.DrawQuad(in bg_quad, bg_tile);
@@ -150,23 +150,23 @@ namespace DEMO
             int canvas_w = Engine.Canvas.Width;
             int canvas_h = Engine.Canvas.Height;
 
-            bg_quad.V0.X = 0;
-            bg_quad.V0.Y = 0;
-            bg_quad.V1.X = canvas_w;
-            bg_quad.V1.Y = 0;
-            bg_quad.V2.X = canvas_w;
-            bg_quad.V2.Y = canvas_h;
-            bg_quad.V3.X = 0;
-            bg_quad.V3.Y = canvas_h;
+            bg_quad.TopLeft.X = 0;
+            bg_quad.TopLeft.Y = 0;
+            bg_quad.TopRight.X = canvas_w;
+            bg_quad.TopRight.Y = 0;
+            bg_quad.BottomRight.X = canvas_w;
+            bg_quad.BottomRight.Y = canvas_h;
+            bg_quad.BottomLeft.X = 0;
+            bg_quad.BottomLeft.Y = canvas_h;
 
-            quad.V0.X = canvas_w / 2 - texture.Width / 2;
-            quad.V0.Y = canvas_h / 2 - texture.Height / 2;
-            quad.V1.X = quad.V0.X + texture.Width;
-            quad.V1.Y = quad.V0.Y;
-            quad.V2.X = quad.V1.X;
-            quad.V2.Y = quad.V0.Y + texture.Height;
-            quad.V3.X = quad.V0.X;
-            quad.V3.Y = quad.V2.Y;
+            quad.TopLeft.X = canvas_w / 2 - texture.Width / 2;
+            quad.TopLeft.Y = canvas_h / 2 - texture.Height / 2;
+            quad.TopRight.X = quad.TopLeft.X + texture.Width;
+            quad.TopRight.Y = quad.TopLeft.Y;
+            quad.BottomRight.X = quad.TopRight.X;
+            quad.BottomRight.Y = quad.TopLeft.Y + texture.Height;
+            quad.BottomLeft.X = quad.TopLeft.X;
+            quad.BottomLeft.Y = quad.BottomRight.Y;
         }
     }
 }

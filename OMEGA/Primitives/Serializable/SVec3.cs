@@ -1,17 +1,17 @@
-﻿using ProtoBuf;
+﻿using MessagePack;
 
 namespace OMEGA
 {
-    [ProtoContract]
+    [MessagePackObject]
     public struct SVec3
     {
-        [ProtoMember(1)]
+        [Key(0)]
         public float X { get;set;}
 
-        [ProtoMember(2)]
+        [Key(1)]
         public float Y { get; set; }
 
-        [ProtoMember(3)]
+        [Key(2)]
         public float Z { get; set; }
 
         public SVec3(float x, float y, float z)

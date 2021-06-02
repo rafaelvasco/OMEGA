@@ -11,30 +11,28 @@ namespace OMEGA
     {
         public static ContentManager Content { get; private set; }
 
-        public static Canvas Canvas {get; private set;}
+        public static Canvas2D Canvas {get; private set;}
 
-        public static IGame RunningGame => running_game;
+        public static IGame RunningGame => _runningGame;
 
-        public static IntPtr DisplaySurfaceHandle => Platform.GetRenderSurfaceHandle();
+        public  delegate void WindowResizeHandler(int width, int height);
+        public static event WindowResizeHandler OnWindowResize ;
 
         public static bool Active
         {
-            get
-            {
-                return is_active;
-            }
+            get => _isActive;
             internal set
             {
-                if (is_active != value)
+                if (_isActive != value)
                 {
-                    is_active = value;
-                    if (is_active)
+                    _isActive = value;
+                    if (_isActive)
                     {
-                        running_game.OnActivated();
+                        _runningGame.OnActivated();
                     }
                     else
                     {
-                        running_game.OnDeactivated();
+                        _runningGame.OnDeactivated();
                     }
                 }
             }
@@ -42,44 +40,41 @@ namespace OMEGA
 
         public static bool MouseVisible
         {
-            get
-            {
-                return is_mouse_visible;
-            }
+            get => _isMouseVisible;
             set
             {
-                is_mouse_visible = value;
+                _isMouseVisible = value;
                 Platform.SetMouseCursorVisible(value);
             }
         }
 
         public static bool Fullscreen
         {
-            get => fullscreen;
+            get => _fullscreen;
             set
             {
-                if (fullscreen != value)
+                if (_fullscreen != value)
                 {
-                    fullscreen = value;
+                    _fullscreen = value;
 
-                    Platform.SetFullscreen(fullscreen);
+                    Platform.SetFullscreen(_fullscreen);
                 }
             }
         }
 
-        private static bool fullscreen;
+        private static bool _fullscreen;
 
-        private static bool is_active;
+        private static bool _isActive;
 
-        private static bool is_mouse_visible;
+        private static bool _isMouseVisible;
 
-        private static IGame running_game;
+        private static IGame _runningGame;
 
         public static void Init(IGame game)
         {
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
 
-            running_game = game;
+            _runningGame = game;
 
             Platform.Init();
 
@@ -87,29 +82,33 @@ namespace OMEGA
 
             var game_info = game.GameInfo;
 
-            fullscreen = game_info.StartFullscreen;
+            _fullscreen = game_info.StartFullscreen;
 
-            Platform.CreateWindow(game_info.Title, game_info.ResolutionWidth, game_info.ResolutionHeight, fullscreen);
+            Platform.CreateWindow(game_info);
 
             Platform.InitGraphicsContext();
 
             Content = new ContentManager(game_info);
 
-            Canvas = new Canvas(game_info.ResolutionWidth, game_info.ResolutionHeight);
+            Blitter.GetDefaultAssets();
+
+            Canvas = new Canvas2D(game_info.ResolutionWidth, game_info.ResolutionHeight);
 
             Input.Init();
 
-            running_game.Load();
+            _runningGame.Load();
 
             GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
         }
 
-        internal static void OnDisplayResize()
+        internal static void HandleWindowResize()
         {
             Canvas.NeedsResetDisplay = true;
+
+            OnWindowResize?.Invoke(Platform.GetDisplaySize().Width, Platform.GetDisplaySize().Height);
         }
 
-        public static void Shutdown()
+        internal static void Shutdown()
         {
             Content.FreeEverything();
             GraphicsContext.Shutdown();
@@ -120,8 +119,6 @@ namespace OMEGA
             var gen1 = GC.CollectionCount(1);
             var gen2 = GC.CollectionCount(2);
 
-            var gc_info = GC.GetGCMemoryInfo();
-
             Console.WriteLine(
                 $"Gen-0: {gen0} | Gen-1: {gen1} | Gen-2: {gen2}"
             );
@@ -130,12 +127,16 @@ namespace OMEGA
 
         public static void Exit()
         {
-            running_game.Exit();
+            _runningGame.Exit();
         }
 
-        public static void ProcessEvents()
+        internal static void ProcessEvents()
         {
             Platform.PollEvents();
+        }
+
+        internal static void ProcessInput()
+        {
             Input.Update();
         }
 

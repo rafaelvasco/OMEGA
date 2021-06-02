@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using static Bgfx.Bgfx;
 
 namespace OMEGA
 {
@@ -13,6 +14,7 @@ namespace OMEGA
         public Vec4 Value => _value;
 
         private Vec4 _value;
+
 
         internal ShaderParameter(string name)
         {
@@ -55,41 +57,66 @@ namespace OMEGA
     {
         internal ProgramHandle Program;
 
-        private ShaderParameter[] Parameters;
+        private ShaderParameter[] _parameters;
 
-        private Dictionary<string, int> ParametersMap;
+        private Dictionary<string, int> _parametersMap;
 
-        internal UniformHandle[] Samplers;
+        private readonly Texture2D[] _textures;
 
-        internal ShaderProgram(ProgramHandle program, IReadOnlyList<string> samplers, IReadOnlyList<string> _params)
+        private int _textureIndex;
+
+        private UniformHandle[] _samplers;
+
+        internal ShaderProgram(ProgramHandle program, IReadOnlyList<string> samplers, IReadOnlyList<string> @params)
         {
-            this.Program = program;
+            Program = program;
+
+            _textures = new Texture2D[samplers.Count];
 
             BuildSamplersList(samplers);
 
-            BuildParametersList(_params);
+            BuildParametersList(@params);
+        }
+
+        internal void SetTexture(int slot, Texture2D texture)
+        {
+            slot = Calc.Clamp(slot, 0, 2);
+
+            _textures[slot] = texture;
+
+            if (slot > _textureIndex)
+            {
+                _textureIndex = slot;
+            }
         }
 
         public ShaderParameter GetParameter(string name)
         {
-            if (ParametersMap.TryGetValue(name, out var index))
-            {
-                return Parameters[index];
-            }
-
-            return null;
+            return _parametersMap.TryGetValue(name, out var index) ? _parameters[index] : null;
         }
 
-        internal unsafe void Submit()
+        internal void Submit()
         {
-            if (Parameters == null)
+            if (_textureIndex == 0)
+            {
+                GraphicsContext.SetTexture(0, _samplers[0], _textures[0].Handle);
+            }
+            else
+            {
+                for (int i = 0; i <= _textureIndex; ++i)
+                {
+                    GraphicsContext.SetTexture((byte)i, _samplers[i], _textures[i].Handle);
+                }
+            }
+
+            if (_parameters == null)
             {
                 return;
             }
 
-            for (int i = 0; i < Parameters.Length; ++i)
+            for (int i = 0; i < _parameters.Length; ++i)
             {
-                var p = Parameters[i];
+                var p = _parameters[i];
 
                 if (p.Constant)
                 {
@@ -97,10 +124,8 @@ namespace OMEGA
                     {
                         continue;
                     }
-                    else
-                    {
-                        p.SubmitedOnce = true;
-                    }
+
+                    p.SubmitedOnce = true;
 
                 }
 
@@ -117,28 +142,28 @@ namespace OMEGA
                 return;
             }
 
-            Samplers = new UniformHandle[samplers.Count];
+            _samplers = new UniformHandle[samplers.Count];
 
             for (int i = 0; i < samplers.Count; ++i)
             {
-                Samplers[i] = GraphicsContext.CreateUniform(samplers[i], UniformType.Sampler, 1);
+                _samplers[i] = GraphicsContext.CreateUniform(samplers[i], UniformType.Sampler, 1);
             }
         }
 
-        private void BuildParametersList(IReadOnlyList<string> _params)
+        private void BuildParametersList(IReadOnlyList<string> @params)
         {
-            if (_params == null)
+            if (@params == null)
             {
                 return;
             }
 
-            Parameters = new ShaderParameter[_params.Count];
-            ParametersMap = new Dictionary<string, int>();
+            _parameters = new ShaderParameter[@params.Count];
+            _parametersMap = new Dictionary<string, int>();
 
-            for (int i = 0; i < _params.Count; ++i)
+            for (int i = 0; i < @params.Count; ++i)
             {
-                Parameters[i] = new ShaderParameter(_params[i]);
-                ParametersMap.Add(_params[i], i);
+                _parameters[i] = new ShaderParameter(@params[i]);
+                _parametersMap.Add(@params[i], i);
             }
         }
 
@@ -149,19 +174,19 @@ namespace OMEGA
                 return;
             }
 
-            if (Samplers != null)
+            if (_samplers != null)
             {
-                for (int i = 0; i < Samplers.Length; ++i)
+                for (int i = 0; i < _samplers.Length; ++i)
                 {
-                    GraphicsContext.DestroyUniform(Samplers[i]);
+                    GraphicsContext.DestroyUniform(_samplers[i]);
                 }
             }
 
-            if (Parameters != null)
+            if (_parameters != null)
             {
-                for (int i = 0; i < Parameters.Length; ++i)
+                for (int i = 0; i < _parameters.Length; ++i)
                 {
-                    GraphicsContext.DestroyUniform(Parameters[i].Uniform);
+                    GraphicsContext.DestroyUniform(_parameters[i].Uniform);
                 }
             }
 

@@ -1,14 +1,14 @@
-﻿using ProtoBuf;
+﻿using MessagePack;
 
 namespace OMEGA
 {
-    [ProtoContract]
+    [MessagePackObject]
     public class TextFileData
     {
-        [ProtoMember(1)]
+        [Key(0)]
         public string Id {get;set;}
 
-        [ProtoMember(2)]
+        [Key(1)]
         public byte[][] TextData {get;set;}
     }
 }

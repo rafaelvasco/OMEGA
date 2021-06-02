@@ -20,32 +20,32 @@ namespace OMEGA
         public const float RAD_ANGLE180 = PI;
         public const float RAD_ANGLE360 = TWO_PI;
 
-        private const float RADIANS_TO_DEGREES_FACTOR = 180f / PI;
-        private const float DEGREES_TO_RADIANS_FACTOR = PI / 180f;
-        private const int SIN_BITS = 13;
-        private const int SIN_MASK = ~(-1 << SIN_BITS);
-        private const int SIN_COUNT = SIN_MASK + 1;
-        private const float RAD_FULL = PI * 2;
-        private const float DEG_FULL = 360;
-        private const float RAD_TO_INDEX = SIN_COUNT / RAD_FULL;
-        private const float DEG_TO_INDEX = SIN_COUNT / DEG_FULL;
+        private const float RadiansToDegreesFactor = 180f / PI;
+        private const float DegreesToRadiansFactor = PI / 180f;
+        private const int SinBits = 13;
+        private const int SinMask = ~(-1 << SinBits);
+        private const int SinCount = SinMask + 1;
+        private const float RadFull = PI * 2;
+        private const float DegFull = 360;
+        private const float RadToIndex = SinCount / RadFull;
+        private const float DegToIndex = SinCount / DegFull;
 
-        private static readonly float[] sinBuffer = new float[SIN_COUNT];
-        private static readonly float[] cosBuffer = new float[SIN_COUNT];
+        private static readonly float[] SinBuffer = new float[SinCount];
+        private static readonly float[] CosBuffer = new float[SinCount];
 
         static Calc()
         {
-            for (int i = 0; i < SIN_COUNT; i++)
+            for (int i = 0; i < SinCount; i++)
             {
-                float angle = (i + 0.5f) / SIN_COUNT * RAD_FULL;
-                sinBuffer[i] = (float) Math.Sin(angle);
-                cosBuffer[i] = (float) Math.Cos(angle);
+                float angle = (i + 0.5f) / SinCount * RadFull;
+                SinBuffer[i] = (float) Math.Sin(angle);
+                CosBuffer[i] = (float) Math.Cos(angle);
             }
 
             for (int i = 0; i < 360; i += 90)
             {
-                sinBuffer[(int) (i * DEG_TO_INDEX) & SIN_MASK] = (float) Math.Sin(i * DEGREES_TO_RADIANS_FACTOR);
-                cosBuffer[(int) (i * DEG_TO_INDEX) & SIN_MASK] = (float) Math.Cos(i * DEGREES_TO_RADIANS_FACTOR);
+                SinBuffer[(int) (i * DegToIndex) & SinMask] = (float) Math.Sin(i * DegreesToRadiansFactor);
+                CosBuffer[(int) (i * DegToIndex) & SinMask] = (float) Math.Cos(i * DegreesToRadiansFactor);
             }
         }
 
@@ -395,7 +395,7 @@ namespace OMEGA
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float Sin(float rad)
         {
-            return sinBuffer[(int) (rad * RAD_TO_INDEX) & SIN_MASK];
+            return SinBuffer[(int) (rad * RadToIndex) & SinMask];
         }
 
         public static float ASin(float v)
@@ -406,7 +406,7 @@ namespace OMEGA
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float Cos(float rad)
         {
-            return cosBuffer[(int) (rad * RAD_TO_INDEX) & SIN_MASK];
+            return CosBuffer[(int) (rad * RadToIndex) & SinMask];
         }
 
         public static float ACos(float v)
@@ -417,25 +417,25 @@ namespace OMEGA
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float SinDeg(float deg)
         {
-            return sinBuffer[(int) (deg * DEG_TO_INDEX) & SIN_MASK];
+            return SinBuffer[(int) (deg * DegToIndex) & SinMask];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float CosDeg(float deg)
         {
-            return cosBuffer[(int) (deg * DEG_TO_INDEX) & SIN_MASK];
+            return CosBuffer[(int) (deg * DegToIndex) & SinMask];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float ToRadians(float degree)
         {
-            return degree * DEGREES_TO_RADIANS_FACTOR;
+            return degree * DegreesToRadiansFactor;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float ToDegrees(float radian)
         {
-            return radian * RADIANS_TO_DEGREES_FACTOR;
+            return radian * RadiansToDegreesFactor;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

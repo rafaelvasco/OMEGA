@@ -4,70 +4,70 @@ namespace OMEGA
 {
     public abstract class Game : IGame
     {
-        public GameInfo GameInfo {get; private set;}
+        public GameInfo GameInfo { get; }
 
         public double UpdateRate { get; set; } = 60.0;
         public bool UnlockFrameRate { get; set; } = true;
 
-        const int time_history_count = 4;
+        private const int TimeHistoryCount = 4;
+        private const int UpdateMult = 1;
+        private bool _running;
+        private bool _resync = true;
+        private readonly double _fixedDeltatime;
+        private readonly double _desiredFrametime;
+        private readonly double _vsyncMaxError;
+        private readonly double[] _snapFreqs;
+        private readonly double[] _timeAverager;
 
-        private bool running = false;
-        private bool resync = true;
-        private int update_mult = 1;
-        private double fixed_deltatime;
-        private double desired_frametime;
-        private double vsync_max_error;
-        private double[] snap_freqs;
-        private double[] time_averager;
-
-        private double prev_frame_time;
-        private double frame_accum = 0;
+        private double _prevFrameTime;
+        private double _frameAccum;
 
 
-        public Game()
+        protected Game()
         {
             GameInfo = ResourceLoader.LoadGameInfo();
 
             Engine.Init(this);
 
-            fixed_deltatime = 1.0 / UpdateRate;
-            desired_frametime = Platform.GetPerformanceFrequency() / UpdateRate;
-            vsync_max_error = Platform.GetPerformanceFrequency() * 0.0002;
+            _fixedDeltatime = 1.0 / UpdateRate;
+            _desiredFrametime = Platform.GetPerformanceFrequency() / UpdateRate;
+            _vsyncMaxError = Platform.GetPerformanceFrequency() * 0.0002;
 
-            double time_60hz = Platform.GetPerformanceFrequency() / 60;
-            snap_freqs = new double[]{
-                time_60hz,      //60fps
-                time_60hz*2,    //30fps
-                time_60hz*3,    //20fps
-                time_60hz*4,    //15fps
-                (time_60hz+1)/2 //120fps
+            double time_60Hz = Platform.GetPerformanceFrequency() / 60;
+            _snapFreqs = new[]
+            {
+                time_60Hz, //60fps
+                time_60Hz * 2, //30fps
+                time_60Hz * 3, //20fps
+                time_60Hz * 4, //15fps
+                (time_60Hz + 1) / 2 //120fps
             };
 
-            time_averager = new double[time_history_count];
+            _timeAverager = new double[TimeHistoryCount];
 
-            for (int i = 0; i < time_history_count; i++)
+            for (int i = 0; i < TimeHistoryCount; i++)
             {
-                time_averager[i] = desired_frametime;
+                _timeAverager[i] = _desiredFrametime;
             }
         }
 
         public void Run()
         {
-            if (running)
+            if (_running)
             {
                 return;
             }
 
-            running = true;
+            _running = true;
 
             Tick();
 
             Engine.ShowWindow(true);
 
-            prev_frame_time = Platform.GetPerformanceCounter();
-            frame_accum = 0;
+            _prevFrameTime = Platform.GetPerformanceCounter();
+            _frameAccum = 0;
 
-            while (running)
+            while (_running)
             {
                 Tick();
             }
@@ -75,21 +75,21 @@ namespace OMEGA
 
         public void Exit()
         {
-            running = false;
+            _running = false;
         }
 
         public void Tick()
         {
             double current_frame_time = Platform.GetPerformanceCounter();
 
-            double delta_time = current_frame_time - prev_frame_time;
+            double delta_time = current_frame_time - _prevFrameTime;
 
-            prev_frame_time = current_frame_time;
+            _prevFrameTime = current_frame_time;
 
             // Handle unexpected timer anomalies (overflow, extra slow frames, etc)
-            if (delta_time > desired_frametime * 8)
+            if (delta_time > _desiredFrametime * 8)
             {
-                delta_time = desired_frametime;
+                delta_time = _desiredFrametime;
             }
 
             if (delta_time < 0)
@@ -98,11 +98,11 @@ namespace OMEGA
             }
 
             // VSync Time Snapping
-            for (int i = 0; i < snap_freqs.Length; ++i)
+            for (int i = 0; i < _snapFreqs.Length; ++i)
             {
-                var snap_freq = snap_freqs[i];
+                var snap_freq = _snapFreqs[i];
 
-                if (Math.Abs(delta_time - snap_freq) < vsync_max_error)
+                if (Math.Abs(delta_time - snap_freq) < _vsyncMaxError)
                 {
                     delta_time = snap_freq;
                     break;
@@ -110,64 +110,65 @@ namespace OMEGA
             }
 
             // Delta Time Averaging
-            for (int i = 0; i < time_history_count - 1; ++i)
+            for (int i = 0; i < TimeHistoryCount - 1; ++i)
             {
-                time_averager[i] = time_averager[i + 1];
+                _timeAverager[i] = _timeAverager[i + 1];
             }
 
-            time_averager[time_history_count - 1] = delta_time;
+            _timeAverager[TimeHistoryCount - 1] = delta_time;
 
             delta_time = 0;
 
-            for (int i = 0; i < time_history_count; ++i)
+            for (int i = 0; i < TimeHistoryCount; ++i)
             {
-                delta_time += time_averager[i];
+                delta_time += _timeAverager[i];
             }
 
-            delta_time /= time_history_count;
+            delta_time /= TimeHistoryCount;
 
             // Add To Accumulator
-            frame_accum += delta_time;
+            _frameAccum += delta_time;
 
             // Spiral of Death Protection
-            if (frame_accum > desired_frametime * 8)
+            if (_frameAccum > _desiredFrametime * 8)
             {
-                resync = true;
+                _resync = true;
             }
 
             // Timer Resync Requested
-            if (resync)
+            if (_resync)
             {
-                frame_accum = 0;
-                delta_time = desired_frametime;
-                resync = false;
+                _frameAccum = 0;
+                delta_time = _desiredFrametime;
+                _resync = false;
             }
 
-            // Process Events
+            // Process Events and Input
 
             Engine.ProcessEvents();
+            Engine.ProcessInput();
 
             // Unlocked Frame Rate, Interpolation Enabled
             if (UnlockFrameRate)
             {
                 double consumed_delta_time = delta_time;
 
-                while (frame_accum >= desired_frametime)
+                while (_frameAccum >= _desiredFrametime)
                 {
-                    FixedUpdate((float)fixed_deltatime);
+                    FixedUpdate((float) _fixedDeltatime);
 
                     // Cap Variable Update's dt to not be larger than fixed update, 
                     // and interleave it (so game state can always get animation frame it needs)
-                    if (consumed_delta_time > desired_frametime)
+                    if (consumed_delta_time > _desiredFrametime)
                     {
-                        Update((float)fixed_deltatime);
-                        consumed_delta_time -= desired_frametime;
+                        Update((float) _fixedDeltatime);
+                        consumed_delta_time -= _desiredFrametime;
                     }
 
-                    frame_accum -= desired_frametime;
+                    _frameAccum -= _desiredFrametime;
                 }
 
-                Update((float)(consumed_delta_time / Platform.GetPerformanceFrequency()));
+                Update((float) (consumed_delta_time / Platform.GetPerformanceFrequency()));
 
                 if (Engine.Canvas.NeedsResetDisplay)
                 {
@@ -175,46 +176,51 @@ namespace OMEGA
                     OnDisplayResize();
                 }
 
-                Draw(Engine.Canvas, (float)(frame_accum / desired_frametime));
+                Draw(Engine.Canvas, (float) (_frameAccum / _desiredFrametime));
 
-                Engine.Canvas.Frame();
-
+                GraphicsContext.Frame();
             }
             // Locked Frame Rate, No Interpolation
             else
             {
-                while (frame_accum >= desired_frametime * update_mult)
+                while (_frameAccum >= _desiredFrametime * UpdateMult)
                 {
-                    for (int i = 0; i < update_mult; ++i)
+                    for (int i = 0; i < UpdateMult; ++i)
                     {
-                        FixedUpdate((float)fixed_deltatime);
-                        Update((float)fixed_deltatime);
+                        FixedUpdate((float) _fixedDeltatime);
+                        Update((float) _fixedDeltatime);
 
-                        frame_accum -= desired_frametime;
+                        _frameAccum -= _desiredFrametime;
                     }
                 }
 
                 if (Engine.Canvas.NeedsResetDisplay)
                 {
                     Engine.Canvas.HandleDisplayChange();
+                    OnDisplayResize();
                 }
 
                 Draw(Engine.Canvas, 1.0f);
 
-                Engine.Canvas.Frame();
+                GraphicsContext.Frame();
             }
-
         }
 
         public abstract void Load();
 
-        public virtual void Unload() { }
+        public virtual void Unload()
+        {
+        }
 
-        public virtual void Update(float dt) { }
+        public virtual void Update(float dt)
+        {
+        }
 
-        public virtual void FixedUpdate(float dt) { }
+        public virtual void FixedUpdate(float dt)
+        {
+        }
 
-        public abstract void Draw(Canvas canvas, float dt);
+        public abstract void Draw(Canvas2D canvas, float dt);
 
         public void Dispose()
         {
@@ -231,7 +237,9 @@ namespace OMEGA
         public virtual void OnDeactivated()
         {
         }
-        
-        public virtual void OnDisplayResize() {}
+
+        public virtual void OnDisplayResize()
+        {
+        }
     }
 }

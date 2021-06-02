@@ -13,6 +13,9 @@ namespace OMEGA
         [JsonPropertyName("height")]
         public int ResolutionHeight { get; set; }
 
+        [JsonPropertyName("resizable_window")]
+        public bool ResizableWindow { get; set; } = false;
+
         [JsonPropertyName("start_fullscreen")]
         public bool StartFullscreen { get; set; }
 
@@ -21,5 +24,7 @@ namespace OMEGA
 
         [JsonPropertyName("preload_asset_paks")]
         public string[] PreloadPaks { get; set; }
+
+        
     }
 }

@@ -11,17 +11,17 @@ namespace OMEGA
         public float Y;
         public float Z;
 
-        private static readonly Vec3 zero_vector = new Vec3(0f);
-        private static readonly Vec3 unit_vector = new Vec3(1f);
-        private static readonly Vec3 unitx_vector = new Vec3(1f, 0f, 0f);
-        private static readonly Vec3 unity_vector = new Vec3(0f, 1f, 0f);
-        private static readonly Vec3 unitz_vector = new Vec3(0f, 0f, 1f);
-        private static readonly Vec3 up = new Vec3(0f, 1f, 0f);
-        private static readonly Vec3 down = new Vec3(0f, -1f, 0f);
-        private static readonly Vec3 right = new Vec3(1f, 0f, 0f);
-        private static readonly Vec3 left = new Vec3(-1f, 0f, 0f);
-        private static readonly Vec3 forward = new Vec3(0f, 0f, -1f);
-        private static readonly Vec3 backward = new Vec3(0f, 0f, 1f);
+        private static readonly Vec3 zero_vector = new(0f);
+        private static readonly Vec3 unit_vector = new(1f);
+        private static readonly Vec3 unitx_vector = new(1f, 0f, 0f);
+        private static readonly Vec3 unity_vector = new(0f, 1f, 0f);
+        private static readonly Vec3 unitz_vector = new(0f, 0f, 1f);
+        private static readonly Vec3 up = new(0f, 1f, 0f);
+        private static readonly Vec3 down = new(0f, -1f, 0f);
+        private static readonly Vec3 right = new(1f, 0f, 0f);
+        private static readonly Vec3 left = new(-1f, 0f, 0f);
+        private static readonly Vec3 forward = new(0f, 0f, -1f);
+        private static readonly Vec3 backward = new(0f, 0f, 1f);
 
         public static Vec3 Zero => zero_vector;
         public static Vec3 One => unit_vector;
@@ -74,8 +74,7 @@ namespace OMEGA
 
         public static float Distance(Vec3 value1, Vec3 value2)
         {
-            float result;
-            DistanceSquared(ref value1, ref value2, out result);
+            DistanceSquared(ref value1, ref value2, out float result);
             return (float)Math.Sqrt(result);
         }
 
@@ -159,7 +158,7 @@ namespace OMEGA
             sb.Append(this.Y);
             sb.Append(" Z:");
             sb.Append(this.Z);
-            sb.Append("}");
+            sb.Append('}');
             return sb.ToString();
         }
 
@@ -268,13 +267,7 @@ namespace OMEGA
 
         public override int GetHashCode()
         {
-            unchecked
-            {
-                var hashCode = X.GetHashCode();
-                hashCode = (hashCode * 397) ^ Y.GetHashCode();
-                hashCode = (hashCode * 397) ^ Z.GetHashCode();
-                return hashCode;
-            }
+            return HashCode.Combine(X, Y, Z);
         }
     }
 }

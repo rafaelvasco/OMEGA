@@ -5,23 +5,25 @@ namespace DEMO
 {
     public class PixmapDemo : Game
     {
-        private Sprite surface;
-        private Pixmap paste;
+        private Sprite _surface;
+        private Pixmap _paste;
 
         public override void Load()
         {
-            paste = Pixmap.Create(16, 16, Color.Orange);
+            _paste = Pixmap.Create(16, 16, Color.Orange);
             
-            Blitter.Begin(paste);
+            Blitter.Begin(_paste);
 
-            Blitter.Rect(0, 0, 8, 8, Color.Blue);
-            Blitter.Rect(8, 8, 8, 8, Color.Blue);
+            Blitter.SetColor(Color.Blue);
+
+            Blitter.FillRect(0, 0, 8, 8);
+            Blitter.FillRect(8, 8, 8, 8);
 
             Blitter.End();
 
-            surface = new Sprite(Texture2D.Create(512, 512, Color.White));
-            surface.SetOrigin(0, 0);
-            surface.SetPosition(Engine.Canvas.Width/2 - surface.Width/2, Engine.Canvas.Height/2 - surface.Height/2);
+            _surface = new Sprite(Texture2D.Create(512, 512, Color.White));
+            _surface.SetOrigin(0, 0);
+            _surface.SetPosition(Engine.Canvas.Width/2.0f - _surface.Width/2, Engine.Canvas.Height/2.0f - _surface.Height/2);
 
             Input.OnKeyPress += Input_OnKeyPress;
         }
@@ -32,26 +34,28 @@ namespace DEMO
 
         public override void Update(float dt)
         {
-            Blitter.Begin(surface.Texture);
+            Blitter.Begin(_surface.Texture);
 
             if (Input.MouseLeftPressed())
             {
                 Console.WriteLine("Mouse Pressed");
 
-                int local_x = (int)(Input.MousePos.X - surface.X);
-                int local_y = (int)(Input.MousePos.Y - surface.Y);
+                int local_x = (int)(Input.MousePos.X - _surface.X);
+                int local_y = (int)(Input.MousePos.Y - _surface.Y);
 
-                Blitter.Rect(local_x - 16, local_y - 16, 32, 32, Color.Black);
+                Blitter.SetColor(Color.Black);
+
+                Blitter.FillRect(local_x - 16, local_y - 16, 32, 32);
             }
 
             if (Input.MouseRightPressed())
             {
                 Console.WriteLine("Mouse Right Pressed");
 
-                int local_x = (int)(Input.MousePos.X - surface.X);
-                int local_y = (int)(Input.MousePos.Y - surface.Y);
+                int local_x = (int)(Input.MousePos.X - _surface.X);
+                int local_y = (int)(Input.MousePos.Y - _surface.Y);
 
-                Blitter.Blit(paste, local_x - 32, local_y - 32, Rect.Empty, 64, 64);
+                Blitter.Blit(_paste, local_x - 32, local_y - 32, Rect.Empty, 64, 64);
             }
 
             if (Input.KeyPressed(Keys.A))
@@ -82,10 +86,10 @@ namespace DEMO
             Blitter.End();
         }
 
-        public override void Draw(Canvas canvas, float dt)
+        public override void Draw(Canvas2D canvas, float dt)
         {
             canvas.Begin();
-            surface.Draw(canvas);
+            _surface.Draw(canvas);
             canvas.End();
         }
 

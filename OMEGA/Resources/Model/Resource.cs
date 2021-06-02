@@ -4,13 +4,13 @@ namespace OMEGA
 {
     public abstract class Resource : IDisposable
     {
-        private bool disposedValue;
+        private bool _disposedValue;
 
         public string Id {get; internal set;}
 
         private void InternalFree(bool disposing)
         {
-            if (!disposedValue)
+            if (!_disposedValue)
             {
                 if (disposing)
                 {
@@ -19,7 +19,7 @@ namespace OMEGA
 
                 FreeUnmanaged();
 
-                disposedValue = true;
+                _disposedValue = true;
             }
         }
 

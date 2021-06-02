@@ -1,8 +1,0 @@
-﻿{
-  "title": "OMEGAED",
-  "width": 1024,
-  "height": 768,
-  "start_fullscreen": false,
-  "resources_folder": "Assets",
-  "preload_asset_paks": [ "editor" ]
-}

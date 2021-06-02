@@ -1,62 +1,65 @@
 ﻿using System;
-using static SDL2.SDL;
+using static Bgfx.Bgfx;
+using static SDL2.Sdl;
 
 namespace OMEGA
 {
     internal static partial class Platform
     {
-        public static Action OnMouseEnter;
-        public static Action OnMouseLeave;
-
         private static IntPtr _window;
 
-        private static int prev_display_w;
+        private static int _prevDisplayW;
 
-        private static int prev_display_h;
+        private static int _prevDisplayH;
 
-        private static int display_w;
+        private static int _displayW;
 
-        private static int display_h;
+        private static int _displayH;
 
-        private static readonly bool OSXUseSpaces = (
+        private static readonly bool OsxUseSpaces = (
             SDL_GetPlatform().Equals("Mac OS X") &&
-            SDL_GetHintBoolean(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, SDL_bool.SDL_TRUE) == SDL_bool.SDL_TRUE
+            SDL_GetHintBoolean(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, SdlBool.SdlTrue) == SdlBool.SdlTrue
         );
 
-        public static void CreateWindow(string title, int width, int height, bool fullscreen)
+        public static void CreateWindow(GameInfo gameInfo)
         {
-            prev_display_w = width;
-            prev_display_h = height;
+            _prevDisplayW = gameInfo.ResolutionWidth;
+            _prevDisplayH = gameInfo.ResolutionHeight;
 
-            var window_flags = SDL_WindowFlags.SDL_WINDOW_HIDDEN |
-                SDL_WindowFlags.SDL_WINDOW_INPUT_FOCUS |
-                SDL_WindowFlags.SDL_WINDOW_MOUSE_FOCUS;
+            var window_flags = SdlWindowFlags.SdlWindowHidden |
+                SdlWindowFlags.SdlWindowInputFocus |
+                SdlWindowFlags.SdlWindowMouseFocus;
 
-            if (fullscreen)
+            if (gameInfo.ResizableWindow)
             {
-                window_flags |= SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP;
+                window_flags |= SdlWindowFlags.SdlWindowResizable;
+            }
+
+            if (gameInfo.StartFullscreen)
+            {
+                window_flags |= SdlWindowFlags.SdlWindowFullscreenDesktop;
             }
 
             _window = SDL_CreateWindow(
-                title,
+                gameInfo.Title,
                 SDL_WINDOWPOS_CENTERED,
                 SDL_WINDOWPOS_CENTERED,
-                width,
-                height,
+                gameInfo.ResolutionWidth,
+                gameInfo.ResolutionHeight,
                 window_flags
             );
 
-            if (fullscreen)
+            if (gameInfo.StartFullscreen)
             {
                 SDL_GetDisplayMode(0, 0, out var mode);
 
-                display_w = mode.w;
-                display_h = mode.h;
+                _displayW = mode.w;
+                _displayH = mode.h;
             }
             else
             {
-                display_w = prev_display_w;
-                display_h = prev_display_h;
+                _displayW = _prevDisplayW;
+                _displayH = _prevDisplayH;
             }
 
             SDL_DisableScreenSaver();
@@ -66,9 +69,9 @@ namespace OMEGA
         {
             GraphicsContext.SetPlatformData(GetRenderSurfaceHandle());
 
-            var display_size = GetDisplaySize();
+            var (width, height) = GetDisplaySize();
 
-            GraphicsContext.Initialize(display_size.Width, display_size.Height, RendererType.Direct3D11);
+            GraphicsContext.Initialize(width, height, RendererType.Direct3D11);
         }
 
         public static void ShowWindow(bool show)
@@ -85,7 +88,7 @@ namespace OMEGA
 
         public static IntPtr GetRenderSurfaceHandle()
         {
-            var info = new SDL_SysWMinfo();
+            var info = new SdlSysWMinfo();
 
             SDL_GetWindowWMInfo(_window, ref info);
 
@@ -99,6 +102,8 @@ namespace OMEGA
 
                 case RunningPlatform.Mac:
                     return info.info.cocoa.window;
+                case RunningPlatform.Unknown:
+                    break;
             }
 
             throw new Exception(
@@ -113,8 +118,8 @@ namespace OMEGA
                 return;
             }
 
-            prev_display_w = width;
-            prev_display_h = height;
+            _prevDisplayW = width;
+            _prevDisplayH = height;
 
             SDL_SetWindowSize(_window, width, height);
             SDL_SetWindowPosition(_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
@@ -122,12 +127,12 @@ namespace OMEGA
 
         public static (int Width, int Height) GetDisplaySize()
         {
-            return (display_w, display_h);
+            return (_displayW, _displayH);
         }
 
         public static bool IsFullscreen()
         {
-            return (SDL_GetWindowFlags(_window) & (uint)SDL_WindowFlags.SDL_WINDOW_FULLSCREEN) != 0;
+            return (SDL_GetWindowFlags(_window) & (uint)SdlWindowFlags.SdlWindowFullscreen) != 0;
         }
 
         public static void SetFullscreen(bool enabled)
@@ -140,20 +145,20 @@ namespace OMEGA
                     {
                         SDL_GetCurrentDisplayMode(
                             0,
-                            out SDL_DisplayMode mode
+                            out SdlDisplayMode mode
                         );
                         SDL_SetWindowSize(_window, mode.w, mode.h);
                     }
-                    SDL_SetWindowFullscreen(_window, (uint)SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP);
+                    SDL_SetWindowFullscreen(_window, (uint)SdlWindowFlags.SdlWindowFullscreenDesktop);
                 }
                 else
                 {
                     SDL_SetWindowFullscreen(_window, 0);
 
-                    if (prev_display_w != display_w || prev_display_h != display_h)
+                    if (_prevDisplayW != _displayW || _prevDisplayH != _displayH)
                     {
                         SDL_RestoreWindow(_window);
-                        SetDisplaySize(prev_display_w, prev_display_h);
+                        SetDisplaySize(_prevDisplayW, _prevDisplayH);
                     }
                 }
             }
@@ -161,7 +166,7 @@ namespace OMEGA
 
         public static bool GetWindowBorderless()
         {
-            return (SDL_GetWindowFlags(_window) & (uint)SDL_WindowFlags.SDL_WINDOW_BORDERLESS) != 0;
+            return (SDL_GetWindowFlags(_window) & (uint)SdlWindowFlags.SdlWindowBorderless) != 0;
         }
 
         public static void SetWindowBorderless(bool borderless)
@@ -169,8 +174,8 @@ namespace OMEGA
             SDL_SetWindowBordered(
                 _window,
                 borderless ?
-                    SDL_bool.SDL_FALSE :
-                    SDL_bool.SDL_TRUE
+                    SdlBool.SdlFalse :
+                    SdlBool.SdlTrue
             );
         }
 
@@ -187,7 +192,7 @@ namespace OMEGA
             SDL_SetHintWithPriority(
                 SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS,
                 "0",
-                SDL_HintPriority.SDL_HINT_OVERRIDE
+                SdlHintPriority.SdlHintOverride
             );
 
             SDL_DestroyWindow(_window);
@@ -200,7 +205,7 @@ namespace OMEGA
 
         public static void SetTextInputRectangle(Rect rectangle)
         {
-            SDL_Rect rect = new SDL_Rect
+            SdlRect rect = new()
             {
                 x = rectangle.X1,
                 y = rectangle.Y1,
@@ -215,19 +220,19 @@ namespace OMEGA
 
         }
 
-        private static void ProcessWindowEvent(SDL_Event evt)
+        private static void ProcessWindowEvent(SdlEvent evt)
         {
             // Window Focus
-            if (evt.window.windowEvent == SDL_WindowEventID.SDL_WINDOWEVENT_FOCUS_GAINED)
+            if (evt.window.windowEvent == SdlWindowEventId.SdlWindoweventFocusGained)
             {
                 Engine.Active = true;
 
-                if (!OSXUseSpaces)
+                if (!OsxUseSpaces)
                 {
                     SDL_SetWindowFullscreen(
                         _window,
                         Engine.Fullscreen ?
-                            (uint)SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP :
+                            (uint)SdlWindowFlags.SdlWindowFullscreenDesktop :
                             0
                     );
                 }
@@ -235,11 +240,11 @@ namespace OMEGA
                 // Disable the screensaver when we're back.
                 SDL_DisableScreenSaver();
             }
-            else if (evt.window.windowEvent == SDL_WindowEventID.SDL_WINDOWEVENT_FOCUS_LOST)
+            else if (evt.window.windowEvent == SdlWindowEventId.SdlWindoweventFocusLost)
             {
                 Engine.Active = false;
 
-                if (!OSXUseSpaces)
+                if (!OsxUseSpaces)
                 {
                     SDL_SetWindowFullscreen(_window, 0);
                 }
@@ -248,30 +253,30 @@ namespace OMEGA
             }
 
             // Window Resize
-            else if (evt.window.windowEvent == SDL_WindowEventID.SDL_WINDOWEVENT_SIZE_CHANGED)
+            else if (evt.window.windowEvent == SdlWindowEventId.SdlWindoweventSizeChanged)
             {
                 var w = evt.window.data1;
                 var h = evt.window.data2;
-                display_w = w;
-                display_h = h;
+                _displayW = w;
+                _displayH = h;
 
-                Engine.OnDisplayResize();
+                Engine.HandleWindowResize();
             }
 
-            else if (evt.window.windowEvent == SDL_WindowEventID.SDL_WINDOWEVENT_EXPOSED)
+            else if (evt.window.windowEvent == SdlWindowEventId.SdlWindoweventExposed)
             {
                 Engine.RunningGame.Tick();
             }
 
-            else if (evt.window.windowEvent == SDL_WindowEventID.SDL_WINDOWEVENT_ENTER)
+            else if (evt.window.windowEvent == SdlWindowEventId.SdlWindoweventEnter)
             {
                 SDL_DisableScreenSaver();
-                OnMouseEnter?.Invoke();
+                MouseEnter?.Invoke();
             }
-            else if (evt.window.windowEvent == SDL_WindowEventID.SDL_WINDOWEVENT_LEAVE)
+            else if (evt.window.windowEvent == SdlWindowEventId.SdlWindoweventLeave)
             {
                 SDL_EnableScreenSaver();
-                OnMouseLeave?.Invoke();
+                MouseLeave?.Invoke();
             }
         }
     }

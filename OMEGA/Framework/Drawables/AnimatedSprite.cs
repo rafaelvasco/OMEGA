@@ -11,32 +11,32 @@ namespace OMEGA
 
     public class SpriteAnimation
     {
-        private const int DEFAULT_FRAME_DELAY = 5;
+        private const int DefaultFrameDelay = 5;
 
-        internal int CurrentFrameIndex => m_frame_indices[m_index];
-        internal Vec2 CurrentFrameOrigin => m_frame_origins[m_index];
+        internal int CurrentFrameIndex => _mFrameIndices[_mIndex];
+        internal Vec2 CurrentFrameOrigin => _mFrameOrigins[_mIndex];
 
         public bool Paused { get; set; }
 
-        private int[] m_frame_indices;
-        private float[] m_frame_delays;
-        private Vec2[] m_frame_origins;
-        private int m_anim_direction = 1;
-        private float m_timer;
-        private int m_index;
+        private readonly int[] _mFrameIndices;
+        private readonly float[] _mFrameDelays;
+        private readonly Vec2[] _mFrameOrigins;
+        private int _mAnimDirection = 1;
+        private float _mTimer;
+        private int _mIndex;
 
-        internal SpriteAnimation(int[] frame_indices, SpriteAnimationMode mode)
+        internal SpriteAnimation(int[] frameIndices, SpriteAnimationMode mode)
         {
             Mode = mode;
-            m_frame_indices = frame_indices;
+            _mFrameIndices = frameIndices;
 
-            m_frame_delays = new float[frame_indices.Length];
-            m_frame_origins = new Vec2[frame_indices.Length];
+            _mFrameDelays = new float[frameIndices.Length];
+            _mFrameOrigins = new Vec2[frameIndices.Length];
 
-            for (int i = 0; i < frame_indices.Length; ++i)
+            for (int i = 0; i < frameIndices.Length; ++i)
             {
-                m_frame_delays[i] = DEFAULT_FRAME_DELAY;
-                m_frame_origins[i] = new Vec2(0.5f, 0.5f);
+                _mFrameDelays[i] = DefaultFrameDelay;
+                _mFrameOrigins[i] = new Vec2(0.5f, 0.5f);
             }
         }
 
@@ -44,23 +44,23 @@ namespace OMEGA
 
         public void SetFrame(int index, bool pause = true)
         {
-            index = Calc.Clamp(index, 0, m_frame_indices.Length-1);
+            index = Calc.Clamp(index, 0, _mFrameIndices.Length-1);
 
-            m_index = index;
+            _mIndex = index;
 
             Paused = pause;
         }
 
         public void Reset()
         {
-            m_index = 0;
+            _mIndex = 0;
         }
 
         public void SetFrameDelay(float delay)
         {
-            for (int i = 0; i < m_frame_delays.Length; ++i)
+            for (int i = 0; i < _mFrameDelays.Length; ++i)
             {
-                m_frame_delays[i] = delay;
+                _mFrameDelays[i] = delay;
             }
         }
 
@@ -68,14 +68,14 @@ namespace OMEGA
         {
             index = ClampIndex(index);
 
-            m_frame_delays[index] = delay;
+            _mFrameDelays[index] = delay;
         }
 
         public void SetFrameOrigin(Vec2 origin)
         {
-            for (int i = 0; i < m_frame_origins.Length; ++i)
+            for (int i = 0; i < _mFrameOrigins.Length; ++i)
             {
-                m_frame_origins[i] = origin;
+                _mFrameOrigins[i] = origin;
             }
         }
 
@@ -83,21 +83,21 @@ namespace OMEGA
         {
             index = ClampIndex(index);
 
-            m_frame_origins[index] = origin;
+            _mFrameOrigins[index] = origin;
         }
 
         private int ClampIndex(int index)
         {
-            if (index > m_frame_indices.Length - 1)
+            if (index > _mFrameIndices.Length - 1)
             {
-                index = m_frame_indices.Length - 1;
+                index = _mFrameIndices.Length - 1;
             }
 
             if (index < 0)
             {
                 if (index == -1)
                 {
-                    index = m_frame_indices.Length - 1;
+                    index = _mFrameIndices.Length - 1;
                 }
                 else
                 {
@@ -110,132 +110,127 @@ namespace OMEGA
 
         internal void Update()
         {
-            if (Paused || m_frame_indices.Length == 1)
+            if (Paused || _mFrameIndices.Length == 1)
             {
                 return;
             }
 
-            m_timer += 1;
+            _mTimer += 1;
 
-            if (m_timer < m_frame_delays[m_index]) return;
+            if (_mTimer < _mFrameDelays[_mIndex]) return;
 
-            m_index += m_anim_direction;
+            _mIndex += _mAnimDirection;
 
-            int max_idx = m_frame_indices.Length - 1;
+            int max_idx = _mFrameIndices.Length - 1;
 
             switch (Mode)
             {
                 case SpriteAnimationMode.OneTime:
 
-                    if (m_index > max_idx)
+                    if (_mIndex > max_idx)
                     {
-                        m_index = max_idx;
+                        _mIndex = max_idx;
                         Paused = true;
                     }
 
                     break;
                 case SpriteAnimationMode.Loop:
 
-                    if (m_index > max_idx)
+                    if (_mIndex > max_idx)
                     {
-                        m_index = 0;
+                        _mIndex = 0;
                     }
 
                     break;
                 case SpriteAnimationMode.PingPong:
 
-                    if (m_anim_direction > 0 && m_index > max_idx)
+                    if (_mAnimDirection > 0 && _mIndex > max_idx)
                     {
-                        m_index = max_idx;
-                        m_anim_direction = -1;
+                        _mIndex = max_idx;
+                        _mAnimDirection = -1;
                     }
-                    else if (m_anim_direction < 0 && m_index < 0)
+                    else if (_mAnimDirection < 0 && _mIndex < 0)
                     {
-                        m_index = 0;
-                        m_anim_direction = 1;
+                        _mIndex = 0;
+                        _mAnimDirection = 1;
                     }
 
                     break;
             }
 
-            m_timer = 0;
+            _mTimer = 0;
         }
     }
 
     public class AnimatedSprite<T> : Drawable where T : System.Enum
     {
-        public SpriteAnimation this[T animation] => m_animations?[animation] ?? null;
+        public SpriteAnimation this[T animation] => _mAnimations?[animation] ?? null;
 
-        public SpriteAnimation CurrentAnimation => m_current_anim;
+        public SpriteAnimation CurrentAnimation => _mCurrentAnim;
 
         public bool Paused
         {
-            get => m_current_anim?.Paused ?? false;
+            get => _mCurrentAnim?.Paused ?? false;
             set
             {
-                if (m_current_anim != null)
+                if (_mCurrentAnim != null)
                 {
-                    m_current_anim.Paused = value;
+                    _mCurrentAnim.Paused = value;
                 }
             }
         }
 
         public AnimatedSprite(TextureAtlas atlas)
         {
-            m_atlas = atlas;
-            m_quads = new Quad[atlas.Count];
-            m_animations = new Dictionary<T, SpriteAnimation>();
+            _mAtlas = atlas;
+            _mQuads = new Quad[atlas.Count];
+            _mAnimations = new Dictionary<T, SpriteAnimation>();
 
             for (int i = 0; i < atlas.Count; ++i)
             {
-                m_quads[i] = new Quad(atlas.Texture, atlas[i]);
+                _mQuads[i] = new Quad(atlas.Texture, atlas[i]);
             }
 
-            Width = m_quads[0].Width;
-            Height = m_quads[0].Height;
+            Width = _mQuads[0].Width;
+            Height = _mQuads[0].Height;
             
         }
 
         public AnimatedSprite<T> AddAnimation(T animation, int[] indices, SpriteAnimationMode mode = SpriteAnimationMode.Loop)
         {
-            m_animations.Add(animation, new SpriteAnimation(indices, mode));
-            m_current_anim = m_animations[animation];
+            _mAnimations.Add(animation, new SpriteAnimation(indices, mode));
+            _mCurrentAnim = _mAnimations[animation];
             return this;
         }
 
         public void Clear()
         {
-            m_animations.Clear();
+            _mAnimations.Clear();
 
-            m_current_anim = null;
+            _mCurrentAnim = null;
         }
 
         public void SetAnimation(T animation, bool paused = false)
         {
-            m_current_anim = m_animations[animation];
+            _mCurrentAnim = _mAnimations[animation];
 
-            m_current_anim.Paused = paused;
+            _mCurrentAnim.Paused = paused;
         }
             
         public void Update()
         {
-            if (m_current_anim == null)
+            if (_mCurrentAnim == null)
             {
                 return;
             }
 
-            m_current_anim.Update();
+            _mCurrentAnim.Update();
         }
 
         public override void SetPosition(float x, float y)
         {
             X = x;
             Y = y;
-        }
-
-        public override void PutOnCenter()
-        {
-            SetPosition(Engine.Canvas.Width / 2 - Width / 2, Engine.Canvas.Height / 2 - Height / 2);
         }
 
         public override void Move(float dx, float dy)
@@ -252,91 +247,91 @@ namespace OMEGA
 
         public override void SetColor(Color color)
         {
-            if (color == m_color)
+            if (color == _mColor)
             {
                 return;
             }
 
-            m_color = color;
+            _mColor = color;
         }
 
         public void FlipHorizontal(bool flip)
         {
-            SetFlip(flip, m_flip_y);
+            SetFlip(flip, _mFlipY);
         }
 
         public void FlipVertical(bool flip)
         {
-            SetFlip(m_flip_x, flip);
+            SetFlip(_mFlipX, flip);
         }
 
-        public void SetFlip(bool flip_h, bool flip_v)
+        public void SetFlip(bool flipH, bool flipV)
         {
-            if (m_flip_x == flip_h && m_flip_y == flip_v)
+            if (_mFlipX == flipH && _mFlipY == flipV)
             {
                 return;
             }
 
-            m_flip_x = flip_h;
-            m_flip_y = flip_v;
+            _mFlipX = flipH;
+            _mFlipY = flipV;
         }
 
         public void SetBlend(BlendMode mode)
         {
-            m_blend_mode = mode;
+            _mBlendMode = mode;
         }
 
-        public override void Draw(Canvas canvas)
+        public override void Draw(Canvas2D canvas)
         {
-            if (m_current_anim == null)
+            if (_mCurrentAnim == null)
             {
                 return;
             }
 
-            canvas.BlendMode = m_blend_mode;
+            canvas.BlendMode = _mBlendMode;
 
-            Vec2 origin = m_current_anim.CurrentFrameOrigin;
+            Vec2 origin = _mCurrentAnim.CurrentFrameOrigin;
 
             var origin_dx = origin.X * Width;
             var origin_dy = origin.Y * Height;
 
-            var draw_q = m_quads[m_current_anim.CurrentFrameIndex];
+            var draw_q = _mQuads[_mCurrentAnim.CurrentFrameIndex];
 
             draw_q.Set(X - origin_dx, Y - origin_dy, Width, Height);
 
-            if (m_flip_x)
+            if (_mFlipX)
             {
-                float tx = draw_q.V0.Tx;
-                draw_q.V0.Tx = draw_q.V1.Tx;
-                draw_q.V1.Tx = tx;
+                float tx = draw_q.TopLeft.Tx;
+                draw_q.TopLeft.Tx = draw_q.TopRight.Tx;
+                draw_q.TopRight.Tx = tx;
 
-                tx = draw_q.V3.Tx;
-                draw_q.V3.Tx = draw_q.V2.Tx;
-                draw_q.V2.Tx = tx;
+                tx = draw_q.BottomLeft.Tx;
+                draw_q.BottomLeft.Tx = draw_q.BottomRight.Tx;
+                draw_q.BottomRight.Tx = tx;
             }
 
-            if (m_flip_y)
+            if (_mFlipY)
             {
-                float ty = draw_q.V0.Ty;
-                draw_q.V0.Ty = draw_q.V3.Ty;
-                draw_q.V3.Ty = ty;
+                float ty = draw_q.TopLeft.Ty;
+                draw_q.TopLeft.Ty = draw_q.BottomLeft.Ty;
+                draw_q.BottomLeft.Ty = ty;
 
-                ty = draw_q.V1.Ty;
-                draw_q.V1.Ty = draw_q.V2.Ty;
-                draw_q.V2.Ty = ty;
+                ty = draw_q.TopRight.Ty;
+                draw_q.TopRight.Ty = draw_q.BottomRight.Ty;
+                draw_q.BottomRight.Ty = ty;
             }
 
-            canvas.DrawQuad(in draw_q, m_atlas.Texture);
+            canvas.DrawQuad(in draw_q, _mAtlas.Texture);
         }
 
-        private bool m_flip_x;
-        private bool m_flip_y;
-        private Color m_color;
-        private TextureAtlas m_atlas;
-        private BlendMode m_blend_mode = BlendMode.Alpha;
-        private readonly Quad[] m_quads;
-        private Dictionary<T, SpriteAnimation> m_animations;
-        private SpriteAnimation m_current_anim;
+        private bool _mFlipX;
+        private bool _mFlipY;
+        private Color _mColor;
+        private readonly TextureAtlas _mAtlas;
+        private BlendMode _mBlendMode = BlendMode.Alpha;
+        private readonly Quad[] _mQuads;
+        private readonly Dictionary<T, SpriteAnimation> _mAnimations;
+        private SpriteAnimation _mCurrentAnim;
         
     }
 }

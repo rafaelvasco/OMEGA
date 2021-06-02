@@ -1,23 +1,23 @@
-﻿using ProtoBuf;
+﻿using MessagePack;
 
 namespace OMEGA
 {
-    [ProtoContract]
+    [MessagePackObject]
     public class ShaderProgramData
     {
-        [ProtoMember(1)]
+        [Key(0)]
         public string Id {get;set;}
 
-        [ProtoMember(2)]
+        [Key(1)]
         public byte[] VertexShader {get;set;}
 
-        [ProtoMember(3)]
+        [Key(2)]
         public byte[] FragmentShader {get;set;}
 
-        [ProtoMember(4)]
+        [Key(3)]
         public string[] Samplers {get;set;}
 
-        [ProtoMember(5)]
+        [Key(4)]
         public string[] Params {get;set;}
     }
 }

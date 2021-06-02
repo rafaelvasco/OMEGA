@@ -23,35 +23,34 @@ namespace OMEGA
 
     }
 
+    public class FontResFaceInfo
+    {
+        [JsonPropertyName("path")]
+        public string Path { get; set; }
+
+        [JsonPropertyName("size")]
+        public int Size { get; set; }
+
+        [JsonPropertyName("char_ranges")]
+        public string[] CharRanges { get; set; }
+    }
+
     public class FontResInfo
     {
         [JsonPropertyName("id")]
         public string Id { get; set; }
 
-        [JsonPropertyName("path")]
-        public string Path { get; set; }
+        [JsonPropertyName("faces")]
+        public FontResFaceInfo[] Faces { get; set; }
 
-        [JsonPropertyName("size")]
-        public int Size { get;set; }
+        [JsonPropertyName("line_spacing")]
+        public int LineSpacing { get; set; }
 
-        [JsonPropertyName("range_level")]
-        public int CharRangeLevel { get;set;}
+        [JsonPropertyName("spacing")]
+        public int Spacing { get; set; }
 
-        [JsonPropertyName("padding")]
-        public int[] Padding { get;set;}
-
-        [JsonPropertyName("dropshadow")]
-        public bool DropShadow { get;set;}
-
-        [JsonPropertyName("shadow_offset_x")]
-        public int ShadowOffsetX { get;set;}
-
-        [JsonPropertyName("shadow_offset_y")]
-        public int ShadowOffsetY { get;set;}
-
-        [JsonPropertyName("shadow_color")]
-        public string ShadowColor { get;set;}
-
+        [JsonPropertyName("default_char")]
+        public char DefaultChar { get; set; }
     }
 
     public class AtlasResInfo

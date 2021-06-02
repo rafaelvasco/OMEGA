@@ -1,28 +1,31 @@
 ﻿using System;
-using static SDL2.SDL;
+using static SDL2.Sdl;
 
 namespace OMEGA
 {
     internal static partial class Platform
     {
-        private static bool SupportsGlobalMouse;
+        private static bool _supportsGlobalMouse;
 
-        public static void GetMouseState(
-            out int x,
-            out int y,
-            out ButtonState left,
-            out ButtonState middle,
-            out ButtonState right,
-            out ButtonState x1,
-            out ButtonState x2
-        )
+        public static Action MouseEnter;
+        public static Action MouseLeave;
+        public static Action<MouseButton> MouseUp;
+        public static Action<MouseButton> MouseDown;
+        public static Action<int, int> MouseMove;
+
+        private static int _mWheelValue = 0;
+
+        public static bool ButtonPosEventPoolEnabled { get;set;} = false;
+
+        public static MouseState GetMouseState()
         {
             uint flags;
+            int x, y;
             if (GetRelativeMouseMode())
             {
                 flags = SDL_GetRelativeMouseState(out x, out y);
             }
-            else if (SupportsGlobalMouse)
+            else if (_supportsGlobalMouse)
             {
                 flags = SDL_GetGlobalMouseState(out x, out y);
                 SDL_GetWindowPosition(_window, out int wx, out int wy);
@@ -34,11 +37,13 @@ namespace OMEGA
                 flags = SDL_GetMouseState(out x, out y);
             }
 
-            left = (ButtonState)(flags & SDL_BUTTON_LMASK);
-            middle = (ButtonState)((flags & SDL_BUTTON_MMASK) >> 1);
-            right = (ButtonState)((flags & SDL_BUTTON_RMASK) >> 2);
-            x1 = (ButtonState)((flags & SDL_BUTTON_X1MASK) >> 3);
-            x2 = (ButtonState)((flags & SDL_BUTTON_X2MASK) >> 4);
+            var left = (ButtonState)(flags & SdlButtonLmask);
+            var middle = (ButtonState)((flags & SdlButtonMmask) >> 1);
+            var right = (ButtonState)((flags & SdlButtonRmask) >> 2);
+            var x1 = (ButtonState)((flags & SdlButtonX1Mask) >> 3);
+            var x2 = (ButtonState)((flags & SdlButtonX2Mask) >> 4);
+
+            return new MouseState(x, y, _mWheelValue, left, middle, right, x1, x2);
         }
 
         public static void SetMousePosition(int x, int y)
@@ -48,34 +53,58 @@ namespace OMEGA
 
         public static bool GetRelativeMouseMode()
         {
-            return SDL_GetRelativeMouseMode() == SDL_bool.SDL_TRUE;
+            return SDL_GetRelativeMouseMode() == SdlBool.SdlTrue;
         }
 
         public static void SetRelativeMouseMode(bool enable)
         {
-            SDL_SetRelativeMouseMode(
+            _ = SDL_SetRelativeMouseMode(
                 enable ?
-                    SDL_bool.SDL_TRUE :
-                    SDL_bool.SDL_FALSE
+                    SdlBool.SdlTrue :
+                    SdlBool.SdlFalse
             );
         }
 
-        private static void ProcessMouseEvent(SDL_Event evt)
+        private static void ProcessMouseEvent(SdlEvent evt)
         {
-            if (evt.type == SDL_EventType.SDL_MOUSEBUTTONDOWN)
+            if (ButtonPosEventPoolEnabled)
             {
-                Mouse.ProcessClicked(evt.button.button - 1);
+                var button = TranslatePlatformMouseButton(evt.button.button);
+
+                switch (evt.type)
+                {
+                    case SdlEventType.SdlMousemotion:
+                        MouseMove(evt.motion.x, evt.motion.y);
+                        break;
+                    case SdlEventType.SdlMousebuttondown:
+                        MouseDown(button);
+                        break;
+                    case SdlEventType.SdlMousebuttonup:
+                        MouseUp(button);
+                        break;
+                }
             }
 
-            else if (evt.type == SDL_EventType.SDL_MOUSEWHEEL)
+            if (evt.type == SdlEventType.SdlMousewheel)
             {
-                Mouse.ProcessMouseWheel(evt.wheel.y * 120);
+                _mWheelValue = evt.wheel.y * 120;
             }
+        }
+
+        private static MouseButton TranslatePlatformMouseButton(byte button)
+        {
+            return button switch
+            {
+                1 => MouseButton.Left,
+                2 => MouseButton.Middle,
+                3 => MouseButton.Right,
+                _ => MouseButton.None,
+            };
         }
 
         private static void InitMouse()
         {
-            SupportsGlobalMouse = 
+            _supportsGlobalMouse = 
                 RunningPlatform == RunningPlatform.Windows ||
                 RunningPlatform == RunningPlatform.Mac ||
                 RunningPlatform == RunningPlatform.Linux;

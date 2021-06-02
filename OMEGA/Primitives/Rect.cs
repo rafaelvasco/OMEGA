@@ -7,7 +7,7 @@ namespace OMEGA
     [Serializable]
     public struct Rect : IEquatable<Rect>
     {
-        private static readonly Rect _empty = new Rect(0, 0, 0, 0);
+        private static readonly Rect _empty = new(0, 0, 0, 0);
         public static ref readonly Rect Empty => ref _empty;
 
         public int X1;
@@ -37,19 +37,27 @@ namespace OMEGA
         public bool IsRegular => X2 > X1 && Y2 > Y1;
 
         public Rect Normalized =>
-            new Rect(Calc.Min(X1, X2), Calc.Min(Y1, Y2), Calc.Max(X1, X2), Calc.Max(Y1, Y2));
+            new(Calc.Min(X1, X2), Calc.Min(Y1, Y2), Calc.Max(X1, X2), Calc.Max(Y1, Y2));
 
         public int Area => Math.Abs(Width * Height);
 
-        public Point TopLeft => new Point(X1, Y1);
+        public Point TopLeft => new(X1, Y1);
 
-        public Point TopRight => new Point(X2, Y1);
+        public Point TopRight => new(X2, Y1);
 
-        public Point BottomLeft => new Point(X1, Y2);
+        public Point BottomLeft => new(X1, Y2);
 
-        public Point BottomRight => new Point(X2, Y2);
+        public Point BottomRight => new(X2, Y2);
 
-        public Point Center => new Point(Calc.Abs(X2 - X1) / 2, Calc.Abs(Y2 - Y1) / 2);
+        public int Left => X1;
+
+        public int Right => X2;
+
+        public int Top => Y1;
+
+        public int Bottom => Y2;
+
+        public Point Center => new(Calc.Abs(X2 - X1) / 2, Calc.Abs(Y2 - Y1) / 2);
 
         public override bool Equals(object obj)
         {
@@ -69,6 +77,11 @@ namespace OMEGA
         public bool Contains(Point p)
         {
             return p.X >= X1 && p.X <= X2 && p.Y >= Y1 && p.Y <= Y2;
+        }
+
+        public bool Contains(int x, int y)
+        {
+            return x >= X1 && x <= X2 && y >= Y1 && y <= Y2;
         }
 
         public bool Contains(ref Rect rect)
@@ -104,15 +117,7 @@ namespace OMEGA
 
         public override int GetHashCode()
         {
-            unchecked
-            {
-                var hash = 17;
-                hash = hash * 23 + X1;
-                hash = hash * 23 + Y1;
-                hash = hash * 23 + X2;
-                hash = hash * 23 + Y2;
-                return hash;
-            }
+            return HashCode.Combine(X1, Y1, X2, Y2);
         }
 
         public Rect Inflated(int x, int y)
@@ -123,6 +128,18 @@ namespace OMEGA
             copy.X2 += x;
             copy.Y1 -= y;
             copy.Y2 += y;
+
+            return copy;
+        }
+
+        public Rect Translated(int dx, int dy)
+        {
+            var copy = this;
+
+            copy.X1 += dx;
+            copy.X2 += dx;
+            copy.Y1 += dy;
+            copy.Y2 += dy;
 
             return copy;
         }

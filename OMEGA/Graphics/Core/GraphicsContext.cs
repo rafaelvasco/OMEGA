@@ -1,140 +1,144 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using static Bgfx.Bgfx;
 
 namespace OMEGA
 {
-    internal static unsafe partial class GraphicsContext
+    internal static unsafe class GraphicsContext
     {
-        static readonly int TextureFormatCount = Enum.GetValues(typeof(TextureFormat)).Length;
+        private static readonly List<GraphicsResource> AllocatedGraphicsResources = new(16);
 
         public static RendererType RendererBackend { get; private set; }
 
-        private static readonly List<GraphicsResource> allocated_graphics_resources = new List<GraphicsResource>(16);
-
-        /* ==================================================================*/
-        /* INITIALIZATION */
-        /* ==================================================================*/
-
-        public static void SetPlatformData(IntPtr window_handle)
+        public static void SetPlatformData(IntPtr windowHandle)
         {
-            unsafe
+            PlatformData platformData = new()
             {
-                PlatformPtrData platformData = new PlatformPtrData();
-                platformData.nwh = window_handle.ToPointer();
-                Bgfx.set_platform_data(&platformData);
-            }
+                nwh = windowHandle.ToPointer()
+            };
+            set_platform_data(&platformData);
         }
 
-        public static Init Initialize(int display_w, int display_h, RendererType renderer_backend)
+        public static Init Initialize(int resolutionWidth, int resolutionHeight, RendererType renderer)
         {
-            RendererBackend = renderer_backend;
+            Init init = new();
 
-            var result = new Init();
-            InitPtrData init_data = new InitPtrData();
-            unsafe
-            {
-                Bgfx.init_ctor(&init_data);
-                init_data.type = renderer_backend;
-                init_data.vendorId = (ushort)PciIdFlags.None;
-                init_data.resolution.width = (uint)display_w;
-                init_data.resolution.height = (uint)display_h;
-                init_data.resolution.reset = (uint)ResetFlags.None;
-                Bgfx.init(&init_data);
-            }
+            RendererBackend = renderer;
+            
+            init_ctor(&init);
+            init.type = renderer;
+            init.vendorId = (ushort)PciIdFlags.None;
+            init.resolution.width = (uint)resolutionWidth;
+            init.resolution.height = (uint)resolutionHeight;
+            init.resolution.reset = (uint)ResetFlags.None;
+            Bgfx.Bgfx.init(&init);
 
-            result.init = init_data;
 
-            Reset(display_w, display_h, ResetFlags.Vsync);
-
-            return result;
+            return init;
         }
 
-        public static void Shutdown()
+        public static IntPtr MakeRef(IntPtr data, uint size)
         {
-            foreach (var resource in allocated_graphics_resources)
-            {
-                resource.Dispose(unregister: false);
-            }
-
-            Bgfx.shutdown();
+            return new(make_ref(data.ToPointer(), size));
         }
 
-        /* ==================================================================*/
-        /* GRAPHICS RESOURCE CREATION */
-        /* ==================================================================*/
-
-        public static IndexBufferHandle CreateIndexBuffer(ushort[] indices, BufferFlags flags = BufferFlags.None)
+        public static void Frame(bool capture = false)
         {
-            unsafe
-            {
-                var memory = GetMemoryBufferReference(indices);
-                var index_buffer = Bgfx.create_index_buffer(memory, (ushort)flags);
-                return index_buffer;
-            }
+            frame(capture);
         }
 
-        public static VertexBufferHandle CreateVertexBuffer(Vertex[] vertices, VertexLayout layout, BufferFlags flags = BufferFlags.None)
+        public static void Reset(int width, int height, ResetFlags resetFlags)
         {
-            var memory = GetMemoryBufferReference(vertices);
-            var vertex_buffer = Bgfx.create_vertex_buffer(memory, &layout.InternalHandle, (ushort)flags);
-            return vertex_buffer;
+            reset((uint)width, (uint)height, (uint)resetFlags, TextureFormat.BGRA8);
+        }
+        
+        public static void SetDebug(DebugFlags flag)
+        {
+            set_debug((uint)flag);
         }
 
-        public static DynamicVertexBufferHandle CreateDynamicVertexBuffer(int vertex_count, VertexLayout layout, BufferFlags flags = BufferFlags.None)
+        public static void SetViewMode(ushort viewId, ViewMode sequential)
         {
-            var dyn_vertex_buffer = Bgfx.create_dynamic_vertex_buffer((uint)vertex_count, &layout.InternalHandle, (ushort)flags);
-            return dyn_vertex_buffer;
+            set_view_mode(viewId, sequential);
         }
 
-        public static DynamicVertexBufferHandle CreateDynamicVertexBuffer(Vertex[] vertices, VertexLayout layout, BufferFlags flags = BufferFlags.None)
+        public static void SetViewClear(ushort viewId, ClearFlags flags, uint color, float depth = 0.0f, byte stencil = 1)
         {
-            var memory = GetMemoryBufferReference(vertices);
-            var dyn_vertex_buffer = Bgfx.create_dynamic_vertex_buffer_mem(memory, &layout.InternalHandle, (ushort)flags);
-            return dyn_vertex_buffer;
+            set_view_clear(viewId, (ushort)flags, color, depth, stencil);
         }
 
-        public static DynamicIndexBufferHandle CreateDynamicIndexBuffer(int index_count, BufferFlags flags = BufferFlags.None) 
+        public static void Touch(ushort i)
         {
-            var dyn_index_buffer = Bgfx.create_dynamic_index_buffer((uint)index_count, (ushort)flags);
-            return dyn_index_buffer;
+            touch(i);
         }
 
-        public static DynamicIndexBufferHandle CreateDynamicIndexBuffer(ushort[] indices, BufferFlags flags = BufferFlags.None)
+        public static void SetViewRect(ushort viewId, int x, int y, int resolutionWidth, int resolutionHeight)
         {
-            var memory = GetMemoryBufferReference(indices);
-            var dyn_index_buffer = Bgfx.create_dynamic_index_buffer_mem(memory, (ushort)flags);
-            return dyn_index_buffer;
+            set_view_rect(viewId, (ushort)x, (ushort)y, (ushort)resolutionWidth, (ushort)resolutionHeight);
         }
 
-        public static void UpdateDynamicVertexBuffer(DynamicVertexBufferHandle handle, int start_vertex, Vertex[] vertices)
+        public static void SetViewProjection(ushort viewId, ref Mat4 view, ref Mat4 projection)
         {
-            var memory = GetMemoryBufferReference(vertices);
-            Bgfx.update_dynamic_vertex_buffer(handle, (uint)start_vertex, memory);
+            set_view_transform(
+                viewId,
+                Unsafe.AsPointer(ref view.M11),
+                Unsafe.AsPointer(ref projection.M11)
+            );
         }
 
-        public static void UpdateDynamicIndexBuffer(DynamicIndexBufferHandle handle, int start_index, ushort[] indices)
+        public static void SetProjection(ushort viewId, ref float projection)
         {
-            var memory = GetMemoryBufferReference(indices);
-            Bgfx.update_dynamic_index_buffer(handle, (uint)start_index, memory);
+            set_view_transform(viewId, null, Unsafe.AsPointer(ref projection));
         }
 
-        public static ShaderProgram CreateShaderProgram(byte[] vertex_src, byte[] frag_src, string[] samplers, string[] _params)
+        public static void SetViewTransform(ushort viewId, float[] view, float[] projection)
         {
-            if (vertex_src.Length == 0 || frag_src.Length == 0)
+            set_view_transform(viewId, view != null ? Unsafe.AsPointer(ref view[0]) : null, projection != null ? Unsafe.AsPointer(ref projection[0]) : null);
+        }
+
+        public static TransientVertexBuffer CreateTransientVertexBuffer(Span<VertexPositionColorTexture> vertices, VertexLayout layout)
+        {
+            var transient_vtx_buffer = new TransientVertexBuffer();
+
+            alloc_transient_vertex_buffer(&transient_vtx_buffer, (uint)vertices.Length, &layout.InternalHandle);
+
+            var data_size = (uint)(vertices.Length * Unsafe.SizeOf<VertexPositionColorTexture>());
+
+            Unsafe.CopyBlock(transient_vtx_buffer.data, Unsafe.AsPointer(ref vertices[0]), data_size);
+
+            return transient_vtx_buffer;
+        }
+
+        public static TransientIndexBuffer CreateTransientIndexBuffer(Span<ushort> indices)
+        {
+            var transient_idx_buffer = new TransientIndexBuffer();
+
+            alloc_transient_index_buffer(&transient_idx_buffer, (uint)indices.Length, false);
+
+            var data_size = (uint)(indices.Length * sizeof(ushort));
+
+            Unsafe.CopyBlock(transient_idx_buffer.data, Unsafe.AsPointer(ref indices[0]), data_size);
+
+            return transient_idx_buffer;
+        }
+
+        public static ShaderProgram CreateShaderProgram(byte[] vertexSrc, byte[] fragSrc, string[] samplers, string[] @params)
+        {
+            if (vertexSrc.Length == 0 || fragSrc.Length == 0)
             {
                 throw new Exception("Cannot load ShaderProgram with empty shader sources");
             }
 
-            var vertex_shader = CreateShader(vertex_src);
-            var frag_shader = CreateShader(frag_src);
+            var vertex_shader = CreateShader(vertexSrc);
+            var frag_shader = CreateShader(fragSrc);
 
             if (!vertex_shader.Valid || !frag_shader.Valid)
             {
                 throw new Exception("Could not load shader correctly.");
             }
 
-            var program = new ShaderProgram(CreateProgram(vertex_shader, frag_shader, true), samplers, _params);
+            var program = new ShaderProgram(CreateProgram(vertex_shader, frag_shader, true), samplers, @params);
 
             if (!program.Program.Valid)
             {
@@ -144,319 +148,313 @@ namespace OMEGA
             return program;
         }
 
-        public static ShaderHandle CreateShader(byte[] bytes)
+        private static ShaderHandle CreateShader(byte[] bytes)
         {
             ShaderHandle shader;
-            unsafe
-            {
-                var data = AllocGraphicsMemoryBuffer(bytes);
-                shader = Bgfx.create_shader(data);
-            }
+            var data = AllocGraphicsMemoryBuffer(bytes);
+            shader = create_shader(data);
             return shader;
         }
 
-        public static ProgramHandle CreateProgram(ShaderHandle vertex, ShaderHandle fragment, bool destroyShader)
+        private static ProgramHandle CreateProgram(ShaderHandle vertex, ShaderHandle fragment, bool destroyShader)
         {
-            var program = Bgfx.create_program(vertex, fragment, destroyShader);
+            var program = create_program(vertex, fragment, destroyShader);
             return program;
         }
 
-        public static UniformHandle CreateUniform(string name, UniformType type, int num_elements)
+        public static UniformHandle CreateUniform(string name, UniformType type, int numElements)
         {
-            var uniform = Bgfx.create_uniform(name, type, (ushort)num_elements);
+            var uniform = create_uniform(name, type, (ushort)numElements);
             return uniform;
         }
 
-        public static TextureHandle CreateTexture2D(int width, int height, bool has_mips, int num_layers, TextureFormat tex_format, TextureFlags flags, byte[] pixel_data)
+        public static TextureHandle CreateTexture2D(ushort width, ushort height, bool hasmips, ushort layers, TextureFormat bgra8, SamplerFlags flags, IntPtr makeRef)
         {
-            unsafe
-            {
-                Memory* data = AllocGraphicsMemoryBuffer(pixel_data);
-                TextureHandle tex = Bgfx.create_texture_2d((ushort)width, (ushort)height, has_mips, (ushort)num_layers, tex_format, (ulong)flags, data);
-                return tex;
-            }
+            return create_texture_2d(width, height, hasmips, layers, bgra8, (ulong)flags, (Memory*)makeRef.ToPointer());
         }
 
-        public static TextureHandle CreateTexture2D(int width, int height, int bytes_per_pixel, bool has_mips, int num_layers, TextureFormat tex_format, TextureFlags flags, IntPtr pixel_data)
+        public static void DestroyTexture2D(Texture2D texture)
         {
-            unsafe
-            {
-                Memory* data = AllocGraphicsMemoryBuffer(pixel_data, width * height * bytes_per_pixel);
-                TextureHandle tex = Bgfx.create_texture_2d((ushort)width, (ushort)height, has_mips, (ushort)num_layers, tex_format, (ulong)flags, data);
-                return tex;
-            }
+            destroy_texture(texture.Handle);
         }
 
-        public static TextureHandle CreateDynamicTexture2D(int width, int height, bool has_mips, int num_layers, TextureFormat tex_format, TextureFlags flags, byte[] pixel_data)
+        public static void UpdateTexture2D(Texture2D texture, int layer, byte mip, int x, int y, int width, int height, byte[] pixelData, int pitch)
         {
-            unsafe
-            {
-                Memory* data = AllocGraphicsMemoryBuffer(pixel_data);
-                TextureHandle tex = Bgfx.create_texture_2d((ushort)width, (ushort)height, has_mips, (ushort)num_layers, tex_format, (ulong)flags, null);
-                Bgfx.update_texture_2d(tex, 0, 0, 0, 0, (ushort)width, (ushort)height, data, ushort.MaxValue);
-                return tex;
-            }
+            var data = GetMemoryBufferReference(pixelData);
+            update_texture_2d(texture.Handle, (ushort)layer, mip, (ushort)x, (ushort)y, (ushort)width, (ushort)height, data, (ushort)pitch);
         }
 
-        public static FrameBufferHandle CreateFrameBuffer(int width, int height, TextureFormat tex_format, TextureFlags tex_flags)
+        public static IndexBufferHandle CreateIndexBuffer(ushort[] indices, BufferFlags flags = BufferFlags.None)
         {
-            return Bgfx.create_frame_buffer((ushort)width, (ushort)height, tex_format, (ulong)tex_flags);
+            var memory = GetMemoryBufferReference(indices);
+            var index_buffer = create_index_buffer(memory, (ushort)flags);
+            return index_buffer;
         }
 
-        public static FrameBufferHandle CreateFrameBuffer(Texture2D texture, TextureFormat tex_format, TextureFlags tex_flags)
+        public static void DestroyIndexBuffer(IndexBufferHandle indexBuffer)
+        {
+            destroy_index_buffer(indexBuffer);
+        }
+
+        public static VertexBufferHandle CreateVertexBuffer(VertexPositionColorTexture[] vertices, VertexLayout layout, BufferFlags flags = BufferFlags.None)
+        {
+            var memory = GetMemoryBufferReference(vertices);
+            var vertex_buffer = create_vertex_buffer(memory, &layout.InternalHandle, (ushort)flags);
+            return vertex_buffer;
+        }
+
+        public static void DestroyVertexBuffer(VertexBufferHandle vertexBuffer)
+        {
+            destroy_vertex_buffer(vertexBuffer);
+        }
+
+        public static DynamicIndexBufferHandle CreateDynamicIndexBuffer(int indexCount, BufferFlags flags = BufferFlags.None)
+        {
+            var dyn_index_buffer = create_dynamic_index_buffer((uint)indexCount, (ushort)flags);
+            return dyn_index_buffer;
+        }
+
+        public static DynamicIndexBufferHandle CreateDynamicIndexBuffer(ushort[] indices, BufferFlags flags = BufferFlags.None)
+        {
+            var memory = GetMemoryBufferReference(indices);
+            var dyn_index_buffer = create_dynamic_index_buffer_mem(memory, (ushort)flags);
+            return dyn_index_buffer;
+        }
+
+        public static void DestroyDynamicIndexBuffer(DynamicIndexBufferHandle indexBuffer)
+        {
+            destroy_dynamic_index_buffer(indexBuffer);
+        }
+
+        public static void UpdateDynamicIndexBuffer(DynamicIndexBufferHandle handle, int startIndex, ushort[] indices)
+        {
+            var memory = GetMemoryBufferReference(indices);
+            update_dynamic_index_buffer(handle, (uint)startIndex, memory);
+        }
+
+        public static DynamicVertexBufferHandle CreateDynamicVertexBuffer(int vertexCount, VertexLayout layout, BufferFlags flags = BufferFlags.None)
+        {
+            var dyn_vertex_buffer = create_dynamic_vertex_buffer((uint)vertexCount, &layout.InternalHandle, (ushort)flags);
+            return dyn_vertex_buffer;
+        }
+
+        public static DynamicVertexBufferHandle CreateDynamicVertexBuffer(VertexPositionColorTexture[] vertices, VertexLayout layout, BufferFlags flags = BufferFlags.None)
+        {
+            var memory = GetMemoryBufferReference(vertices);
+            var dyn_vertex_buffer = create_dynamic_vertex_buffer_mem(memory, &layout.InternalHandle, (ushort)flags);
+            return dyn_vertex_buffer;
+        }
+
+        public static void UpdateDynamicVertexBuffer(DynamicVertexBufferHandle handle, int startVertex, VertexPositionColorTexture[] vertices)
+        {
+            var memory = GetMemoryBufferReference(vertices);
+            update_dynamic_vertex_buffer(handle, (uint)startVertex, memory);
+        }
+
+        public static void DestroyDynamicVertexBuffer(DynamicVertexBufferHandle vertexBuffer)
+        {
+            destroy_dynamic_vertex_buffer(vertexBuffer);
+        }
+
+        public static TextureHandle CreateTexture2D(int width, int height, bool hasMips, int numLayers, TextureFormat texFormat, SamplerFlags flags, byte[] pixelData)
+        {
+            Memory* data = AllocGraphicsMemoryBuffer(pixelData);
+
+            TextureHandle tex = create_texture_2d((ushort)width, (ushort)height, hasMips, (ushort)numLayers, texFormat, (ulong)flags, data);
+            return tex;
+        }
+
+        public static TextureHandle CreateTexture2D(int width, int height, int bytesPerPixel, bool hasMips, int numLayers, TextureFormat texFormat, SamplerFlags flags, IntPtr pixelData)
+        {
+            var data = AllocGraphicsMemoryBuffer(pixelData, width * height * bytesPerPixel);
+            TextureHandle tex = create_texture_2d((ushort)width, (ushort)height, hasMips, (ushort)numLayers, texFormat, (ulong)flags, data);
+            return tex;
+        }
+
+        public static TextureHandle CreateTexture2D<T>(int width, int height, bool hasMips, int numLayers, TextureFormat texFormat, SamplerFlags flags, T[] pixelBytes) where T : struct
+        {
+            var data = AllocGraphicsMemoryBuffer(pixelBytes);
+            TextureHandle tex = create_texture_2d((ushort)width, (ushort)height, hasMips, (ushort)numLayers, texFormat, (ulong)flags, data);
+            return tex;
+        }
+
+        public static TextureHandle CreateDynamicTexture2D(int width, int height, bool hasMips, int numLayers, TextureFormat texFormat, SamplerFlags flags, byte[] pixelData)
+        {
+            Memory* data = AllocGraphicsMemoryBuffer(pixelData);
+            TextureHandle tex = create_texture_2d((ushort)width, (ushort)height, hasMips, (ushort)numLayers, texFormat, (ulong)flags, null);
+            update_texture_2d(tex, 0, 0, 0, 0, (ushort)width, (ushort)height, data, ushort.MaxValue);
+            return tex;
+        }
+
+        public static FrameBufferHandle CreateFrameBuffer(int width, int height, TextureFormat texFormat, SamplerFlags texFlags)
+        {
+            return create_frame_buffer((ushort)width, (ushort)height, texFormat, (ulong)texFlags);
+        }
+
+        public static FrameBufferHandle CreateFrameBuffer(Texture2D texture, TextureFormat texFormat, SamplerFlags texFlags)
         {
             var attachment = stackalloc Attachment[1];
-            
+
             attachment->handle = texture.Handle;
             attachment->access = Access.ReadWrite;
             attachment->layer = 0;
             attachment->mip = 0;
             attachment->resolve = 0;
 
-            return Bgfx.create_frame_buffer_from_attachment(1, attachment, false);
-
+            return create_frame_buffer_from_attachment(1, attachment, false);
         }
 
-        public static void AllocTransientVertexBuffer(out TransientVertexBuffer buffer, int vertex_count, ref VertexLayout layout)
+        public static void DestroyFrameBuffer(FrameBufferHandle frameBuffer)
         {
-            Bgfx.alloc_transient_vertex_buffer(out buffer, (uint)vertex_count, ref layout.InternalHandle);
+            destroy_frame_buffer(frameBuffer);
         }
 
-        public static void AllocTransientIndexBuffer(out TransientIndexBuffer buffer, int num_indices)
+        public static void SetDynamicIndexBuffer(DynamicIndexBuffer indexBuffer, int firstIndex, int numIndices)
         {
-            Bgfx.alloc_transient_index_buffer(out buffer, (uint)num_indices);
+            set_dynamic_index_buffer(indexBuffer.Handle, (uint)firstIndex, (uint)numIndices);
         }
 
-        public static void RegisterAllocatedResource(GraphicsResource resource)
+        public static void SetDynamicVertexBuffer(byte stream, DynamicVertexBuffer vertexBuffer, int startVertex, int numVertices)
         {
-            allocated_graphics_resources.Add(resource);
+            set_dynamic_vertex_buffer(stream, vertexBuffer.Handle, (uint)startVertex, (uint)numVertices);
         }
 
-        public static void UnregisterAllocatedResource(GraphicsResource resource)
+        public static void SetTransientVertexBuffer(byte stream, TransientVertexBuffer vertexBuffer, int startVertex, int numVertices)
         {
-            allocated_graphics_resources.Remove(resource);
+            set_transient_vertex_buffer(stream, &vertexBuffer, (uint)startVertex, (uint)numVertices);
         }
 
-        public static TextureHandle GetFrameBufferTexture(FrameBufferHandle frame_buffer, byte attachment)
+        public static void SetTransientIndexBuffer(TransientIndexBuffer indexBuffer, int firstIndex, int numIndices)
         {
-            return Bgfx.get_texture(frame_buffer, attachment);
+            set_transient_index_buffer(&indexBuffer, (uint)firstIndex, (uint)numIndices);
         }
 
-        public static IntPtr MakeRef(IntPtr data, uint size)
+        public static void SetIndexBuffer(IndexBuffer indexBuffer, int firstIndex, int numIndices)
         {
-            unsafe
-            {
-                return new IntPtr(Bgfx.make_ref(data.ToPointer(), size));
-            }
+            set_index_buffer(indexBuffer.Handle, (uint)firstIndex, (uint)numIndices);
         }
 
-        /* ==================================================================*/
-        /* GRAPHICS RESOURCE DISPOSING */
-        /* ==================================================================*/
-
-        public static void DestroyTexture(TextureHandle texture)
+        public static void SetVertexBuffer(byte stream, VertexBuffer vertexBuffer, int startVertex, int numVertices)
         {
-            Bgfx.destroy_texture(texture);
+            set_vertex_buffer(stream, vertexBuffer.Handle, (uint)startVertex, (uint)numVertices);
         }
 
-        public static void DestroyIndexBuffer(IndexBufferHandle index_buffer)
+        public static void SetFrameBuffer(ushort viewId, FrameBufferHandle handle)
         {
-            Bgfx.destroy_index_buffer(index_buffer);
+            set_view_frame_buffer(viewId, handle);
         }
 
-        public static void DestroyDynamicIndexBuffer(DynamicIndexBufferHandle index_buffer)
+        public static int GetAvailableTransientVertexBuffers(int requiredVertexCount, VertexLayout layout)
         {
-            Bgfx.destroy_dynamic_index_buffer(index_buffer);
+            return (int)get_avail_transient_vertex_buffer((uint)requiredVertexCount, (Bgfx.Bgfx.VertexLayout*)Unsafe.AsPointer(ref layout.InternalHandle));
         }
 
-        public static void DestroyFrameBuffer(FrameBufferHandle frame_buffer)
+        public static int GetAvailableTransientIndexBuffers(int numIndices)
         {
-            Bgfx.destroy_frame_buffer(frame_buffer);
+            return (int)get_avail_transient_index_buffer((uint)numIndices, false);
         }
 
-        public static void DestroyVertexBuffer(VertexBufferHandle vertex_buffer)
+        private static Memory* AllocGraphicsMemoryBuffer<T>(T[] array)
         {
-            Bgfx.destroy_vertex_buffer(vertex_buffer);
+            var size = (uint)(array.Length * Unsafe.SizeOf<T>());
+            var data = alloc(size);
+            Unsafe.CopyBlockUnaligned(data->data, Unsafe.AsPointer(ref array[0]), size);
+            return data;
         }
 
-        public static void DestroyDynamicVertexBuffer(DynamicVertexBufferHandle vertex_buffer)
+        private static Memory* AllocGraphicsMemoryBuffer(IntPtr dataPtr, int dataSize)
         {
-            Bgfx.destroy_dynamic_vertex_buffer(vertex_buffer);
+            var data = alloc((uint)dataSize);
+            Unsafe.CopyBlockUnaligned(data->data, dataPtr.ToPointer(), (uint)dataSize);
+            return data;
         }
 
-        public static void DestroyProgram(ProgramHandle shader_program)
+        private static Memory* GetMemoryBufferReference<T>(T[] array)
         {
-            Bgfx.destroy_program(shader_program);
+            var size = (uint)(array.Length * Unsafe.SizeOf<T>());
+            var data = make_ref(Unsafe.AsPointer(ref array[0]), size);
+            return data;
+        }
+     
+        public static TextureHandle GetFrameBufferTexture(FrameBufferHandle frameBuffer, byte attachment)
+        {
+            return get_texture(frameBuffer, attachment);
         }
 
-        public static void DestroyShader(ShaderHandle shader)
+        public static void SetState(StateFlags state)
         {
-            Bgfx.destroy_shader(shader);
+            set_state((ulong)state, 0);
         }
 
-        public static void DestroyUniform(UniformHandle uniform)
+        public static void SetTexture(byte textureUnit, UniformHandle uniform, TextureHandle texture, TextureFlags flags = (TextureFlags)uint.MaxValue)
         {
-            Bgfx.destroy_uniform(uniform);
+            set_texture(textureUnit, uniform, texture, (uint)flags);
         }
 
-        /* ==================================================================*/
-        /* RENDERING */
-        /* ==================================================================*/
-
-        /* BUFFERS */
-        /* ==================================================================*/
-
-        public static void SetDynamicIndexBuffer(DynamicIndexBufferHandle index_buffer, int first_index, int num_indices)
+        public static void SetTransientVertexBuffer(byte stream, ref TransientVertexBuffer tvb, uint startVertex,
+            uint numVertices)
         {
-            Bgfx.set_dynamic_index_buffer(index_buffer, (uint)first_index, (uint)num_indices);
+            set_transient_vertex_buffer(stream, (TransientVertexBuffer*)Unsafe.AsPointer(ref tvb), startVertex, numVertices);
         }
 
-        public static void SetDynamicVertexBuffer(byte stream, DynamicVertexBufferHandle vertex_buffer, int start_vertex, int num_vertices)
+        public static void SetTransientIndexBuffer(ref TransientIndexBuffer tib, uint firstIndex, uint numIndices)
         {
-            Bgfx.set_dynamic_vertex_buffer(stream, vertex_buffer, (uint)start_vertex, (uint)num_vertices);
-        }
-
-        public static void SetTransientVertexBuffer(byte stream, TransientVertexBuffer vertex_buffer, int start_vertex, int num_vertices)
-        {
-            unsafe
-            {
-                Bgfx.set_transient_vertex_buffer(stream, &vertex_buffer, (uint)start_vertex, (uint)num_vertices);
-            }
-        }
-
-        public static void SetTransientIndexBuffer(TransientIndexBuffer index_buffer, int first_index, int num_indices)
-        {
-            unsafe
-            {
-                Bgfx.set_transient_index_buffer(&index_buffer, (uint)first_index, (uint)num_indices);
-            }
-        }
-
-        public static void SetIndexBuffer(IndexBufferHandle index_buffer, int first_index, int num_indices)
-        {
-            Bgfx.set_index_buffer(index_buffer, (uint)first_index, (uint)num_indices);
-        }
-
-        public static void SetVertexBuffer(byte stream, VertexBufferHandle vertex_buffer, int start_vertex, int num_vertices)
-        {
-            Bgfx.set_vertex_buffer(stream, vertex_buffer, (uint)start_vertex, (uint)num_vertices);
-        }
-
-        public static void SetFrameBuffer(ushort view_id, FrameBufferHandle handle)
-        {
-            Bgfx.set_view_frame_buffer(view_id, handle);
-        }
-
-        public static int GetAvailableTransientVertexBuffers(int required_vertex_count, VertexLayout layout)
-        {
-            return (int)Bgfx.get_avail_transient_vertex_buffer((uint)required_vertex_count, ref layout.InternalHandle);
-        }
-
-        public static int GetAvailableTransientIndexBuffers(int num_indices)
-        {
-            return (int)Bgfx.get_avail_transient_index_buffer((uint)num_indices);
-        }
-
-        /* TEXTURE AND FRAMEBUFFER */
-        /* ==================================================================*/
-        public static void UpdateTexture2D(TextureHandle texture, int layer, byte mip, int x, int y, int width, int height, byte[] pixel_data, int pitch)
-        {
-            unsafe
-            {
-                var data = GetMemoryBufferReference(pixel_data);
-                Bgfx.update_texture_2d(texture, (ushort)layer, mip, (ushort)x, (ushort)y, (ushort)width, (ushort)height, data, (ushort)pitch);
-            }
-        }
-
-        public static void SetTexture(byte tex_stage, UniformHandle sampler_uniform, TextureHandle texture, TextureFlags flags = (TextureFlags)uint.MaxValue)
-        {
-            Bgfx.set_texture(tex_stage, sampler_uniform, texture, (uint)flags);
-        }
-
-        /* SHADERS */
-        /* ==================================================================*/
-
-        public static void SetUniform(UniformHandle uniform, float value)
-        {
-            Bgfx.set_uniform(uniform, &value, 1);
-        }
-
-        public static void SetUniform(UniformHandle uniform, ref Vec4 value)
-        {
-            Bgfx.set_uniform(uniform, Unsafe.AsPointer(ref value), 1);
-        }
-
-        public static void Frame(bool capture = false)
-        {
-            Bgfx.frame(capture);
-        }
-
-        public static void Reset(int width, int height, ResetFlags resetFlags)
-        {
-            Reset(width, height, resetFlags, (TextureFormat)TextureFormatCount);
-        }
-
-        public static void Reset(int width, int height, ResetFlags resetFlags, TextureFormat format)
-        {
-            unsafe
-            {
-                Bgfx.reset((uint)width, (uint)height, (uint)resetFlags, format);
-            }
-        }
-
-        public static void SetViewMode(ushort view_id, ViewMode view_mode)
-        {
-            Bgfx.set_view_mode(view_id, view_mode);
-        }
-
-        public static void SetViewClear(ushort view_id, ClearFlags flags, uint color, float depth = 0.0f, byte stencil = 1)
-        {
-            Bgfx.set_view_clear(view_id, (ushort)flags, color, depth, stencil);
-        }
-
-        public static void SetViewRect(ushort view_id, int x, int y, int resolutionWidth, int resolutionHeight)
-        {
-            Bgfx.set_view_rect(view_id, (ushort)x, (ushort)y, (ushort)resolutionWidth, (ushort)resolutionHeight);
-        }
-
-        public static void SetViewProjection(ushort view_id, ref Mat4 view, ref Mat4 projection)
-        {
-            Bgfx.set_view_transform(
-                view_id,
-                Unsafe.AsPointer(ref view.M11),
-                Unsafe.AsPointer(ref projection.M11)
-            );
-        }
-
-        public static void SetProjection(ushort view_id, ref float projection)
-        {
-            Bgfx.set_view_transform(view_id, null, Unsafe.AsPointer(ref projection));
-        }
-
-        public static void Touch(ushort view_id)
-        {
-            Bgfx.touch(view_id);
-        }
-
-        public static void SetModelTransform(ref Mat4 transform)
-        {
-            Bgfx.set_transform(
-                Unsafe.AsPointer(ref transform.M11),
-                1
-            );
-        }
-
-        /* RENDER */
-        /* ==================================================================*/
-
-        public static void SetState(StateFlags state, uint rgba = 0)
-        {
-            Bgfx.set_state((ulong)state, rgba);
+            set_transient_index_buffer((TransientIndexBuffer*)Unsafe.AsPointer(ref tib), firstIndex, numIndices);
         }
 
         public static void SetScissor(int x, int y, int width, int height)
         {
-            Bgfx.set_scissor((ushort)x, (ushort)y, (ushort)width, (ushort)height);
+            set_scissor((ushort)x, (ushort)y, (ushort)width, (ushort)height);
+        }
+
+        public static void Submit(ushort viewId, ProgramHandle program, uint depth = 0, bool preserveState = false)
+        {
+            submit(viewId, program, depth, preserveState ? (byte)1 : (byte)0);
+        }
+
+        public static void RegisterAllocatedResource(GraphicsResource resource)
+        {
+            AllocatedGraphicsResources.Add(resource);
+        }
+
+        public static void UnregisterAllocatedResource(GraphicsResource resource)
+        {
+            AllocatedGraphicsResources.Remove(resource);
+        }
+
+        public static void SetUniform(UniformHandle uniform, float value)
+        {
+            set_uniform(uniform, &value, 1);
+        }
+
+        public static void SetUniform(UniformHandle uniform, ref Vec4 value)
+        {
+            set_uniform(uniform, Unsafe.AsPointer(ref value), 1);
+        }
+
+        public static void DestroyProgram(ProgramHandle shaderProgram)
+        {
+            destroy_program(shaderProgram);
+        }
+
+        public static void DestroyShader(ShaderHandle shader)
+        {
+            destroy_shader(shader);
+        }
+
+        public static void DestroyUniform(UniformHandle uniform)
+        {
+            destroy_uniform(uniform);
+        }
+
+        public static void Shutdown()
+        {
+            foreach (var resource in AllocatedGraphicsResources)
+            {
+                resource.Dispose();
+            }
+
+            shutdown();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -466,105 +464,9 @@ namespace OMEGA
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static StateFlags STATE_BLEND_FUNC_SEPARATE(StateFlags srcRGB, StateFlags dstRGB, StateFlags srcA, StateFlags dstA)
+        public static StateFlags STATE_BLEND_FUNC_SEPARATE(StateFlags srcRgb, StateFlags dstRgb, StateFlags srcA, StateFlags dstA)
         {
-            return (StateFlags)((((ulong)(srcRGB) | ((ulong)(dstRGB) << 4))) | (((ulong)(srcA) | ((ulong)(dstA) << 4)) << 8));
-        }
-
-        public static void Submit(ushort viewId, ProgramHandle program, uint depth = 0, bool preserve_state = false)
-        {
-            Bgfx.submit(viewId, program, depth, (byte)(preserve_state ? 1 : 0));
-        }
-
-        /* DEBUG */
-        /* ==================================================================*/
-
-        public static void SetDebug(DebugFlags flag)
-        {
-            Bgfx.set_debug((uint)flag);
-        }
-
-        /// <summary>
-        /// Writes debug text to the screen.
-        /// </summary>
-        /// <param name="x">The X position, in cells.</param>
-        /// <param name="y">The Y position, in cells.</param>
-        /// <param name="foreColor">The foreground color of the text.</param>
-        /// <param name="backColor">The background color of the text.</param>
-        /// <param name="format">The format of the message.</param>
-        /// <param name="args">The arguments with which to format the message.</param>
-        public static void DebugTextClear(DebugColor color = DebugColor.Black, bool smallText = false)
-        {
-            var attr = (byte)((byte)color << 4);
-            Bgfx.dbg_text_clear(attr, smallText);
-        }
-
-
-        /// <summary>
-        /// Writes debug text to the screen.
-        /// </summary>
-        /// <param name="x">The X position, in cells.</param>
-        /// <param name="y">The Y position, in cells.</param>
-        /// <param name="foreColor">The foreground color of the text.</param>
-        /// <param name="backColor">The background color of the text.</param>
-        /// <param name="message">The message to write.</param>
-        public static void DebugTextWrite(int x, int y, DebugColor foreColor, DebugColor backColor, string message)
-        {
-            var attr = (byte)(((byte)backColor << 4) | (byte)foreColor);
-            Bgfx.dbg_text_printf((ushort)x, (ushort)y, attr, "%s", message);
-        }
-
-        /// <summary>
-        /// Draws data directly into the debug text buffer.
-        /// </summary>
-        /// <param name="x">The X position, in cells.</param>
-        /// <param name="y">The Y position, in cells.</param>
-        /// <param name="width">The width of the image to draw.</param>
-        /// <param name="height">The height of the image to draw.</param>
-        /// <param name="data">The image data bytes.</param>
-        /// <param name="pitch">The pitch of each line in the image data.</param>
-        public static void DebugTextImage(int x, int y, int width, int height, IntPtr data, int pitch)
-        {
-            Bgfx.dbg_text_image((ushort)x, (ushort)y, (ushort)width, (ushort)height, data, (ushort)pitch);
-        }
-
-        /// <summary>
-        /// Draws data directly into the debug text buffer.
-        /// </summary>
-        /// <param name="x">The X position, in cells.</param>
-        /// <param name="y">The Y position, in cells.</param>
-        /// <param name="width">The width of the image to draw.</param>
-        /// <param name="height">The height of the image to draw.</param>
-        /// <param name="data">The image data bytes.</param>
-        /// <param name="pitch">The pitch of each line in the image data.</param>
-        public static void DebugTextImage(int x, int y, int width, int height, byte[] data, int pitch)
-        {
-            fixed (byte* ptr = data)
-                Bgfx.dbg_text_image((ushort)x, (ushort)y, (ushort)width, (ushort)height, new IntPtr(ptr), (ushort)pitch);
-        }
-
-        /* UTILS */
-        /* ==================================================================*/
-        private static unsafe Memory* AllocGraphicsMemoryBuffer<T>(T[] array)
-        {
-            var size = (uint)(array.Length * Unsafe.SizeOf<T>());
-            var data = Bgfx.alloc(size);
-            Unsafe.CopyBlockUnaligned(data->data, Unsafe.AsPointer(ref array[0]), size);
-            return data;
-        }
-
-        private static unsafe Memory* AllocGraphicsMemoryBuffer(IntPtr data_ptr, int data_size)
-        {
-            var data = Bgfx.alloc((uint)data_size);
-            Unsafe.CopyBlockUnaligned(data->data, data_ptr.ToPointer(), (uint)data_size);
-            return data;
-        }
-
-        private static unsafe Memory* GetMemoryBufferReference<T>(T[] array)
-        {
-            var size = (uint)(array.Length * Unsafe.SizeOf<T>());
-            var data = Bgfx.make_ref(Unsafe.AsPointer(ref array[0]), size);
-            return data;
+            return (StateFlags)((((ulong)(srcRgb) | ((ulong)(dstRgb) << 4))) | (((ulong)(srcA) | ((ulong)(dstA) << 4)) << 8));
         }
     }
 }

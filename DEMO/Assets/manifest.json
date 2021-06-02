@@ -1,20 +1,5 @@
 ﻿{
   "resources": {
-    "base": {
-      "shaders": [
-        {
-          "id": "canvas_shader",
-          "vs_path": "Base/Shaders/canvas_shader/canvas_vs.sc",
-          "fs_path": "Base/Shaders/canvas_shader/canvas_fs.sc"
-        }
-      ],
-      "text_files": [
-        {
-          "id": "gamecontrollerdb",
-          "path": "Base/TextFiles/gamecontrollerdb.txt"
-        }
-      ]
-    },
     "demo": {
       "images": [
         {
@@ -40,41 +25,43 @@
       ],
       "fonts": [
         {
-          "id": "nokia60",
-          "path": "Fonts/nokiafc22.ttf",
-          "size": 60,
-          "dropshadow": true,
-          "shadow_offset_x": 4,
-          "shadow_offset_y": 4,
-          "shadow_color": "#222222FF"
-        },
-        {
           "id": "nokia16",
-          "path": "Fonts/nokiafc22.ttf",
-          "size": 16,
-          "dropshadow": true,
-          "shadow_offset_x": 2,
-          "shadow_offset_y": 2,
-          "shadow_color": "#222222FF"
+          "faces": [
+            {
+              "path": "Fonts/nokiafc22.ttf",
+              "size": 16,
+              "char_ranges": [ "BasicLatin" ]
+            }
+          ],
+          "line_spacing": 20,
+          "spacing": 2,
+          "default_char": " "
         },
         {
-          "id": "droid60",
-          "path": "Fonts/droidsans.ttf",
-          "size": 60,
-          "dropshadow": true,
-          "shadow_offset_x": 4,
-          "shadow_offset_y": 4,
-          "shadow_color": "#222222FF"
+          "id": "droid16",
+          "faces": [
+            {
+              "path": "Fonts/droidsans.ttf",
+              "size": 16,
+              "char_ranges": [ "BasicLatin" ]
+            }
+          ],
+          "line_spacing": 20,
+          "spacing": 2,
+          "default_char": " "
         },
         {
-          "id": "c6460",
-          "path": "Fonts/c64.ttf",
-          "size": 60,
-          "dropshadow": true,
-          "shadow_offset_x": 4,
-          "shadow_offset_y": 4,
-          "shadow_color": "#222222FF"
-
+          "id": "c6416",
+          "faces": [
+            {
+              "path": "Fonts/c64.ttf",
+              "size": 16,
+              "char_ranges": [ "BasicLatin" ]
+            }
+          ],
+          "line_spacing": 20,
+          "spacing": 2,
+          "default_char": " "
         }
       ],
       "atlases": [

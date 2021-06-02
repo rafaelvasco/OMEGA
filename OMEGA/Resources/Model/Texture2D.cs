@@ -1,5 +1,6 @@
 ﻿
 using System;
+using static Bgfx.Bgfx;
 
 namespace OMEGA
 {
@@ -7,9 +8,9 @@ namespace OMEGA
     {
         internal readonly TextureHandle Handle;
 
-        internal TextureFlags TexFlags;
+        internal SamplerFlags SamplerFlags;
 
-        internal Pixmap Pixmap { get; private set; }
+        public Pixmap Pixmap { get; }
 
         public int Width { get; protected set; }
 
@@ -19,12 +20,12 @@ namespace OMEGA
 
         public bool Tiled
         {
-            get => tiled;
+            get => _tiled;
             set
             {
-                if (tiled == value) return;
+                if (_tiled == value) return;
 
-                tiled = value;
+                _tiled = value;
 
                 UpdateTexFlags();
             }
@@ -32,79 +33,57 @@ namespace OMEGA
 
         public bool Filtered
         {
-            get => filtered;
+            get => _filtered;
             set
             {
-                if (filtered == value) return;
+                if (_filtered == value) return;
 
-                filtered = value;
+                _filtered = value;
 
                 UpdateTexFlags();
             }
         }
 
-        public bool RenderTarget
-        {
-            get => render_target;
-            set
-            {
-                if (render_target == value)
-                {
-                    return;
-                }
+        private bool _tiled;
 
-                render_target = value;
+        private bool _filtered;
 
-                UpdateTexFlags();
-            }
-        }
-
-
-        private bool tiled;
-
-        private bool filtered;
-
-        private bool render_target = false;
-
-        internal Texture2D(IntPtr data, int width, int height, int bytes_per_pixel)
+        internal Texture2D(IntPtr data, int width, int height, int bytesPerPixel)
         {
             Pixmap = null;
             Width = width;
             Height = height;
             Tiled = false;
             Filtered = false;
-            RenderTarget = false;
             UpdateTexFlags();
-            Handle = GraphicsContext.CreateTexture2D(width, height, bytes_per_pixel, false, 0, TextureFormat.BGRA8, TexFlags, data);
+            Handle = GraphicsContext.CreateTexture2D(width, height, bytesPerPixel, false, 0, TextureFormat.BGRA8, SamplerFlags, data);
         }
 
-        internal Texture2D(Pixmap pixmap, bool tiled, bool filtered, bool render_target = false)
+        internal Texture2D(Pixmap pixmap, bool tiled, bool filtered)
         {
             Pixmap = pixmap;
             Width = pixmap.Width;
             Height = pixmap.Height;
             Tiled = tiled;
             Filtered = filtered;
-            RenderTarget = render_target;
             UpdateTexFlags();
-            Handle = GraphicsContext.CreateDynamicTexture2D(pixmap.Width, pixmap.Height, false, 0, TextureFormat.BGRA8, TexFlags, pixmap.Data);
+            Handle = GraphicsContext.CreateDynamicTexture2D(pixmap.Width, pixmap.Height, false, 0, TextureFormat.BGRA8, SamplerFlags, pixmap.Data);
         }
 
-        internal Texture2D(TextureHandle tex_handle, int width, int height, bool filtered, bool tiled)
+        internal Texture2D(TextureHandle texHandle, int width, int height, bool filtered, bool tiled)
         {
             Pixmap = null;
             this.Filtered = filtered;
             this.Tiled = tiled;
             this.Width = width;
             this.Height = height;
-            this.RenderTarget = true;
-            this.Handle = tex_handle;
+            this.Handle = texHandle;
             UpdateTexFlags();
         }
 
-        public static Texture2D Create(int width, int height, Color fill_color, bool tiled = false, bool filtered = false)
+        public static Texture2D Create(int width, int height, Color fillColor, bool tiled = false, bool filtered = false)
         {
-            var pixmap = new Pixmap(width, height, fill_color);
+            var pixmap = new Pixmap(width, height, fillColor);
 
             return Create(pixmap, tiled, filtered);
         }
@@ -113,22 +92,14 @@ namespace OMEGA
         {
             var texture = new Texture2D(pixmap, tiled, filtered);
 
-            int id = Engine.Content.RegisterRuntimeLoaded(texture);
-
-            texture.Id = $"Texture({id}) [{pixmap.Width},{pixmap.Height}]";
+            Engine.Content.RegisterRuntimeLoaded(texture);
 
             return texture;
         }
 
-        public static Texture2D Create(IntPtr data, int width, int height, int bytes_per_pixel)
+        public void SaveToFile(string path)
         {
-            var texture = new Texture2D(data, width, height, bytes_per_pixel);
-
-            int id = Engine.Content.RegisterRuntimeLoaded(texture);
-
-            texture.Id = $"Texture({id}) [{width},{height}]";
-
-            return texture;
+            Pixmap.SaveToFile(path);
         }
 
         internal void ReloadPixels()
@@ -138,48 +109,40 @@ namespace OMEGA
                 return;
             }
 
-            GraphicsContext.UpdateTexture2D(Handle, 0, 0, 0, 0, Width, Height, Pixmap.Data, Pixmap.Stride);
+            GraphicsContext.UpdateTexture2D(this, 0, 0, 0, 0, Width, Height, Pixmap.Data, Pixmap.Stride);
         }
 
         private void UpdateTexFlags()
         {
-            var flags = BuildTexFlags(Tiled, Filtered, RenderTarget);
+            var flags = BuildTexFlags(Tiled, Filtered);
 
-            this.TexFlags = flags;
+            this.SamplerFlags = flags;
         }
 
-        private static TextureFlags BuildTexFlags(bool tiled, bool filtered, bool render_target)
+        private static SamplerFlags BuildTexFlags(bool tiled, bool filtered)
         {
-            var tex_flags = TextureFlags.None;
+            var tex_flags = SamplerFlags.None;
 
-            if (!tiled) tex_flags = TextureFlags.ClampU | TextureFlags.ClampV;
+            if (!tiled) tex_flags = SamplerFlags.UClamp | SamplerFlags.VClamp;
 
-            if (!filtered) tex_flags |= TextureFlags.FilterPoint;
-
-            if (render_target)
-            {
-                tex_flags |= TextureFlags.RenderTarget;
-            }
+            if (!filtered) tex_flags |= SamplerFlags.Point;
 
             return tex_flags;
         }
 
         protected override void FreeUnmanaged()
         {
-            GraphicsContext.DestroyTexture(Handle);
+            GraphicsContext.DestroyTexture2D(this);
         }
 
         protected override void FreeManaged()
         {
-            if (Pixmap != null)
-            {
-                Pixmap.Dispose();
-            }
+            Pixmap?.Dispose();
         }
 
         public bool Equals(Texture2D other)
         {
-            return Handle.idx == other.Handle.idx;
+            return other != null && Handle.idx == other.Handle.idx;
         }
 
         public override bool Equals(object obj)

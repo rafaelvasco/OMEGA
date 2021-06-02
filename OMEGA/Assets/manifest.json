@@ -19,6 +19,21 @@
           "id": "logo",
           "path": "Base/Images/alpha_omega.png"
         }
+      ],
+      "fonts": [
+        {
+          "id": "default_font",
+          "faces": [
+            {
+              "path": "Base/Fonts/c64.ttf",
+              "size": 16,
+              "char_ranges": [ "BasicLatin" ]
+            }
+          ],
+          "line_spacing": 20,
+          "spacing": 2,
+          "default_char": " "
+        }
       ]
     }
   }

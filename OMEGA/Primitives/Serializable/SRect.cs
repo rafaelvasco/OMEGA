@@ -1,20 +1,20 @@
-﻿using ProtoBuf;
+﻿using MessagePack;
 
 namespace OMEGA
 {
-    [ProtoContract]
+    [MessagePackObject]
     public struct SRect
     {
-        [ProtoMember(1)]
+        [Key(0)]
         public int X { get;set;}
 
-        [ProtoMember(2)]
+        [Key(1)]
         public int Y { get;set;}
 
-        [ProtoMember(3)]
+        [Key(2)]
         public int W { get;set;}
 
-        [ProtoMember(4)]
+        [Key(3)]
         public int H { get;set;}
 
         public SRect(int x, int y, int w, int h)
